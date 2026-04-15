@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { MessageSquare, Video, User, Dumbbell } from "lucide-react";
 import { ChatTab } from "@/components/chat-tab";
+import { VideoReviewTab } from "@/components/video-review-tab";
 
 const tabs = [
   { id: "technique", label: "Technique", icon: MessageSquare, description: "Ask about punching mechanics" },
@@ -79,22 +80,7 @@ export default function Home() {
             ]}
           />
         )}
-        {activeTab === "video" && (
-          <div className="flex h-full items-center justify-center">
-            <div className="text-center max-w-md px-6">
-              <Video size={48} className="mx-auto mb-4 text-muted" />
-              <h2 className="text-xl font-semibold mb-2">Video Review</h2>
-              <p className="text-muted text-sm">
-                Upload a sparring or bag work clip and get AI analysis based on
-                The Punch Doctor&apos;s methodology — stance, hip rotation, weight transfer, and more.
-              </p>
-              <p className="text-xs text-muted mt-4 border border-border rounded-lg p-3 bg-surface">
-                Coming soon. This feature will analyze your video frame-by-frame
-                using Alex&apos;s 4-phase system.
-              </p>
-            </div>
-          </div>
-        )}
+        {activeTab === "video" && <VideoReviewTab />}
         {activeTab === "style" && (
           <div className="flex h-full items-center justify-center">
             <div className="text-center max-w-md px-6">
