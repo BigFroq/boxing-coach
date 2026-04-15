@@ -99,7 +99,7 @@ export async function synthesizeNodes(
       .join("\n\n---\n\n");
 
     const response = await getAnthropic().messages.create({
-      model: "claude-opus-4-6-20250414",
+      model: "claude-opus-4-20250514",
       max_tokens: 4096,
       system: `You are synthesizing a knowledge node for Dr. Alex Wiant's boxing methodology knowledge graph.
 

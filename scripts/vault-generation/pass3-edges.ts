@@ -47,7 +47,7 @@ export async function discoverEdges(
       .join("\n\n===\n\n");
 
     const response = await getAnthropic().messages.create({
-      model: "claude-opus-4-6-20250414",
+      model: "claude-opus-4-20250514",
       max_tokens: 8192,
       system: `You are discovering connections between nodes in a boxing knowledge graph.
 
