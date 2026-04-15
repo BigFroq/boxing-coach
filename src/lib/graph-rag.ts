@@ -86,20 +86,30 @@ async function decomposeQuery(query: string): Promise<DecomposedQuery> {
   const text =
     response.content[0].type === "text" ? response.content[0].text : "";
 
+  let result: DecomposedQuery;
   try {
     const parsed = JSON.parse(text) as DecomposedQuery;
-    // Validate shape
     if (
       !Array.isArray(parsed.sub_queries) ||
       !Array.isArray(parsed.keywords)
     ) {
       throw new Error("Invalid decomposition shape");
     }
-    return parsed;
+    result = parsed;
   } catch {
-    // Fallback: use original query as single sub-query
-    return { sub_queries: [query], keywords: [] };
+    result = { sub_queries: [query], keywords: [] };
   }
+
+  // Always supplement with keywords extracted directly from the query
+  // This catches fighter names and terms Claude might miss
+  const words = query.toLowerCase().split(/\s+/);
+  const supplemental = words.filter(
+    (w) => w.length > 3 && !["does", "what", "how", "the", "with", "from", "this", "that", "when", "where", "which", "about", "their", "your", "have", "been", "should", "would", "could"].includes(w)
+  );
+  const allKeywords = [...new Set([...result.keywords.map(k => k.toLowerCase()), ...supplemental])];
+  result.keywords = allKeywords;
+
+  return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -170,7 +180,7 @@ async function graphSearch(
   const { data, error } = await supabase.rpc("search_graph", {
     query_embedding: embedding,
     entry_keywords: keywords,
-    max_hops: 2,
+    max_hops: 1,
     max_results: 15,
   });
 
