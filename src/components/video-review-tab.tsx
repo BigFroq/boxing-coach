@@ -31,8 +31,8 @@ export function VideoReviewTab() {
       return;
     }
 
-    if (file.size > 100 * 1024 * 1024) {
-      setError("Video must be under 100MB");
+    if (file.size > 200 * 1024 * 1024) {
+      setError("Video must be under 200MB");
       return;
     }
 
@@ -63,7 +63,8 @@ export function VideoReviewTab() {
     });
 
     const duration = video.duration;
-    const maxFrames = 12;
+    // Scale frames based on video length: ~1 frame per 5 seconds, min 8, max 20
+    const maxFrames = Math.min(20, Math.max(8, Math.round(duration / 5)));
     const interval = Math.max(duration / maxFrames, 0.5);
     const extractedFrames: string[] = [];
 
@@ -130,9 +131,9 @@ export function VideoReviewTab() {
             <Upload size={40} className="mx-auto mb-4 text-muted" />
             <h2 className="text-lg font-semibold mb-2">Upload a Video Clip</h2>
             <p className="text-sm text-muted mb-1">
-              Sparring, bag work, or shadow boxing — 15-60 seconds works best
+              Sparring, bag work, or shadow boxing — up to one round (3 min)
             </p>
-            <p className="text-xs text-muted">MP4, MOV, or WebM under 100MB</p>
+            <p className="text-xs text-muted">MP4, MOV, or WebM under 200MB</p>
             <input
               ref={fileInputRef}
               type="file"

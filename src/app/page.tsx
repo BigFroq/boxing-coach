@@ -4,6 +4,7 @@ import { useState } from "react";
 import { MessageSquare, Video, User, Dumbbell } from "lucide-react";
 import { ChatTab } from "@/components/chat-tab";
 import { VideoReviewTab } from "@/components/video-review-tab";
+import { StyleFinderTab } from "@/components/style-finder-tab";
 
 const tabs = [
   { id: "technique", label: "Technique", icon: MessageSquare, description: "Ask about punching mechanics" },
@@ -81,21 +82,7 @@ export default function Home() {
           />
         )}
         {activeTab === "video" && <VideoReviewTab />}
-        {activeTab === "style" && (
-          <div className="flex h-full items-center justify-center">
-            <div className="text-center max-w-md px-6">
-              <User size={48} className="mx-auto mb-4 text-muted" />
-              <h2 className="text-xl font-semibold mb-2">Find Your Style</h2>
-              <p className="text-muted text-sm">
-                Answer questions about your body type, reach, speed, and preferences.
-                Get a tailored fighting style recommendation based on analysis of elite fighters.
-              </p>
-              <p className="text-xs text-muted mt-4 border border-border rounded-lg p-3 bg-surface">
-                Coming soon. Built from The Punch Doctor&apos;s fighter analysis library.
-              </p>
-            </div>
-          </div>
-        )}
+        {activeTab === "style" && <StyleFinderTab />}
       </main>
     </div>
   );
