@@ -43,3 +43,9 @@ next-env.d.ts
 # content (large transcript files)
 content/transcripts/*.md
 content/transcripts/manifest.json
+
+# vault generation cache
+scripts/vault-generation/.cache/
+
+# generated vault (regenerated from DB)
+vault/
