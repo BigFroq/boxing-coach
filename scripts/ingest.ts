@@ -170,8 +170,8 @@ async function embedWithRetry(batch: string[], maxRetries = 5): Promise<number[]
 
 async function embedChunks(chunks: RawChunk[]): Promise<number[][]> {
   const texts = chunks.map((c) => c.content);
-  // Free tier: 3 RPM, 10K TPM — use tiny batches with generous delay
-  const batchSize = 4;
+  // With payment method: standard rate limits unlocked
+  const batchSize = 64;
   const allEmbeddings: number[][] = [];
 
   for (let i = 0; i < texts.length; i += batchSize) {
@@ -179,9 +179,9 @@ async function embedChunks(chunks: RawChunk[]): Promise<number[][]> {
     const embeddings = await embedWithRetry(batch);
     allEmbeddings.push(...embeddings);
     console.log(`  Embedded: ${Math.min(i + batchSize, texts.length)}/${texts.length}`);
-    // 25s delay between calls (3 RPM = 1 per 20s, add buffer)
+    // Small delay between calls to be polite
     if (i + batchSize < texts.length) {
-      await new Promise((r) => setTimeout(r, 25000));
+      await new Promise((r) => setTimeout(r, 1000));
     }
   }
   return allEmbeddings;
@@ -211,9 +211,9 @@ async function upsertChunks(
         video_url: chunk.video_url ?? null,
         pdf_file: chunk.pdf_file ?? null,
         chunk_index: chunk.chunk_index,
-        techniques: metadata[globalIdx].techniques,
-        fighters: metadata[globalIdx].fighters,
-        category: metadata[globalIdx].category,
+        techniques: metadata[globalIdx]?.techniques ?? [],
+        fighters: metadata[globalIdx]?.fighters ?? [],
+        category: metadata[globalIdx]?.category ?? "theory",
         char_count: chunk.content.length,
       };
     });
