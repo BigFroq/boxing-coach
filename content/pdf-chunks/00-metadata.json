@@ -1,0 +1,25 @@
+{
+  "course": "Power Punching Blueprint",
+  "author": "Alex Wiant DC",
+  "alias": "The Punch Doctor",
+  "website": "howtopunchharder.com",
+  "youtube": "https://www.youtube.com/@ThePunchDoctor",
+  "pages": 40,
+  "chunks": [
+    { "file": "01-what-is-power.md", "pages": "1-2", "topic": "Power physics, acceleration types, throw vs push" },
+    { "file": "02-common-misconceptions.md", "pages": "2-6", "topic": "Debunked myths: shoulder, breathing, heel, stepping" },
+    { "file": "03-torque-and-four-phases.md", "pages": "7-8", "topic": "4 mechanical phases of torque and power generation" },
+    { "file": "04-kinetic-chains.md", "pages": "8-10", "topic": "Kinetic chains from Anatomy Trains, cross-body energy transfer" },
+    { "file": "05-shearing-force-and-knuckles.md", "pages": "10-13", "topic": "Impact mechanics, shearing force, 3-knuckle landing" },
+    { "file": "06-stance-and-phase1-exercise.md", "pages": "14-15", "topic": "Stance width, center of gravity, loading exercises" },
+    { "file": "07-phase2-hip-mechanics.md", "pages": "16-17", "topic": "Hip opening/closing, which punches use which" },
+    { "file": "08-phase3-core-transfer.md", "pages": "17-20", "topic": "Core transfer, high five exercise, loose arms, knuckle stability" },
+    { "file": "09-phase4-follow-through.md", "pages": "21", "topic": "Follow through, arm unwinding, reset mechanics" },
+    { "file": "10-jab-mechanics.md", "pages": "22", "topic": "Jab phases and kinetic chains" },
+    { "file": "11-straight-mechanics.md", "pages": "22-24", "topic": "Straight punch phases, on-your-mark position" },
+    { "file": "12-hook-mechanics.md", "pages": "24-25", "topic": "Hook phases, lateral loading, arc mechanics" },
+    { "file": "13-uppercut-mechanics.md", "pages": "25-27", "topic": "Lead and rear uppercut mechanics" },
+    { "file": "14-hand-wrapping.md", "pages": "28-35", "topic": "15-step hand wrapping guide, Mexican wraps" },
+    { "file": "15-bag-work-and-combos.md", "pages": "36-39", "topic": "Bag work, breathing, weight control, combinations" }
+  ]
+}

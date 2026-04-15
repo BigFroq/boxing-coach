@@ -1,64 +1,115 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import { MessageSquare, Video, User, Dumbbell } from "lucide-react";
+import { ChatTab } from "@/components/chat-tab";
+
+const tabs = [
+  { id: "technique", label: "Technique", icon: MessageSquare, description: "Ask about punching mechanics" },
+  { id: "drills", label: "Drills", icon: Dumbbell, description: "Exercises & training" },
+  { id: "video", label: "Video Review", icon: Video, description: "Analyze your footage" },
+  { id: "style", label: "Find Your Style", icon: User, description: "Discover your fighting style" },
+] as const;
+
+type TabId = (typeof tabs)[number]["id"];
 
 export default function Home() {
+  const [activeTab, setActiveTab] = useState<TabId>("technique");
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="flex h-full flex-col">
+      {/* Header */}
+      <header className="flex items-center justify-between border-b border-border px-6 py-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent font-bold text-white text-sm">
+            PD
+          </div>
+          <div>
+            <h1 className="text-lg font-semibold leading-tight">Punch Doctor AI</h1>
+            <p className="text-xs text-muted">Powered by Alex Wiant DC&apos;s methodology</p>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+      </header>
+
+      {/* Tab Navigation */}
+      <nav className="flex border-b border-border px-6">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
+                isActive
+                  ? "border-accent text-accent"
+                  : "border-transparent text-muted hover:text-foreground"
+              }`}
+            >
+              <Icon size={16} />
+              {tab.label}
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* Tab Content */}
+      <main className="flex-1 overflow-hidden">
+        {activeTab === "technique" && (
+          <ChatTab
+            systemContext="technique"
+            placeholder="Ask about punch mechanics, kinetic chains, phases..."
+            suggestions={[
+              "How do I generate more power in my jab?",
+              "Explain the 4 phases of a power punch",
+              "Why should I land with the last 3 knuckles?",
+              "What's wrong with breathing out when I punch?",
+            ]}
+          />
+        )}
+        {activeTab === "drills" && (
+          <ChatTab
+            systemContext="drills"
+            placeholder="Ask about exercises, training routines, bag work..."
+            suggestions={[
+              "What exercises help with hip rotation?",
+              "How do I practice the High Five exercise?",
+              "Give me a bag work routine for power",
+              "How should I wrap my hands?",
+            ]}
+          />
+        )}
+        {activeTab === "video" && (
+          <div className="flex h-full items-center justify-center">
+            <div className="text-center max-w-md px-6">
+              <Video size={48} className="mx-auto mb-4 text-muted" />
+              <h2 className="text-xl font-semibold mb-2">Video Review</h2>
+              <p className="text-muted text-sm">
+                Upload a sparring or bag work clip and get AI analysis based on
+                The Punch Doctor&apos;s methodology — stance, hip rotation, weight transfer, and more.
+              </p>
+              <p className="text-xs text-muted mt-4 border border-border rounded-lg p-3 bg-surface">
+                Coming soon. This feature will analyze your video frame-by-frame
+                using Alex&apos;s 4-phase system.
+              </p>
+            </div>
+          </div>
+        )}
+        {activeTab === "style" && (
+          <div className="flex h-full items-center justify-center">
+            <div className="text-center max-w-md px-6">
+              <User size={48} className="mx-auto mb-4 text-muted" />
+              <h2 className="text-xl font-semibold mb-2">Find Your Style</h2>
+              <p className="text-muted text-sm">
+                Answer questions about your body type, reach, speed, and preferences.
+                Get a tailored fighting style recommendation based on analysis of elite fighters.
+              </p>
+              <p className="text-xs text-muted mt-4 border border-border rounded-lg p-3 bg-surface">
+                Coming soon. Built from The Punch Doctor&apos;s fighter analysis library.
+              </p>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
