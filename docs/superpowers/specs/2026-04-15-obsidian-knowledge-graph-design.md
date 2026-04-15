@@ -49,7 +49,7 @@ CREATE TABLE knowledge_nodes (
   content text NOT NULL,            -- full structured note (see Node Content Format)
   aliases text[] DEFAULT '{}',      -- ["jab", "lead hand punch"]
   embedding vector(512),            -- Voyage AI embedding of content
-  centrality float DEFAULT 0,       -- pre-computed, count of weighted edges
+  centrality float DEFAULT 0,       -- pre-computed: SUM(weight) of all edges where this node is source OR target, normalized 0-1
   created_at timestamptz DEFAULT now(),
   updated_at timestamptz DEFAULT now()
 );
@@ -199,7 +199,10 @@ For each sub-query, Claude generates a short hypothetical answer (~100 words) as
    - Node content from connected nodes (concept summaries)
    - Source chunks via SOURCED_FROM edges (evidence)
    - Edge evidence text (why things connect)
-3. **Scoring:** Each collected item gets a graph score: `edge_weight * (1 / hop_distance) * source_node_centrality`
+3. **Bidirectional traversal:** Edges are walked in BOTH directions — if Canelo DEMONSTRATES Jab Mechanics, traversal from "Jab Mechanics" finds "Canelo" and vice versa. The recursive CTE joins on both `source_node` and `target_node`.
+4. **Deduplication:** The CTE tracks visited nodes to avoid cycles and duplicate results.
+5. **Entry keywords:** Extracted by Claude during query decomposition — proper nouns, technique names, and key terms from each sub-query.
+6. **Scoring:** Each collected item gets a graph score: `edge_weight * (1 / hop_distance) * source_node_centrality`
 
 ### Cross-Encoder Reranking
 
@@ -251,20 +254,35 @@ BEGIN
     ORDER BY kn.embedding <=> query_embedding
     LIMIT 5
   ),
-  -- Traverse edges up to max_hops
+  -- Traverse edges bidirectionally up to max_hops, deduplicated
   traversal AS (
-    SELECT id, title, content, node_type, centrality, hop, path_weight, vector_sim
+    SELECT id, title, content, node_type, centrality, hop, path_weight, vector_sim,
+           ARRAY[id] AS visited
     FROM entry_nodes
     UNION ALL
+    -- Forward: source_node → target_node
+    (SELECT
+      kn.id, kn.title, kn.content, kn.node_type, kn.centrality,
+      t.hop + 1,
+      t.path_weight * ke.weight,
+      0::float,
+      t.visited || kn.id
+    FROM traversal t
+    JOIN knowledge_edges ke ON ke.source_node = t.id
+    JOIN knowledge_nodes kn ON kn.id = ke.target_node
+    WHERE t.hop < max_hops AND NOT (kn.id = ANY(t.visited))
+    UNION ALL
+    -- Reverse: target_node → source_node
     SELECT
       kn.id, kn.title, kn.content, kn.node_type, kn.centrality,
       t.hop + 1,
       t.path_weight * ke.weight,
-      0::float
+      0::float,
+      t.visited || kn.id
     FROM traversal t
-    JOIN knowledge_edges ke ON ke.source_node = t.id
-    JOIN knowledge_nodes kn ON kn.id = ke.target_node
-    WHERE t.hop < max_hops
+    JOIN knowledge_edges ke ON ke.target_node = t.id
+    JOIN knowledge_nodes kn ON kn.id = ke.source_node
+    WHERE t.hop < max_hops AND NOT (kn.id = ANY(t.visited)))
   )
   -- Return nodes with their scores
   SELECT
@@ -452,6 +470,29 @@ When new content is added:
 3. **Update vault:** Write new/modified `.md` files to the vault directory
 4. **Sync to DB:** Update `knowledge_nodes`, `knowledge_edges`, re-embed changed nodes, recompute centrality
 
+### Centrality Computation
+
+Run after any edge changes:
+
+```sql
+UPDATE knowledge_nodes kn SET centrality = COALESCE(scores.raw / max_scores.max_raw, 0)
+FROM (
+  SELECT node_id, SUM(weight) AS raw FROM (
+    SELECT source_node AS node_id, weight FROM knowledge_edges
+    UNION ALL
+    SELECT target_node AS node_id, weight FROM knowledge_edges WHERE target_node IS NOT NULL
+  ) edges GROUP BY node_id
+) scores,
+(SELECT MAX(raw) AS max_raw FROM (
+  SELECT node_id, SUM(weight) AS raw FROM (
+    SELECT source_node AS node_id, weight FROM knowledge_edges
+    UNION ALL
+    SELECT target_node AS node_id, weight FROM knowledge_edges WHERE target_node IS NOT NULL
+  ) edges GROUP BY node_id
+) s) max_scores
+WHERE kn.id = scores.node_id;
+```
+
 ### Vault → DB Sync (after Alex edits)
 
 `npm run vault-to-db`:
@@ -483,8 +524,20 @@ When new content is added:
 
 **Query logging:**
 - Every production query logs: query text, retrieved items, response, timestamp
-- Stored in Supabase `query_logs` table
 - Enables future analysis of what users ask and whether retrieval was good
+
+```sql
+CREATE TABLE query_logs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  query text NOT NULL,
+  context text,                        -- "technique", "drills", etc.
+  sub_queries text[],                  -- decomposed sub-queries
+  retrieved_node_ids uuid[],           -- which knowledge nodes were returned
+  retrieved_chunk_ids uuid[],          -- which content chunks were returned
+  response_preview text,               -- first 500 chars of Claude's response
+  created_at timestamptz DEFAULT now()
+);
+```
 
 ## 6. Integration with Existing RAG
 
