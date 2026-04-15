@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
-import { retrieveChunks, formatChunksForPrompt, extractCitations, type SourceCitation } from "@/lib/rag";
+import { retrieveContext, formatChunksForPrompt, extractCitations, type SourceCitation } from "@/lib/graph-rag";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
       const seenIds = new Set<string>();
 
       for (const query of searchQueries.slice(0, 3)) {
-        const chunks = await retrieveChunks(query, { count: 4 });
+        const { chunks } = await retrieveContext(query, { count: 4 });
         for (const chunk of chunks) {
           const key = `${chunk.source_type}-${chunk.video_id ?? chunk.pdf_file}-${chunk.content.slice(0, 50)}`;
           if (!seenIds.has(key)) {

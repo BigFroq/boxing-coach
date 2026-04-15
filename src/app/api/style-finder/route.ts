@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
-import { retrieveChunks, formatChunksForPrompt, extractCitations } from "@/lib/rag";
+import { retrieveContext, formatChunksForPrompt, extractCitations } from "@/lib/graph-rag";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -51,13 +51,12 @@ export async function POST(request: NextRequest) {
     // Build a search query from user profile to find relevant fighter analyses
     const searchQuery = `fighter style ${answers.temperament ?? ""} ${answers.speed_vs_power ?? ""} ${answers.build ?? ""} boxing analysis`;
 
-    const chunks = await retrieveChunks(searchQuery, {
+    const { chunks, citations } = await retrieveContext(searchQuery, {
       count: 8,
       categories: ["analysis", "mechanics"],
     });
 
     const ragContext = formatChunksForPrompt(chunks);
-    const citations = extractCitations(chunks);
 
     const response = await anthropic.messages.create({
       model: "claude-sonnet-4-20250514",

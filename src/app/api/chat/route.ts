@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
-import { retrieveChunks, formatChunksForPrompt, extractCitations } from "@/lib/rag";
+import { retrieveContext, formatChunksForPrompt, extractCitations } from "@/lib/graph-rag";
+import { createServerClient } from "@/lib/supabase";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -66,13 +67,13 @@ export async function POST(request: NextRequest) {
       categories = ["mechanics", "theory", "analysis"];
     }
 
-    const chunks = await retrieveChunks(lastUserMessage.content, {
-      count: 10,
+    // Graph-enhanced retrieval: decompose → HyDE → parallel (vector + graph) → rerank
+    const { chunks, citations } = await retrieveContext(lastUserMessage.content, {
+      count: 12,
       categories,
     });
 
     const contextText = formatChunksForPrompt(chunks);
-    const citations = extractCitations(chunks);
 
     let contextNote = "";
     if (context === "drills") {
@@ -94,9 +95,34 @@ export async function POST(request: NextRequest) {
     const content =
       response.content[0].type === "text" ? response.content[0].text : "No response generated.";
 
+    // Log query for eval (fire-and-forget)
+    logQuery(lastUserMessage.content, context, chunks, content).catch(() => {});
+
     return NextResponse.json({ content, citations });
   } catch (error) {
     console.error("Chat API error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+async function logQuery(
+  query: string,
+  context: string | undefined,
+  chunks: { video_id?: string | null; pdf_file?: string | null }[],
+  response: string
+) {
+  try {
+    const supabase = createServerClient();
+    await supabase.from("query_logs").insert({
+      query,
+      context: context ?? null,
+      retrieved_chunk_ids: chunks
+        .filter((c) => c.video_id || c.pdf_file)
+        .map((c) => c.video_id ?? c.pdf_file)
+        .slice(0, 20),
+      response_preview: response.slice(0, 500),
+    });
+  } catch {
+    // Non-critical — don't fail the request
   }
 }
