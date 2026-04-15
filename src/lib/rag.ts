@@ -53,7 +53,7 @@ export function formatChunksForPrompt(chunks: RetrievedChunk[]): string {
 }
 
 export interface SourceCitation {
-  type: "video" | "course";
+  type: "video" | "course" | "concept";
   title: string;
   url?: string;
   file?: string;
