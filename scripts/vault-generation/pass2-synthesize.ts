@@ -8,7 +8,11 @@ export interface SynthesizedNode extends NodeCandidate {
   source_chunk_ids: string[]; // UUIDs of chunks used
 }
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+let _anthropic: Anthropic | null = null;
+function getAnthropic() {
+  if (!_anthropic) _anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  return _anthropic;
+}
 
 const VOYAGE_API_URL = "https://api.voyageai.com/v1/embeddings";
 
@@ -94,8 +98,8 @@ export async function synthesizeNodes(
       })
       .join("\n\n---\n\n");
 
-    const response = await anthropic.messages.create({
-      model: "claude-opus-4-6-20250515",
+    const response = await getAnthropic().messages.create({
+      model: "claude-opus-4-6-20250414",
       max_tokens: 4096,
       system: `You are synthesizing a knowledge node for Dr. Alex Wiant's boxing methodology knowledge graph.
 

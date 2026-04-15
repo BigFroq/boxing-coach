@@ -4,7 +4,11 @@ import Anthropic from "@anthropic-ai/sdk";
 import type { SynthesizedNode } from "./pass2-synthesize";
 import type { DiscoveredEdge } from "./pass3-edges";
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+let _anthropic: Anthropic | null = null;
+function getAnthropic() {
+  if (!_anthropic) _anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  return _anthropic;
+}
 
 const VOYAGE_API_URL = "https://api.voyageai.com/v1/embeddings";
 
@@ -66,8 +70,8 @@ export async function validateAndInsert(
   };
 
   console.log("Running validation with Claude...");
-  const validationResponse = await anthropic.messages.create({
-    model: "claude-opus-4-6-20250515",
+  const validationResponse = await getAnthropic().messages.create({
+    model: "claude-opus-4-6-20250414",
     max_tokens: 4096,
     system: `You are validating a boxing knowledge graph for completeness and accuracy.
 

@@ -10,7 +10,11 @@ export interface NodeCandidate {
   description: string; // 1-sentence reason this deserves a node
 }
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+let _anthropic: Anthropic | null = null;
+function getAnthropic() {
+  if (!_anthropic) _anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  return _anthropic;
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function extractEntities(
@@ -45,8 +49,8 @@ export async function extractEntities(
       })
       .join("\n\n---\n\n");
 
-    const response = await anthropic.messages.create({
-      model: "claude-opus-4-6-20250515",
+    const response = await getAnthropic().messages.create({
+      model: "claude-opus-4-6-20250414",
       max_tokens: 8192,
       system: `You are analyzing boxing coaching content from Dr. Alex Wiant's "Punch Doctor" channel and "Power Punching Blueprint" course.
 
@@ -98,8 +102,8 @@ Return ONLY a JSON array of objects. No markdown fencing.`,
   if (allCandidates.length > 0) {
     console.log(`\nDeduplication pass on ${allCandidates.length} candidates...`);
 
-    const dedupeResponse = await anthropic.messages.create({
-      model: "claude-opus-4-6-20250515",
+    const dedupeResponse = await getAnthropic().messages.create({
+      model: "claude-opus-4-6-20250414",
       max_tokens: 8192,
       system: `You are deduplicating a list of knowledge graph node candidates from a boxing coaching corpus.
 

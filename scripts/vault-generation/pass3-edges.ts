@@ -12,7 +12,11 @@ export interface DiscoveredEdge {
   evidence: string;
 }
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+let _anthropic: Anthropic | null = null;
+function getAnthropic() {
+  if (!_anthropic) _anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  return _anthropic;
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function discoverEdges(
@@ -42,8 +46,8 @@ export async function discoverEdges(
       .map(n => `### ${n.title} (${n.slug}, type: ${n.node_type})\n${n.content.slice(0, 2000)}`)
       .join("\n\n===\n\n");
 
-    const response = await anthropic.messages.create({
-      model: "claude-opus-4-6-20250515",
+    const response = await getAnthropic().messages.create({
+      model: "claude-opus-4-6-20250414",
       max_tokens: 8192,
       system: `You are discovering connections between nodes in a boxing knowledge graph.
 
