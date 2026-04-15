@@ -10,7 +10,8 @@
     "ingest": "tsx scripts/ingest.ts",
     "generate-vault": "tsx scripts/generate-vault.ts",
     "vault-to-db": "tsx scripts/vault-to-db.ts",
-    "eval": "tsx scripts/eval.ts"
+    "eval": "tsx scripts/eval.ts",
+    "incremental-ingest": "tsx scripts/incremental-ingest.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.88.0",
