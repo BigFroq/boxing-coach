@@ -62,10 +62,10 @@ export default function Home() {
             systemContext="technique"
             placeholder="Ask about punch mechanics, kinetic chains, phases..."
             suggestions={[
-              "How do I generate more power in my jab?",
-              "Explain the 4 phases of a power punch",
-              "Why should I land with the last 3 knuckles?",
-              "What's wrong with breathing out when I punch?",
+              "How does Canelo use kinetic chains in his jab?",
+              "Break down Beterbiev's power — what makes him hit so hard?",
+              "What's the difference between a push punch and a throw?",
+              "How should I use hip rotation for a left hook?",
             ]}
           />
         )}
@@ -74,10 +74,10 @@ export default function Home() {
             systemContext="drills"
             placeholder="Ask about exercises, training routines, bag work..."
             suggestions={[
-              "What exercises help with hip rotation?",
-              "How do I practice the High Five exercise?",
-              "Give me a bag work routine for power",
-              "How should I wrap my hands?",
+              "What exercises build punching power using kinetic chains?",
+              "Give me a rotator cuff warm-up routine for boxing",
+              "How do I practice the 4 phases of torque?",
+              "What's the right way to throw a medicine ball for punching power?",
             ]}
           />
         )}

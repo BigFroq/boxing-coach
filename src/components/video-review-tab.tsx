@@ -8,6 +8,8 @@ interface AnalysisResult {
   phases: { phase: string; feedback: string }[];
   strengths: string[];
   improvements: string[];
+  coaching_advice: string[];
+  citations: { type: "video" | "course"; title: string; url?: string; file?: string }[];
 }
 
 export function VideoReviewTab() {
@@ -283,6 +285,42 @@ export function VideoReviewTab() {
                         </li>
                       ))}
                     </ul>
+                  </div>
+                )}
+
+                {/* Coaching Advice (RAG-grounded) */}
+                {analysis.coaching_advice && analysis.coaching_advice.length > 0 && (
+                  <div className="bg-accent/5 border border-accent/20 rounded-xl p-4">
+                    <h4 className="text-sm font-medium text-accent mb-2">Punch Doctor Coaching Tips</h4>
+                    <ul className="space-y-2">
+                      {analysis.coaching_advice.map((tip, i) => (
+                        <li key={i} className="text-sm flex gap-2">
+                          <span className="text-accent shrink-0">{i + 1}.</span>
+                          {tip}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Source Videos */}
+                {analysis.citations && analysis.citations.length > 0 && (
+                  <div className="bg-surface border border-border rounded-xl p-4">
+                    <h4 className="text-sm font-medium text-muted mb-3">Learn More — Recommended Videos</h4>
+                    <div className="flex gap-2 flex-wrap">
+                      {analysis.citations.map((c, i) => (
+                        <a
+                          key={i}
+                          href={c.url ?? "#"}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-hover border border-border text-xs hover:border-accent transition-colors max-w-[280px]"
+                        >
+                          <span className="text-accent shrink-0">&#9654;</span>
+                          <span className="truncate">{c.title}</span>
+                        </a>
+                      ))}
+                    </div>
                   </div>
                 )}
 
