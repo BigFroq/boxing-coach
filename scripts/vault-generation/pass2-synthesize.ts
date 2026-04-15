@@ -98,10 +98,13 @@ export async function synthesizeNodes(
       })
       .join("\n\n---\n\n");
 
-    const response = await getAnthropic().messages.create({
-      model: "claude-opus-4-20250514",
-      max_tokens: 4096,
-      system: `You are synthesizing a knowledge node for Dr. Alex Wiant's boxing methodology knowledge graph.
+    let response;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        response = await getAnthropic().messages.create({
+          model: "claude-opus-4-20250514",
+          max_tokens: 4096,
+          system: `You are synthesizing a knowledge node for Dr. Alex Wiant's boxing methodology knowledge graph.
 
 Create a structured concept note about "${candidate.title}" (type: ${candidate.node_type}).
 
@@ -146,6 +149,18 @@ Rules:
         },
       ],
     });
+        break;
+      } catch (err) {
+        if (attempt < 2) {
+          console.warn(`    Retry ${attempt + 1} for "${candidate.title}" (${(err as Error).message?.slice(0, 50)})`);
+          await new Promise(r => setTimeout(r, 5000 * (attempt + 1)));
+        } else {
+          console.error(`    Failed after 3 attempts: "${candidate.title}", skipping`);
+          continue;
+        }
+      }
+    }
+    if (!response) continue;
 
     const content = response.content[0].type === "text" ? response.content[0].text : "";
 
@@ -154,6 +169,19 @@ Rules:
       content,
       source_chunk_ids: relevantChunks.map(c => c.id),
     });
+
+    // Save cache every 10 nodes
+    if (synthesized.length % 10 === 0) {
+      const fs = await import("fs");
+      const path = await import("path");
+      const cacheDir = path.join(process.cwd(), "scripts", "vault-generation", ".cache");
+      await fs.promises.mkdir(cacheDir, { recursive: true });
+      await fs.promises.writeFile(
+        path.join(cacheDir, "pass2-synthesized.json"),
+        JSON.stringify(synthesized, null, 2)
+      );
+      console.log(`    [cached ${synthesized.length} nodes]`);
+    }
 
     // Rate limiting — small delay between Opus calls
     if (i < candidates.length - 1) {
