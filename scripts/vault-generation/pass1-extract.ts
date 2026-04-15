@@ -50,7 +50,7 @@ export async function extractEntities(
       .join("\n\n---\n\n");
 
     const response = await getAnthropic().messages.create({
-      model: "claude-opus-4-20250514",
+      model: "claude-opus-4-6",
       max_tokens: 8192,
       system: `You are analyzing boxing coaching content from Dr. Alex Wiant's "Punch Doctor" channel and "Power Punching Blueprint" course.
 
@@ -103,7 +103,7 @@ Return ONLY a JSON array of objects. No markdown fencing.`,
     console.log(`\nDeduplication pass on ${allCandidates.length} candidates...`);
 
     const dedupeResponse = await getAnthropic().messages.create({
-      model: "claude-opus-4-20250514",
+      model: "claude-opus-4-6",
       max_tokens: 8192,
       system: `You are deduplicating a list of knowledge graph node candidates from a boxing coaching corpus.
 
