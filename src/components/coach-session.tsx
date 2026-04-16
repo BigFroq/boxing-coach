@@ -23,13 +23,6 @@ export function CoachSession({ userId }: CoachSessionProps) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
-  const getToken = async () => {
-    const { createBrowserClient } = await import("@/lib/supabase-browser");
-    const supabase = createBrowserClient();
-    const { data } = await supabase.auth.getSession();
-    return data.session?.access_token ?? "";
-  };
-
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
@@ -40,11 +33,10 @@ export function CoachSession({ userId }: CoachSessionProps) {
       setStreaming(false);
 
       try {
-        const token = await getToken();
         const response = await fetch("/api/coach/session", {
           method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-          body: JSON.stringify({ messages: allMessages }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, messages: allMessages }),
         });
 
         if (!response.ok || !response.body) {
@@ -124,11 +116,10 @@ export function CoachSession({ userId }: CoachSessionProps) {
     setSaving(true);
 
     try {
-      const token = await getToken();
       const response = await fetch("/api/coach/save-session", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ messages }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, messages }),
       });
 
       if (response.ok) {

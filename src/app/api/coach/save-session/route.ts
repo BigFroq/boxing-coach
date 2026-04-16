@@ -1,8 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
-import { getAuthenticatedUser } from "@/lib/auth-server";
-
 async function callWithRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
   for (let i = 0; i < maxRetries; i++) {
     try {
@@ -47,13 +45,7 @@ Rules:
 
 export async function POST(request: NextRequest) {
   try {
-    const authUser = await getAuthenticatedUser(request);
-    if (!authUser) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const userId = authUser.id;
-
-    const { messages } = await request.json();
+    const { messages, userId } = await request.json();
 
     if (!messages || messages.length === 0) {
       return NextResponse.json({ error: "Missing messages" }, { status: 400 });

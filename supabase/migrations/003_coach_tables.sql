@@ -3,7 +3,7 @@
 
 -- User profiles (persistent coaching notes)
 CREATE TABLE user_profiles (
-  id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  id uuid PRIMARY KEY,
   display_name text,
   tendencies jsonb DEFAULT '{}'::jsonb,
   skill_levels jsonb DEFAULT '{}'::jsonb,
@@ -16,7 +16,7 @@ CREATE TABLE user_profiles (
 -- Training sessions (one per logged session)
 CREATE TABLE training_sessions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id uuid NOT NULL,
   session_type text CHECK (session_type IN ('bag_work', 'shadow_boxing', 'sparring', 'drills', 'mixed')),
   rounds int,
   transcript jsonb NOT NULL DEFAULT '[]'::jsonb,
@@ -30,7 +30,7 @@ CREATE INDEX idx_training_sessions_user ON training_sessions(user_id, created_at
 -- Focus areas (tracked problems with status progression)
 CREATE TABLE focus_areas (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id uuid NOT NULL,
   name text NOT NULL,
   description text,
   status text NOT NULL DEFAULT 'new' CHECK (status IN ('new', 'active', 'improving', 'resolved')),
@@ -45,7 +45,7 @@ CREATE INDEX idx_focus_areas_user ON focus_areas(user_id, status);
 -- Drill prescriptions
 CREATE TABLE drill_prescriptions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_id uuid NOT NULL,
   focus_area_id uuid REFERENCES focus_areas(id) ON DELETE SET NULL,
   session_id uuid REFERENCES training_sessions(id) ON DELETE SET NULL,
   drill_name text NOT NULL,
@@ -63,29 +63,8 @@ ALTER TABLE training_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE focus_areas ENABLE ROW LEVEL SECURITY;
 ALTER TABLE drill_prescriptions ENABLE ROW LEVEL SECURITY;
 
--- Users can only access their own data
-CREATE POLICY "Users read own profile" ON user_profiles FOR SELECT USING (auth.uid() = id);
-CREATE POLICY "Users update own profile" ON user_profiles FOR UPDATE USING (auth.uid() = id);
-CREATE POLICY "Users insert own profile" ON user_profiles FOR INSERT WITH CHECK (auth.uid() = id);
-
-CREATE POLICY "Users read own sessions" ON training_sessions FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users insert own sessions" ON training_sessions FOR INSERT WITH CHECK (auth.uid() = user_id);
-
-CREATE POLICY "Users read own focus areas" ON focus_areas FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users manage own focus areas" ON focus_areas FOR ALL USING (auth.uid() = user_id);
-
-CREATE POLICY "Users read own prescriptions" ON drill_prescriptions FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users manage own prescriptions" ON drill_prescriptions FOR ALL USING (auth.uid() = user_id);
-
--- Auto-create profile on first login (trigger)
-CREATE OR REPLACE FUNCTION handle_new_user()
-RETURNS trigger AS $$
-BEGIN
-  INSERT INTO user_profiles (id) VALUES (NEW.id);
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+-- Open policies (no auth — anonymous user IDs from localStorage)
+CREATE POLICY "Allow all on user_profiles" ON user_profiles FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on training_sessions" ON training_sessions FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on focus_areas" ON focus_areas FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all on drill_prescriptions" ON drill_prescriptions FOR ALL USING (true) WITH CHECK (true);

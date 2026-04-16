@@ -3,8 +3,6 @@ import { NextRequest } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import { retrieveContext, formatChunksForPrompt, extractCitations, type SourceCitation } from "@/lib/graph-rag";
 import { FOUR_PHASES, CORE_PRINCIPLES, MYTHS } from "@/lib/framework";
-import { getAuthenticatedUser } from "@/lib/auth-server";
-
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
@@ -134,13 +132,7 @@ async function loadUserContext(userId: string) {
 
 export async function POST(request: NextRequest) {
   try {
-    const authUser = await getAuthenticatedUser(request);
-    if (!authUser) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
-    }
-    const userId = authUser.id;
-
-    const { messages } = await request.json();
+    const { messages, userId } = await request.json();
 
     if (!messages || !Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: "Missing messages" }), { status: 400 });

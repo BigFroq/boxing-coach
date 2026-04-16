@@ -1,12 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { MessageSquare, ClipboardList, User, Dumbbell, LogOut } from "lucide-react";
+import { MessageSquare, ClipboardList, User, Dumbbell } from "lucide-react";
 import { ChatTab } from "@/components/chat-tab";
 import { CoachTab } from "@/components/coach-tab";
 import { StyleFinderTab } from "@/components/style-finder-tab";
-import { AuthGate } from "@/components/auth-gate";
-import { signOut } from "@/lib/auth";
 
 const tabs = [
   { id: "technique", label: "Technique", icon: MessageSquare, description: "Ask about punching mechanics" },
@@ -17,13 +15,20 @@ const tabs = [
 
 type TabId = (typeof tabs)[number]["id"];
 
-interface AppContentProps {
-  userId: string;
-  userEmail: string;
+function getAnonymousUserId(): string {
+  if (typeof window === "undefined") return "anon";
+  let id = localStorage.getItem("punch-doctor-user-id");
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem("punch-doctor-user-id", id);
+  }
+  return id;
 }
 
-function AppContent({ userId, userEmail }: AppContentProps) {
+function AppContent() {
   const [activeTab, setActiveTab] = useState<TabId>("technique");
+  const [coachQuery, setCoachQuery] = useState<string | undefined>();
+  const userId = getAnonymousUserId();
 
   return (
     <div className="flex h-full flex-col">
@@ -38,14 +43,6 @@ function AppContent({ userId, userEmail }: AppContentProps) {
             <p className="text-xs text-muted">Powered by Alex Wiant DC&apos;s methodology</p>
           </div>
         </div>
-        <button
-          onClick={async () => { await signOut(); window.location.reload(); }}
-          className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs text-muted hover:text-foreground transition-colors"
-          title={userEmail}
-        >
-          <LogOut size={14} />
-          Sign out
-        </button>
       </header>
 
       {/* Tab Navigation */}
@@ -82,6 +79,7 @@ function AppContent({ userId, userEmail }: AppContentProps) {
               "What's the difference between a push punch and a throw?",
               "How should I use hip rotation for a left hook?",
             ]}
+            initialQuery={coachQuery}
           />
         )}
         {activeTab === "drills" && (
@@ -97,16 +95,20 @@ function AppContent({ userId, userEmail }: AppContentProps) {
           />
         )}
         {activeTab === "coach" && <CoachTab userId={userId} />}
-        {activeTab === "style" && <StyleFinderTab />}
+        {activeTab === "style" && (
+          <StyleFinderTab
+            userId={userId}
+            onSwitchToChat={(query) => {
+              setCoachQuery(query);
+              setActiveTab("technique");
+            }}
+          />
+        )}
       </main>
     </div>
   );
 }
 
 export default function Home() {
-  return (
-    <AuthGate>
-      {(user) => <AppContent userId={user.id} userEmail={user.email ?? ""} />}
-    </AuthGate>
-  );
+  return <AppContent />;
 }
