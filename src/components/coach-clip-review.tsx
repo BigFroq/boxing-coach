@@ -59,49 +59,50 @@ export function CoachClipReview() {
     const canvas = canvasRef.current;
     if (!video || !canvas) return [];
 
-    return new Promise((resolve) => {
-      video.onloadedmetadata = async () => {
-        const duration = video.duration;
-        if (duration > 25) {
-          setError(
-            "Clip must be under 20 seconds. This video is " +
-              Math.round(duration) +
-              "s."
-          );
-          resolve([]);
-          return;
-        }
+    // Wait for metadata if not ready
+    if (video.readyState < 1) {
+      await new Promise<void>((r) => {
+        video.onloadedmetadata = () => r();
+      });
+    }
 
-        const fps = 5;
-        const totalFrames = Math.min(Math.floor(duration * fps), 60);
-        const interval = duration / totalFrames;
+    const duration = video.duration;
+    if (duration > 25) {
+      setError(
+        "Clip must be under 20 seconds. This video is " +
+          Math.round(duration) +
+          "s."
+      );
+      return [];
+    }
 
-        const maxW = 640,
-          maxH = 480;
-        const scale = Math.min(
-          maxW / video.videoWidth,
-          maxH / video.videoHeight,
-          1
-        );
-        canvas.width = Math.round(video.videoWidth * scale);
-        canvas.height = Math.round(video.videoHeight * scale);
-        const ctx = canvas.getContext("2d")!;
+    const fps = 5;
+    const totalFrames = Math.min(Math.floor(duration * fps), 60);
+    const interval = duration / totalFrames;
 
-        const frames: string[] = [];
-        for (let i = 0; i < totalFrames; i++) {
-          const time = i * interval;
-          video.currentTime = time;
-          await new Promise<void>((r) => {
-            video.onseeked = () => r();
-          });
-          ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-          const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
-          frames.push(dataUrl.split(",")[1]);
-        }
-        resolve(frames);
-      };
-      video.load();
-    });
+    const maxW = 640,
+      maxH = 480;
+    const scale = Math.min(
+      maxW / video.videoWidth,
+      maxH / video.videoHeight,
+      1
+    );
+    canvas.width = Math.round(video.videoWidth * scale);
+    canvas.height = Math.round(video.videoHeight * scale);
+    const ctx = canvas.getContext("2d")!;
+
+    const frames: string[] = [];
+    for (let i = 0; i < totalFrames; i++) {
+      const time = i * interval;
+      video.currentTime = time;
+      await new Promise<void>((r) => {
+        video.onseeked = () => r();
+      });
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+      frames.push(dataUrl.split(",")[1]);
+    }
+    return frames;
   }, []);
 
   const analyze = useCallback(async () => {
