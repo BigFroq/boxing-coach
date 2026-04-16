@@ -51,15 +51,7 @@ function CitationCards({ citations }: { citations: SourceCitation[] }) {
 
 export function ChatTab({ systemContext, placeholder, suggestions, initialQuery }: ChatTabProps) {
   const storageKey = `boxing-coach-chat-${systemContext}`;
-  const [messages, setMessages] = useState<Message[]>(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      const saved = localStorage.getItem(storageKey);
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [streaming, setStreaming] = useState(false);
@@ -68,6 +60,19 @@ export function ChatTab({ systemContext, placeholder, suggestions, initialQuery 
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const slowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastFailedMessageRef = useRef<string | null>(null);
+
+  // Load messages from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setMessages(parsed);
+        }
+      }
+    } catch { /* ignore */ }
+  }, [storageKey]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
