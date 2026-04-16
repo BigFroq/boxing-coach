@@ -34,14 +34,22 @@ export function CoachProgress({ userId }: { userId: string }) {
   const [data, setData] = useState<ProgressData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const getToken = async () => {
+    const { createBrowserClient } = await import("@/lib/supabase-browser");
+    const supabase = createBrowserClient();
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token ?? "";
+  };
+
   useEffect(() => {
-    fetch(`/api/coach/progress?userId=${userId}`)
-      .then((r) => r.json())
-      .then((d) => {
-        setData(d);
-        setLoading(false);
+    getToken().then((token) => {
+      fetch("/api/coach/progress", {
+        headers: { Authorization: `Bearer ${token}` },
       })
-      .catch(() => setLoading(false));
+        .then((r) => r.json())
+        .then((d) => { setData(d); setLoading(false); })
+        .catch(() => setLoading(false));
+    });
   }, [userId]);
 
   if (loading) {

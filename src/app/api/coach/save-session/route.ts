@@ -1,6 +1,19 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
+import { getAuthenticatedUser } from "@/lib/auth-server";
+
+async function callWithRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      if (i === maxRetries - 1) throw err;
+      await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, i)));
+    }
+  }
+  throw new Error("Unreachable");
+}
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -34,10 +47,16 @@ Rules:
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, messages } = await request.json();
+    const authUser = await getAuthenticatedUser(request);
+    if (!authUser) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const userId = authUser.id;
 
-    if (!userId || !messages || messages.length === 0) {
-      return NextResponse.json({ error: "Missing userId or messages" }, { status: 400 });
+    const { messages } = await request.json();
+
+    if (!messages || messages.length === 0) {
+      return NextResponse.json({ error: "Missing messages" }, { status: 400 });
     }
 
     // Extract structured data from conversation
@@ -45,12 +64,14 @@ export async function POST(request: NextRequest) {
       .map((m: { role: string; content: string }) => `${m.role === "user" ? "Fighter" : "Coach"}: ${m.content}`)
       .join("\n\n");
 
-    const extractionResponse = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 1024,
-      system: EXTRACTION_PROMPT,
-      messages: [{ role: "user", content: transcript }],
-    });
+    const extractionResponse = await callWithRetry(() =>
+      anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 1024,
+        system: EXTRACTION_PROMPT,
+        messages: [{ role: "user", content: transcript }],
+      })
+    );
 
     const extractionText =
       extractionResponse.content[0].type === "text" ? extractionResponse.content[0].text : "{}";
@@ -161,17 +182,9 @@ export async function POST(request: NextRequest) {
     // 4. Save drill prescriptions
     if (extracted.drills_prescribed && Array.isArray(extracted.drills_prescribed)) {
       for (const drill of extracted.drills_prescribed) {
-        const { data: focusArea } = await supabase
-          .from("focus_areas")
-          .select("id")
-          .eq("user_id", userId)
-          .ilike("name", `%${drill.name.split(" ")[0]}%`)
-          .limit(1)
-          .single();
-
         await supabase.from("drill_prescriptions").insert({
           user_id: userId,
-          focus_area_id: focusArea?.id ?? null,
+          focus_area_id: null,
           session_id: session.id,
           drill_name: drill.name,
           details: drill.details ?? null,

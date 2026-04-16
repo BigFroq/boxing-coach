@@ -39,7 +39,7 @@ function AppContent({ userId, userEmail }: AppContentProps) {
           </div>
         </div>
         <button
-          onClick={() => signOut()}
+          onClick={async () => { await signOut(); window.location.reload(); }}
           className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs text-muted hover:text-foreground transition-colors"
           title={userEmail}
         >
