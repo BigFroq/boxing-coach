@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { MessageSquare, Video, User, Dumbbell, LogOut } from "lucide-react";
+import { MessageSquare, ClipboardList, User, Dumbbell, LogOut } from "lucide-react";
 import { ChatTab } from "@/components/chat-tab";
-import { VideoReviewTab } from "@/components/video-review-tab";
+import { CoachTab } from "@/components/coach-tab";
 import { StyleFinderTab } from "@/components/style-finder-tab";
 import { AuthGate } from "@/components/auth-gate";
 import { signOut } from "@/lib/auth";
@@ -11,7 +11,7 @@ import { signOut } from "@/lib/auth";
 const tabs = [
   { id: "technique", label: "Technique", icon: MessageSquare, description: "Ask about punching mechanics" },
   { id: "drills", label: "Drills", icon: Dumbbell, description: "Exercises & training" },
-  { id: "video", label: "Video Review", icon: Video, description: "Analyze your footage" },
+  { id: "coach", label: "My Coach", icon: ClipboardList, description: "Log sessions & track progress" },
   { id: "style", label: "Find Your Style", icon: User, description: "Discover your fighting style" },
 ] as const;
 
@@ -22,7 +22,7 @@ interface AppContentProps {
   userEmail: string;
 }
 
-function AppContent({ userEmail }: AppContentProps) {
+function AppContent({ userId, userEmail }: AppContentProps) {
   const [activeTab, setActiveTab] = useState<TabId>("technique");
 
   return (
@@ -96,7 +96,7 @@ function AppContent({ userEmail }: AppContentProps) {
             ]}
           />
         )}
-        {activeTab === "video" && <VideoReviewTab />}
+        {activeTab === "coach" && <CoachTab userId={userId} />}
         {activeTab === "style" && <StyleFinderTab />}
       </main>
     </div>
