@@ -21,6 +21,7 @@ interface ChatTabProps {
   systemContext: string;
   placeholder: string;
   suggestions: string[];
+  initialQuery?: string;
 }
 
 function CitationCards({ citations }: { citations: SourceCitation[] }) {
@@ -48,7 +49,7 @@ function CitationCards({ citations }: { citations: SourceCitation[] }) {
   );
 }
 
-export function ChatTab({ systemContext, placeholder, suggestions }: ChatTabProps) {
+export function ChatTab({ systemContext, placeholder, suggestions, initialQuery }: ChatTabProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -192,6 +193,15 @@ export function ChatTab({ systemContext, placeholder, suggestions }: ChatTabProp
       inputRef.current?.focus();
     }
   }, [messages, loading, streaming, systemContext]);
+
+  // Handle initial query from style finder CTA
+  const initialQueryFiredRef = useRef(false);
+  useEffect(() => {
+    if (initialQuery && !initialQueryFiredRef.current && !loading && !streaming) {
+      initialQueryFiredRef.current = true;
+      sendMessage(initialQuery);
+    }
+  }, [initialQuery, loading, streaming, sendMessage]);
 
   function handleRetry() {
     if (lastFailedMessageRef.current) {
