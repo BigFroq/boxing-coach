@@ -1,15 +1,27 @@
 "use client";
 
-import { DIMENSION_LABELS, type DimensionScores } from "@/data/fighter-profiles";
+import { type DimensionScores } from "@/data/fighter-profiles";
 
 interface RadarChartProps {
   scores: DimensionScores;
 }
 
-const DIMENSIONS = Object.keys(DIMENSION_LABELS) as (keyof DimensionScores)[];
-const CENTER = 200;
-const RADIUS = 110;
-const LABEL_RADIUS = RADIUS + 30;
+// Short labels that fit in the chart
+const CHART_LABELS: Record<keyof DimensionScores, string> = {
+  powerMechanics: "Power",
+  positionalReadiness: "Position",
+  rangeControl: "Range",
+  defensiveIntegration: "Defense",
+  ringIQ: "Ring IQ",
+  outputPressure: "Pressure",
+  deceptionSetup: "Deception",
+  killerInstinct: "Killer Instinct",
+};
+
+const DIMENSIONS = Object.keys(CHART_LABELS) as (keyof DimensionScores)[];
+const CENTER = 150;
+const RADIUS = 90;
+const LABEL_RADIUS = RADIUS + 28;
 const RINGS = [25, 50, 75, 100];
 
 function polarToCartesian(angle: number, value: number, maxRadius: number) {
@@ -21,7 +33,6 @@ function polarToCartesian(angle: number, value: number, maxRadius: number) {
 
 export function RadarChart({ scores }: RadarChartProps) {
   const angleStep = (2 * Math.PI) / DIMENSIONS.length;
-  // Start from top (-90 degrees)
   const startAngle = -Math.PI / 2;
 
   const points = DIMENSIONS.map((dim, i) => {
@@ -32,8 +43,8 @@ export function RadarChart({ scores }: RadarChartProps) {
   const polygonPath = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ") + " Z";
 
   return (
-    <div className="w-full max-w-md mx-auto aspect-square">
-      <svg viewBox="0 0 400 400" className="w-full h-full">
+    <div className="w-full max-w-sm mx-auto aspect-square">
+      <svg viewBox="0 0 300 300" className="w-full h-full overflow-visible">
         {/* Concentric rings */}
         {RINGS.map((ring) => {
           const r = (ring / 100) * RADIUS;
@@ -82,15 +93,13 @@ export function RadarChart({ scores }: RadarChartProps) {
           const angle = startAngle + i * angleStep;
           const pos = polarToCartesian(angle, 100, LABEL_RADIUS);
 
-          // Determine text-anchor based on horizontal position
           let anchor: "start" | "middle" | "end" = "middle";
           if (pos.x < CENTER - 10) anchor = "end";
           else if (pos.x > CENTER + 10) anchor = "start";
 
-          // Nudge vertical alignment
           let dy = "0.35em";
-          if (pos.y < CENTER - 40) dy = "0.8em";
-          if (pos.y > CENTER + 40) dy = "-0.2em";
+          if (pos.y < CENTER - 30) dy = "0em";
+          if (pos.y > CENTER + 30) dy = "0.8em";
 
           return (
             <text
@@ -100,11 +109,11 @@ export function RadarChart({ scores }: RadarChartProps) {
               textAnchor={anchor}
               dy={dy}
               fill="currentColor"
-              className="text-muted"
-              fontSize={9}
+              className="text-foreground"
+              fontSize={10}
               fontWeight={500}
             >
-              {DIMENSION_LABELS[dim]}
+              {CHART_LABELS[dim]}
             </text>
           );
         })}
