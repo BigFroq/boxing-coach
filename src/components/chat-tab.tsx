@@ -49,9 +49,28 @@ function CitationCards({ citations }: { citations: SourceCitation[] }) {
   );
 }
 
+interface SavedConversation {
+  id: string;
+  preview: string;
+  messages: Message[];
+  timestamp: number;
+}
+
+function loadHistory(key: string): SavedConversation[] {
+  try {
+    const saved = localStorage.getItem(key + "-history");
+    return saved ? JSON.parse(saved) : [];
+  } catch { return []; }
+}
+
+function saveHistory(key: string, history: SavedConversation[]) {
+  localStorage.setItem(key + "-history", JSON.stringify(history.slice(0, 20)));
+}
+
 export function ChatTab({ systemContext, placeholder, suggestions, initialQuery }: ChatTabProps) {
   const storageKey = `boxing-coach-chat-${systemContext}`;
   const [messages, setMessages] = useState<Message[]>([]);
+  const [history, setHistory] = useState<SavedConversation[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [streaming, setStreaming] = useState(false);
@@ -61,7 +80,7 @@ export function ChatTab({ systemContext, placeholder, suggestions, initialQuery 
   const slowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastFailedMessageRef = useRef<string | null>(null);
 
-  // Load messages from localStorage on mount
+  // Load current conversation and history on mount
   useEffect(() => {
     try {
       const saved = localStorage.getItem(storageKey);
@@ -72,18 +91,65 @@ export function ChatTab({ systemContext, placeholder, suggestions, initialQuery 
         }
       }
     } catch { /* ignore */ }
+    setHistory(loadHistory(storageKey));
   }, [storageKey]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Persist messages to localStorage
+  // Persist current conversation to localStorage
   useEffect(() => {
     if (messages.length > 0) {
       localStorage.setItem(storageKey, JSON.stringify(messages));
     }
   }, [messages, storageKey]);
+
+  const archiveAndNewChat = useCallback(() => {
+    if (messages.length > 0) {
+      const firstUserMsg = messages.find(m => m.role === "user");
+      const conv: SavedConversation = {
+        id: Date.now().toString(),
+        preview: firstUserMsg?.content.slice(0, 80) ?? "Conversation",
+        messages: messages,
+        timestamp: Date.now(),
+      };
+      const updated = [conv, ...loadHistory(storageKey)].slice(0, 20);
+      saveHistory(storageKey, updated);
+      setHistory(updated);
+    }
+    setMessages([]);
+    localStorage.removeItem(storageKey);
+  }, [messages, storageKey]);
+
+  const loadConversation = useCallback((conv: SavedConversation) => {
+    // Archive current if not empty
+    if (messages.length > 0) {
+      const firstUserMsg = messages.find(m => m.role === "user");
+      const current: SavedConversation = {
+        id: Date.now().toString(),
+        preview: firstUserMsg?.content.slice(0, 80) ?? "Conversation",
+        messages: messages,
+        timestamp: Date.now(),
+      };
+      const updated = [current, ...loadHistory(storageKey).filter(c => c.id !== conv.id)].slice(0, 20);
+      saveHistory(storageKey, updated);
+      setHistory(updated);
+    } else {
+      // Remove loaded conv from history
+      const updated = loadHistory(storageKey).filter(c => c.id !== conv.id);
+      saveHistory(storageKey, updated);
+      setHistory(updated);
+    }
+    setMessages(conv.messages);
+    localStorage.setItem(storageKey, JSON.stringify(conv.messages));
+  }, [messages, storageKey]);
+
+  const deleteConversation = useCallback((id: string) => {
+    const updated = loadHistory(storageKey).filter(c => c.id !== id);
+    saveHistory(storageKey, updated);
+    setHistory(updated);
+  }, [storageKey]);
 
   // Clean up slow timer on unmount
   useEffect(() => {
@@ -256,6 +322,36 @@ export function ChatTab({ systemContext, placeholder, suggestions, initialQuery 
                 </button>
               ))}
             </div>
+
+            {history.length > 0 && (
+              <div className="mt-8 w-full max-w-lg">
+                <p className="text-xs text-muted uppercase tracking-wide mb-3">Past conversations</p>
+                <div className="space-y-1.5">
+                  {history.map((conv) => (
+                    <div
+                      key={conv.id}
+                      className="flex items-center justify-between rounded-lg border border-border bg-surface hover:bg-surface-hover px-4 py-2.5 group transition-colors"
+                    >
+                      <button
+                        onClick={() => loadConversation(conv)}
+                        className="flex-1 text-left text-sm truncate mr-3"
+                      >
+                        <span className="text-foreground">{conv.preview}</span>
+                        <span className="text-xs text-muted ml-2">
+                          {new Date(conv.timestamp).toLocaleDateString()}
+                        </span>
+                      </button>
+                      <button
+                        onClick={() => deleteConversation(conv.id)}
+                        className="text-xs text-muted opacity-0 group-hover:opacity-100 hover:text-red-400 transition-all"
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="max-w-3xl mx-auto space-y-4">
@@ -310,10 +406,10 @@ export function ChatTab({ systemContext, placeholder, suggestions, initialQuery 
         {messages.length > 0 && !loading && !streaming && (
           <div className="max-w-3xl mx-auto mb-2">
             <button
-              onClick={() => { setMessages([]); localStorage.removeItem(storageKey); }}
+              onClick={archiveAndNewChat}
               className="text-xs text-muted hover:text-foreground transition-colors"
             >
-              Clear chat
+              New chat
             </button>
           </div>
         )}
