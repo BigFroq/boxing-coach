@@ -75,7 +75,16 @@ export async function POST(request: NextRequest) {
     const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (jsonMatch) jsonStr = jsonMatch[1].trim();
 
-    const result = JSON.parse(jsonStr);
+    let result;
+    try {
+      result = JSON.parse(jsonStr);
+    } catch {
+      console.error("Failed to parse style finder JSON:", jsonStr.slice(0, 200));
+      return NextResponse.json(
+        { error: "Failed to parse style recommendation. The model returned an unexpected format. Please try again." },
+        { status: 422 }
+      );
+    }
     return NextResponse.json({ ...result, citations });
   } catch (error) {
     console.error("Style finder error:", error);

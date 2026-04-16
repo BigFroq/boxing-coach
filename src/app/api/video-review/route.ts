@@ -102,7 +102,16 @@ export async function POST(request: NextRequest) {
     const jsonMatch = visionText.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (jsonMatch) jsonStr = jsonMatch[1].trim();
 
-    const analysis = JSON.parse(jsonStr);
+    let analysis;
+    try {
+      analysis = JSON.parse(jsonStr);
+    } catch {
+      console.error("Failed to parse vision analysis JSON:", jsonStr.slice(0, 200));
+      return NextResponse.json(
+        { error: "Failed to parse video analysis. The model returned an unexpected format. Please try again." },
+        { status: 422 }
+      );
+    }
 
     // Pass 2: RAG grounding — retrieve relevant coaching content for the issues found
     const searchQueries: string[] = analysis.search_queries ?? [];
@@ -110,11 +119,14 @@ export async function POST(request: NextRequest) {
     let coachingAdvice: string[] = [];
 
     if (searchQueries.length > 0) {
+      // Parallel RAG retrieval
+      const results = await Promise.all(
+        searchQueries.slice(0, 3).map((q) => retrieveContext(q, { count: 4 }))
+      );
+
       const allChunks = [];
       const seenIds = new Set<string>();
-
-      for (const query of searchQueries.slice(0, 3)) {
-        const { chunks } = await retrieveContext(query, { count: 4 });
+      for (const { chunks } of results) {
         for (const chunk of chunks) {
           const key = `${chunk.source_type}-${chunk.video_id ?? chunk.pdf_file}-${chunk.content.slice(0, 50)}`;
           if (!seenIds.has(key)) {

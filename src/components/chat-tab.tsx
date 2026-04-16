@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { Send, Loader2, ExternalLink, BookOpen } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { Send, Loader2, ExternalLink, BookOpen, RefreshCw } from "lucide-react";
 
 interface SourceCitation {
   type: "video" | "course";
@@ -14,6 +14,7 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   citations?: SourceCitation[];
+  error?: boolean;
 }
 
 interface ChatTabProps {
@@ -33,7 +34,7 @@ function CitationCards({ citations }: { citations: SourceCitation[] }) {
           href={c.url ?? "#"}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-hover border border-border text-xs hover:border-accent transition-colors max-w-[250px]"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-hover border border-border text-xs hover:border-accent transition-colors max-w-[180px] sm:max-w-[250px]"
         >
           {c.type === "video" ? (
             <ExternalLink size={12} className="text-accent shrink-0" />
@@ -51,21 +52,39 @@ export function ChatTab({ systemContext, placeholder, suggestions }: ChatTabProp
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [streaming, setStreaming] = useState(false);
+  const [slowWarning, setSlowWarning] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const slowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastFailedMessageRef = useRef<string | null>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  async function sendMessage(text: string) {
-    if (!text.trim() || loading) return;
+  // Clean up slow timer on unmount
+  useEffect(() => {
+    return () => {
+      if (slowTimerRef.current) clearTimeout(slowTimerRef.current);
+    };
+  }, []);
+
+  const sendMessage = useCallback(async (text: string) => {
+    if (!text.trim() || loading || streaming) return;
 
     const userMessage: Message = { role: "user", content: text.trim() };
     const newMessages = [...messages, userMessage];
     setMessages(newMessages);
     setInput("");
     setLoading(true);
+    setSlowWarning(false);
+    lastFailedMessageRef.current = text.trim();
+
+    // Show slow warning after 10s
+    slowTimerRef.current = setTimeout(() => {
+      setSlowWarning(true);
+    }, 10000);
 
     try {
       const res = await fetch("/api/chat", {
@@ -78,20 +97,107 @@ export function ChatTab({ systemContext, placeholder, suggestions }: ChatTabProp
       });
 
       if (!res.ok) throw new Error("Failed to get response");
+      if (!res.body) throw new Error("No response body");
 
-      const data = await res.json();
+      // Add empty assistant message for streaming
+      const assistantIndex = newMessages.length;
+      setMessages([...newMessages, { role: "assistant", content: "" }]);
+      setLoading(false);
+      setStreaming(true);
+      if (slowTimerRef.current) {
+        clearTimeout(slowTimerRef.current);
+        slowTimerRef.current = null;
+      }
+      setSlowWarning(false);
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let accumulated = "";
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        // Parse SSE events from buffer
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? ""; // Keep incomplete line in buffer
+
+        for (const line of lines) {
+          if (!line.startsWith("data: ")) continue;
+          const jsonStr = line.slice(6).trim();
+          if (!jsonStr) continue;
+
+          try {
+            const event = JSON.parse(jsonStr);
+            if (event.type === "text") {
+              accumulated += event.content;
+              setMessages((prev) => {
+                const updated = [...prev];
+                updated[assistantIndex] = {
+                  ...updated[assistantIndex],
+                  content: accumulated,
+                };
+                return updated;
+              });
+            } else if (event.type === "done") {
+              setMessages((prev) => {
+                const updated = [...prev];
+                updated[assistantIndex] = {
+                  ...updated[assistantIndex],
+                  content: accumulated,
+                  citations: event.citations ?? [],
+                };
+                return updated;
+              });
+            } else if (event.type === "error") {
+              setMessages((prev) => {
+                const updated = [...prev];
+                updated[assistantIndex] = {
+                  role: "assistant",
+                  content: "Sorry, something went wrong during streaming. Please try again.",
+                  error: true,
+                };
+                return updated;
+              });
+            }
+          } catch {
+            // Skip malformed JSON
+          }
+        }
+      }
+
+      lastFailedMessageRef.current = null;
+    } catch (err) {
+      if (slowTimerRef.current) {
+        clearTimeout(slowTimerRef.current);
+        slowTimerRef.current = null;
+      }
+      setSlowWarning(false);
+
+      const isNetworkError = err instanceof TypeError && err.message === "Failed to fetch";
+      const errorContent = isNetworkError
+        ? "Connection error — check your internet and try again."
+        : "Sorry, something went wrong. Please try again.";
+
       setMessages([
         ...newMessages,
-        { role: "assistant", content: data.content, citations: data.citations ?? [] },
-      ]);
-    } catch {
-      setMessages([
-        ...newMessages,
-        { role: "assistant", content: "Sorry, something went wrong. Please try again." },
+        { role: "assistant", content: errorContent, error: true },
       ]);
     } finally {
       setLoading(false);
+      setStreaming(false);
       inputRef.current?.focus();
+    }
+  }, [messages, loading, streaming, systemContext]);
+
+  function handleRetry() {
+    if (lastFailedMessageRef.current) {
+      // Remove the error message first
+      setMessages((prev) => prev.slice(0, -1));
+      sendMessage(lastFailedMessageRef.current);
     }
   }
 
@@ -104,7 +210,7 @@ export function ChatTab({ systemContext, placeholder, suggestions }: ChatTabProp
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex-1 overflow-y-auto px-6 py-4">
+      <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
         {messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center">
             <p className="text-muted text-sm mb-6">Pick a question or type your own</p>
@@ -127,7 +233,7 @@ export function ChatTab({ systemContext, placeholder, suggestions }: ChatTabProp
                 key={i}
                 className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}
               >
-                <div className="max-w-[80%]">
+                <div className="max-w-[90%] sm:max-w-[80%]">
                   <div
                     className={`rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                       m.role === "user"
@@ -140,13 +246,27 @@ export function ChatTab({ systemContext, placeholder, suggestions }: ChatTabProp
                   {m.role === "assistant" && m.citations && (
                     <CitationCards citations={m.citations} />
                   )}
+                  {m.role === "assistant" && m.error && (
+                    <button
+                      onClick={handleRetry}
+                      className="flex items-center gap-1.5 mt-2 text-xs text-accent hover:text-accent-hover transition-colors"
+                    >
+                      <RefreshCw size={12} />
+                      Retry
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
             {loading && (
               <div className="flex justify-start">
                 <div className="bg-surface border border-border rounded-2xl rounded-bl-md px-4 py-3">
-                  <Loader2 size={16} className="animate-spin text-muted" />
+                  <div className="flex items-center gap-2">
+                    <Loader2 size={16} className="animate-spin text-muted" />
+                    {slowWarning && (
+                      <span className="text-xs text-muted">Taking longer than expected...</span>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -155,7 +275,7 @@ export function ChatTab({ systemContext, placeholder, suggestions }: ChatTabProp
         )}
       </div>
 
-      <div className="border-t border-border px-6 py-4">
+      <div className="border-t border-border px-4 sm:px-6 py-4">
         <div className="max-w-3xl mx-auto flex gap-2">
           <textarea
             ref={inputRef}
@@ -168,7 +288,7 @@ export function ChatTab({ systemContext, placeholder, suggestions }: ChatTabProp
           />
           <button
             onClick={() => sendMessage(input)}
-            disabled={!input.trim() || loading}
+            disabled={!input.trim() || loading || streaming}
             className="flex h-[46px] w-[46px] items-center justify-center rounded-xl bg-accent text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             <Send size={16} />

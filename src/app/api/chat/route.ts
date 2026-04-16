@@ -1,5 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { retrieveContext, formatChunksForPrompt, extractCitations } from "@/lib/graph-rag";
 import { createServerClient } from "@/lib/supabase";
 
@@ -76,12 +76,18 @@ export async function POST(request: NextRequest) {
     const { messages, context } = await request.json();
 
     if (!messages || !Array.isArray(messages)) {
-      return NextResponse.json({ error: "Messages required" }, { status: 400 });
+      return new Response(JSON.stringify({ error: "Messages required" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     const lastUserMessage = [...messages].reverse().find((m: { role: string }) => m.role === "user");
     if (!lastUserMessage) {
-      return NextResponse.json({ error: "No user message" }, { status: 400 });
+      return new Response(JSON.stringify({ error: "No user message" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     let categories: string[] | undefined;
@@ -106,7 +112,8 @@ export async function POST(request: NextRequest) {
       contextNote = "\n\nThe user is asking about punch mechanics and technique. Focus on biomechanical principles.";
     }
 
-    const response = await anthropic.messages.create({
+    // Stream the response via SSE
+    const stream = anthropic.messages.stream({
       model: "claude-sonnet-4-20250514",
       max_tokens: 1500,
       system: SYSTEM_PROMPT + contextText + contextNote,
@@ -116,16 +123,52 @@ export async function POST(request: NextRequest) {
       })),
     });
 
-    const content =
-      response.content[0].type === "text" ? response.content[0].text : "No response generated.";
+    let fullContent = "";
 
-    // Log query for eval (fire-and-forget)
-    logQuery(lastUserMessage.content, context, chunks, content).catch(() => {});
+    const readableStream = new ReadableStream({
+      async start(controller) {
+        const encoder = new TextEncoder();
 
-    return NextResponse.json({ content, citations });
+        stream.on("text", (text) => {
+          fullContent += text;
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ type: "text", content: text })}\n\n`)
+          );
+        });
+
+        stream.on("end", () => {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ type: "done", citations })}\n\n`)
+          );
+          controller.close();
+
+          // Log query (fire-and-forget)
+          logQuery(lastUserMessage.content, context, chunks, fullContent).catch(() => {});
+        });
+
+        stream.on("error", (err) => {
+          console.error("Stream error:", err);
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ type: "error", message: "Stream error" })}\n\n`)
+          );
+          controller.close();
+        });
+      },
+    });
+
+    return new Response(readableStream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
+    });
   } catch (error) {
     console.error("Chat API error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return new Response(JSON.stringify({ error: "Internal server error" }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 }
 

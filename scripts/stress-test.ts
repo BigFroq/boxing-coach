@@ -273,7 +273,7 @@ async function main() {
 
   const valid = allScores.filter((s) => s.scores.accuracy > 0);
   const avg = (key: keyof Scores) => {
-    const vals = valid.map((s) => s.scores[key]).filter((v): v is number => v != null && v > 0);
+    const vals = valid.map((s) => s.scores[key]).filter((v): v is number => typeof v === "number" && v > 0);
     return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : "N/A";
   };
 
@@ -298,7 +298,7 @@ async function main() {
 
   for (const [cat, scores] of Object.entries(categoryScores)) {
     const catAvg = (key: keyof Scores) => {
-      const vals = scores.map((s) => s[key]).filter((v): v is number => v != null && v > 0);
+      const vals = scores.map((s) => s[key]).filter((v): v is number => typeof v === "number" && v > 0);
       return vals.length ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1) : "N/A";
     };
     console.log(`\n  ${cat.toUpperCase()} (${scores.length} questions)`);

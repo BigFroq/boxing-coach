@@ -21,7 +21,7 @@ export default function Home() {
   return (
     <div className="flex h-full flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between border-b border-border px-6 py-4">
+      <header className="flex items-center justify-between border-b border-border px-4 sm:px-6 py-4">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent font-bold text-white text-sm">
             PD
@@ -34,7 +34,7 @@ export default function Home() {
       </header>
 
       {/* Tab Navigation */}
-      <nav className="flex border-b border-border px-6">
+      <nav className="flex border-b border-border px-4 sm:px-6">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -42,7 +42,7 @@ export default function Home() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2 -mb-px ${
+              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-colors border-b-2 -mb-px ${
                 isActive
                   ? "border-accent text-accent"
                   : "border-transparent text-muted hover:text-foreground"

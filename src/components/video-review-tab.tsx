@@ -50,46 +50,56 @@ export function VideoReviewTab() {
 
     setExtracting(true);
     setError(null);
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
 
-    // Wait for video metadata
-    await new Promise<void>((resolve) => {
-      if (video.readyState >= 1) {
-        resolve();
-      } else {
-        video.addEventListener("loadedmetadata", () => resolve(), { once: true });
+    try {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) {
+        setError("Failed to initialize canvas for frame extraction.");
+        setExtracting(false);
+        return;
       }
-    });
 
-    const duration = video.duration;
-    // Scale frames based on video length: ~1 frame per 5 seconds, min 8, max 20
-    const maxFrames = Math.min(20, Math.max(8, Math.round(duration / 5)));
-    const interval = Math.max(duration / maxFrames, 0.5);
-    const extractedFrames: string[] = [];
-
-    canvas.width = Math.min(video.videoWidth, 640);
-    canvas.height = Math.min(video.videoHeight, 480);
-    // Maintain aspect ratio
-    const scale = Math.min(640 / video.videoWidth, 480 / video.videoHeight);
-    canvas.width = Math.round(video.videoWidth * scale);
-    canvas.height = Math.round(video.videoHeight * scale);
-
-    for (let time = 0; time < duration && extractedFrames.length < maxFrames; time += interval) {
-      video.currentTime = time;
+      // Wait for video metadata
       await new Promise<void>((resolve) => {
-        video.addEventListener("seeked", () => resolve(), { once: true });
+        if (video.readyState >= 1) {
+          resolve();
+        } else {
+          video.addEventListener("loadedmetadata", () => resolve(), { once: true });
+        }
       });
 
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
-      extractedFrames.push(dataUrl);
-    }
+      const duration = video.duration;
+      // Scale frames based on video length: ~1 frame per 5 seconds, min 8, max 20
+      const maxFrames = Math.min(20, Math.max(8, Math.round(duration / 5)));
+      const interval = Math.max(duration / maxFrames, 0.5);
+      const extractedFrames: string[] = [];
 
-    setFrames(extractedFrames);
-    setExtracting(false);
+      canvas.width = Math.min(video.videoWidth, 640);
+      canvas.height = Math.min(video.videoHeight, 480);
+      // Maintain aspect ratio
+      const scale = Math.min(640 / video.videoWidth, 480 / video.videoHeight);
+      canvas.width = Math.round(video.videoWidth * scale);
+      canvas.height = Math.round(video.videoHeight * scale);
+
+      for (let time = 0; time < duration && extractedFrames.length < maxFrames; time += interval) {
+        video.currentTime = time;
+        await new Promise<void>((resolve) => {
+          video.addEventListener("seeked", () => resolve(), { once: true });
+        });
+
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+        extractedFrames.push(dataUrl);
+      }
+
+      setFrames(extractedFrames);
+    } catch {
+      setError("Failed to extract frames from the video. Try a different format or shorter clip.");
+    } finally {
+      setExtracting(false);
+    }
   }, []);
 
   const analyzeVideo = useCallback(async () => {
@@ -108,12 +118,16 @@ export function VideoReviewTab() {
         }),
       });
 
-      if (!res.ok) throw new Error("Analysis failed");
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? "Analysis failed");
+      }
 
       const data = await res.json();
       setAnalysis(data);
-    } catch {
-      setError("Failed to analyze video. Please try again.");
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to analyze video.";
+      setError(`Analysis failed: ${message}. Please try again.`);
     } finally {
       setAnalyzing(false);
     }
@@ -128,7 +142,7 @@ export function VideoReviewTab() {
         {!videoUrl ? (
           <div
             onClick={() => fileInputRef.current?.click()}
-            className="border-2 border-dashed border-border rounded-xl p-12 text-center cursor-pointer hover:border-accent transition-colors"
+            className="border-2 border-dashed border-border rounded-xl p-6 sm:p-12 text-center cursor-pointer hover:border-accent transition-colors"
           >
             <Upload size={40} className="mx-auto mb-4 text-muted" />
             <h2 className="text-lg font-semibold mb-2">Upload a Video Clip</h2>
@@ -152,7 +166,7 @@ export function VideoReviewTab() {
                 ref={videoRef}
                 src={videoUrl}
                 controls
-                className="w-full max-h-[400px] object-contain bg-black"
+                className="w-full max-h-[200px] sm:max-h-[300px] md:max-h-[400px] object-contain bg-black"
                 preload="auto"
               />
               <div className="flex items-center justify-between px-4 py-3">
@@ -217,7 +231,7 @@ export function VideoReviewTab() {
                     </button>
                   )}
                 </div>
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                   {frames.map((frame, i) => (
                     <img
                       key={i}
