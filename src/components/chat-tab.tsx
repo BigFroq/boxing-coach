@@ -50,7 +50,16 @@ function CitationCards({ citations }: { citations: SourceCitation[] }) {
 }
 
 export function ChatTab({ systemContext, placeholder, suggestions, initialQuery }: ChatTabProps) {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const storageKey = `boxing-coach-chat-${systemContext}`;
+  const [messages, setMessages] = useState<Message[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      const saved = localStorage.getItem(storageKey);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [streaming, setStreaming] = useState(false);
@@ -63,6 +72,13 @@ export function ChatTab({ systemContext, placeholder, suggestions, initialQuery 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Persist messages to localStorage
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem(storageKey, JSON.stringify(messages));
+    }
+  }, [messages, storageKey]);
 
   // Clean up slow timer on unmount
   useEffect(() => {
@@ -286,6 +302,16 @@ export function ChatTab({ systemContext, placeholder, suggestions, initialQuery 
       </div>
 
       <div className="border-t border-border px-4 sm:px-6 py-4">
+        {messages.length > 0 && !loading && !streaming && (
+          <div className="max-w-3xl mx-auto mb-2">
+            <button
+              onClick={() => { setMessages([]); localStorage.removeItem(storageKey); }}
+              className="text-xs text-muted hover:text-foreground transition-colors"
+            >
+              Clear chat
+            </button>
+          </div>
+        )}
         <div className="max-w-3xl mx-auto flex gap-2">
           <textarea
             ref={inputRef}
