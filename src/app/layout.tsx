@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Punch Doctor AI",
-  description: "AI Boxing Coach powered by The Punch Doctor's methodology",
+  title: "Boxing Coach AI",
+  description: "AI Boxing Coach",
 };
 
 export default function RootLayout({
