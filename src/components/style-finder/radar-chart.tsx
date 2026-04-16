@@ -7,9 +7,9 @@ interface RadarChartProps {
 }
 
 const DIMENSIONS = Object.keys(DIMENSION_LABELS) as (keyof DimensionScores)[];
-const CENTER = 150;
+const CENTER = 200;
 const RADIUS = 110;
-const LABEL_RADIUS = RADIUS + 24;
+const LABEL_RADIUS = RADIUS + 30;
 const RINGS = [25, 50, 75, 100];
 
 function polarToCartesian(angle: number, value: number, maxRadius: number) {
@@ -33,7 +33,7 @@ export function RadarChart({ scores }: RadarChartProps) {
 
   return (
     <div className="w-full max-w-md mx-auto aspect-square">
-      <svg viewBox="0 0 300 300" className="w-full h-full">
+      <svg viewBox="0 0 400 400" className="w-full h-full">
         {/* Concentric rings */}
         {RINGS.map((ring) => {
           const r = (ring / 100) * RADIUS;
