@@ -26,7 +26,7 @@ export async function retrieveChunks(
   const queryEmbedding = await embedText(query);
   const supabase = createServerClient();
 
-  const { data, error } = await supabase.rpc("match_chunks", {
+  const { data, error } = await (supabase.rpc as Function)("match_chunks", {
     query_embedding: queryEmbedding,
     match_count: count,
     filter_categories: categories ?? null,
@@ -41,21 +41,29 @@ export async function retrieveChunks(
 }
 
 export function formatChunksForPrompt(chunks: RetrievedChunk[]): string {
-  // Prioritize source chunks (with real video titles) over concept nodes
+  // Prioritize real video/course chunks over concept nodes
   const sorted = [...chunks].sort((a, b) => {
-    const aHasVideo = a.video_url ? 1 : 0;
-    const bHasVideo = b.video_url ? 1 : 0;
-    return bHasVideo - aHasVideo;
+    // Videos first (most citable), then course, then concepts last
+    const score = (c: RetrievedChunk) => {
+      if (c.source_type === "transcript" && c.video_title) return 3;
+      if (c.pdf_file && !c.pdf_file.startsWith("concept:")) return 2;
+      return 1;
+    };
+    return score(b) - score(a);
   });
 
   return sorted
     .map((chunk) => {
-      const source =
-        chunk.source_type === "transcript" && chunk.video_title
-          ? `[YOUR VIDEO: "${chunk.video_title}" — ${chunk.video_url ?? ""}]`
-          : chunk.pdf_file
-            ? `[YOUR COURSE: ${chunk.pdf_file}]`
-            : `[Source]`;
+      let source: string;
+      if (chunk.source_type === "transcript" && chunk.video_title) {
+        source = `[YOUR VIDEO: "${chunk.video_title}" — ${chunk.video_url ?? ""}]`;
+      } else if (chunk.pdf_file?.startsWith("concept:")) {
+        source = `[KNOWLEDGE BASE: ${chunk.pdf_file.replace("concept:", "")}]`;
+      } else if (chunk.pdf_file) {
+        source = `[YOUR COURSE: ${chunk.pdf_file}]`;
+      } else {
+        source = `[Source]`;
+      }
       return `${source}\n${chunk.content}`;
     })
     .join("\n\n---\n\n");

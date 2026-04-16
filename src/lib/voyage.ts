@@ -1,4 +1,4 @@
-// Direct Voyage AI API calls — avoids voyageai SDK module resolution issues with Next.js bundler
+// Direct Voyage AI API calls with retry logic
 
 const VOYAGE_API_URL = "https://api.voyageai.com/v1/embeddings";
 
@@ -13,22 +13,40 @@ function getApiKey(): string {
 }
 
 async function callVoyageEmbed(input: string[], model: string): Promise<number[][]> {
-  const res = await fetch(VOYAGE_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${getApiKey()}`,
-    },
-    body: JSON.stringify({ input, model }),
-  });
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await fetch(VOYAGE_API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${getApiKey()}`,
+        },
+        body: JSON.stringify({ input, model }),
+      });
 
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Voyage AI error ${res.status}: ${body}`);
+      if (!res.ok) {
+        const body = await res.text();
+        if (res.status === 429 && attempt < 2) {
+          const delay = 2000 * Math.pow(2, attempt);
+          console.warn(`Voyage rate limited, retrying in ${delay}ms...`);
+          await new Promise((r) => setTimeout(r, delay));
+          continue;
+        }
+        throw new Error(`Voyage AI error ${res.status}: ${body}`);
+      }
+
+      const data = (await res.json()) as VoyageEmbedResponse;
+      return data.data.map((d) => d.embedding);
+    } catch (err) {
+      if (attempt < 2 && err instanceof TypeError) {
+        // Network error — retry
+        await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, attempt)));
+        continue;
+      }
+      throw err;
+    }
   }
-
-  const data = (await res.json()) as VoyageEmbedResponse;
-  return data.data.map((d) => d.embedding);
+  throw new Error("Voyage AI: max retries exceeded");
 }
 
 export async function embedText(text: string): Promise<number[]> {

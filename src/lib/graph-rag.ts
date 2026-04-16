@@ -141,7 +141,7 @@ async function vectorSearch(
 ): Promise<RawCandidate[]> {
   const supabase = createServerClient();
 
-  const { data, error } = await supabase.rpc("match_chunks", {
+  const { data, error } = await (supabase.rpc as Function)("match_chunks", {
     query_embedding: embedding,
     match_count: count,
     filter_categories: categories ?? null,
@@ -177,7 +177,7 @@ async function graphSearch(
 ): Promise<RawCandidate[]> {
   const supabase = createServerClient();
 
-  const { data, error } = await supabase.rpc("search_graph", {
+  const { data, error } = await (supabase.rpc as Function)("search_graph", {
     query_embedding: embedding,
     entry_keywords: keywords,
     max_hops: 1,
@@ -192,22 +192,25 @@ async function graphSearch(
 
   if (!data || !Array.isArray(data)) return [];
 
-  return (data as GraphSearchRow[]).map((row) => ({
-    content: row.content,
-    source: "graph" as const,
-    similarity: row.graph_score,
-    // Graph chunks keep their video metadata; graph nodes become course references
-    source_type: row.item_type === "chunk" ? ("transcript" as const) : ("transcript" as const),
-    video_id: null,
-    video_title: row.title,
-    video_url: row.video_url,
-    pdf_file: null,
-    techniques: [],
-    fighters: [],
-    category: row.node_type ?? "concept",
-    node_type: row.node_type,
-    graph_title: row.title,
-  }));
+  return (data as GraphSearchRow[]).map((row) => {
+    const isChunk = row.item_type === "chunk";
+    return {
+      content: row.content,
+      source: "graph" as const,
+      similarity: row.graph_score,
+      // Chunks keep video metadata; concept nodes are tagged as "concept" type
+      source_type: isChunk ? ("transcript" as const) : ("pdf" as const),
+      video_id: null,
+      video_title: isChunk ? row.title : null,
+      video_url: isChunk ? row.video_url : null,
+      pdf_file: isChunk ? null : `concept:${row.title}`,
+      techniques: [],
+      fighters: [],
+      category: row.node_type ?? "concept",
+      node_type: row.node_type,
+      graph_title: row.title,
+    };
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -241,7 +244,7 @@ function deduplicateCandidates(candidates: RawCandidate[]): RawCandidate[] {
 
   for (const candidate of candidates) {
     // Use content hash as dedup key (first 200 chars to handle minor variations)
-    const key = candidate.content.slice(0, 200);
+    const key = `${candidate.video_id ?? candidate.pdf_file ?? ""}:${candidate.content.slice(0, 500)}`;
 
     const existing = seen.get(key);
     if (!existing || candidate.similarity > existing.similarity) {
@@ -262,7 +265,6 @@ async function rerankCandidates(
   topN: number
 ): Promise<RawCandidate[]> {
   if (candidates.length === 0) return [];
-  if (candidates.length <= topN) return candidates;
 
   const cohere = getCohere();
   if (!cohere) {
