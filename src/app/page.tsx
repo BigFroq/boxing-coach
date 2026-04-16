@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { MessageSquare, Video, User, Dumbbell } from "lucide-react";
+import { MessageSquare, Video, User, Dumbbell, LogOut } from "lucide-react";
 import { ChatTab } from "@/components/chat-tab";
 import { VideoReviewTab } from "@/components/video-review-tab";
 import { StyleFinderTab } from "@/components/style-finder-tab";
+import { AuthGate } from "@/components/auth-gate";
+import { signOut } from "@/lib/auth";
 
 const tabs = [
   { id: "technique", label: "Technique", icon: MessageSquare, description: "Ask about punching mechanics" },
@@ -15,7 +17,12 @@ const tabs = [
 
 type TabId = (typeof tabs)[number]["id"];
 
-export default function Home() {
+interface AppContentProps {
+  userId: string;
+  userEmail: string;
+}
+
+function AppContent({ userEmail }: AppContentProps) {
   const [activeTab, setActiveTab] = useState<TabId>("technique");
 
   return (
@@ -31,6 +38,14 @@ export default function Home() {
             <p className="text-xs text-muted">Powered by Alex Wiant DC&apos;s methodology</p>
           </div>
         </div>
+        <button
+          onClick={() => signOut()}
+          className="flex items-center gap-1.5 rounded-md px-2 py-1.5 text-xs text-muted hover:text-foreground transition-colors"
+          title={userEmail}
+        >
+          <LogOut size={14} />
+          Sign out
+        </button>
       </header>
 
       {/* Tab Navigation */}
@@ -85,5 +100,13 @@ export default function Home() {
         {activeTab === "style" && <StyleFinderTab />}
       </main>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <AuthGate>
+      {(user) => <AppContent userId={user.id} userEmail={user.email ?? ""} />}
+    </AuthGate>
   );
 }
