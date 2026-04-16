@@ -41,18 +41,21 @@ export async function retrieveChunks(
 }
 
 export function formatChunksForPrompt(chunks: RetrievedChunk[]): string {
-  return chunks
+  // Prioritize source chunks (with real video titles) over concept nodes
+  const sorted = [...chunks].sort((a, b) => {
+    const aHasVideo = a.video_url ? 1 : 0;
+    const bHasVideo = b.video_url ? 1 : 0;
+    return bHasVideo - aHasVideo;
+  });
+
+  return sorted
     .map((chunk) => {
-      let source: string;
-      if (chunk.source_type === "transcript" && chunk.video_title) {
-        source = `[Video: ${chunk.video_title} | ${chunk.video_url}]`;
-      } else if (chunk.pdf_file?.startsWith("concept:")) {
-        source = `[Knowledge Base: ${chunk.pdf_file.replace("concept:", "")}]`;
-      } else if (chunk.pdf_file) {
-        source = `[Course: ${chunk.pdf_file}]`;
-      } else {
-        source = `[Source]`;
-      }
+      const source =
+        chunk.source_type === "transcript" && chunk.video_title
+          ? `[YOUR VIDEO: "${chunk.video_title}" — ${chunk.video_url ?? ""}]`
+          : chunk.pdf_file
+            ? `[YOUR COURSE: ${chunk.pdf_file}]`
+            : `[Source]`;
       return `${source}\n${chunk.content}`;
     })
     .join("\n\n---\n\n");

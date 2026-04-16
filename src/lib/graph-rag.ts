@@ -196,12 +196,12 @@ async function graphSearch(
     content: row.content,
     source: "graph" as const,
     similarity: row.graph_score,
-    // Distinguish graph nodes from source chunks
-    source_type: row.item_type === "chunk" ? ("transcript" as const) : ("pdf" as const),
+    // Graph chunks keep their video metadata; graph nodes become course references
+    source_type: row.item_type === "chunk" ? ("transcript" as const) : ("transcript" as const),
     video_id: null,
-    video_title: row.item_type === "chunk" ? row.title : null,
-    video_url: row.item_type === "chunk" ? row.video_url : null,
-    pdf_file: row.item_type === "node" ? `concept:${row.title}` : null,
+    video_title: row.title,
+    video_url: row.video_url,
+    pdf_file: null,
     techniques: [],
     fighters: [],
     category: row.node_type ?? "concept",
