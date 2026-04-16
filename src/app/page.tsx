@@ -32,13 +32,13 @@ function AppContent() {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
-      <header className="flex items-center justify-between border-b border-border px-4 sm:px-6 py-4">
-        <h1 className="text-lg font-semibold leading-tight">Boxing Coach AI</h1>
-      </header>
-
-      {/* Tab Navigation */}
-      <nav className="flex border-b border-border px-4 sm:px-6">
+      {/* Header + Tab Navigation */}
+      <header className="border-b border-border">
+        <div className="flex items-center gap-3 px-4 sm:px-6 pt-4 pb-3">
+          <span className="text-xl" role="img" aria-label="Boxing glove">🥊</span>
+          <h1 className="text-lg font-semibold leading-tight">Boxing Coach AI</h1>
+        </div>
+        <nav className="flex px-4 sm:px-6">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -57,7 +57,8 @@ function AppContent() {
             </button>
           );
         })}
-      </nav>
+        </nav>
+      </header>
 
       {/* Tab Content */}
       <main className="flex-1 overflow-hidden">
