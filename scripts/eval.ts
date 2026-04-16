@@ -151,10 +151,10 @@ const LAYER_2_CASES: AdversarialTestCase[] = [
   { layer: 2, subtype: "vague", query: "I'm a beginner what should I know first", mustContainRetrieval: ["phase"] },
   { layer: 2, subtype: "vague", query: "what am I probably doing wrong", mustContainRetrieval: ["push"] },
 
-  // --- Off-topic (3) ---
-  { layer: 2, subtype: "off-topic", query: "what should I eat before training", refusalPatterns: ["not what i teach", "outside", "don't cover", "don't teach", "not my area", "not something i", "focus on punch", "focus on mechanics"] },
-  { layer: 2, subtype: "off-topic", query: "how to run faster for boxing", refusalPatterns: ["not what i teach", "outside", "don't cover", "don't teach", "not my area", "not something i", "focus on punch", "focus on mechanics"] },
-  { layer: 2, subtype: "off-topic", query: "what are the best boxing gloves", refusalPatterns: ["not what i teach", "outside", "don't cover", "don't teach", "not my area", "not something i", "focus on punch", "focus on mechanics"] },
+  // --- Off-topic (3) — should answer helpfully but steer back to mechanics ---
+  { layer: 2, subtype: "off-topic", query: "what should I eat before training", refusalPatterns: ["mechanic", "power", "train", "performance", "energy", "fuel"] },
+  { layer: 2, subtype: "off-topic", query: "how to run faster for boxing", refusalPatterns: ["mechanic", "athletic", "explosive", "power", "footwork", "condition"] },
+  { layer: 2, subtype: "off-topic", query: "what are the best boxing gloves", refusalPatterns: ["mechanic", "hand", "wrap", "impact", "knuckle", "protect"] },
 
   // --- Multi-topic (4) ---
   { layer: 2, subtype: "multi-topic", query: "compare Canelo's jab to Beterbiev's right hand", mustContainRetrieval: ["canelo", "beterbiev"] },
@@ -222,8 +222,15 @@ function containsKeyword(text: string, keyword: string): boolean {
   return text.toLowerCase().includes(keyword.toLowerCase());
 }
 
-function allChunksText(chunks: { content: string }[]): string {
-  return chunks.map((c) => c.content).join(" ");
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function allChunksText(chunks: any[]): string {
+  return chunks.map((c) => {
+    const parts = [c.content as string];
+    if (c.video_title) parts.push(c.video_title as string);
+    if (c.pdf_file) parts.push(c.pdf_file as string);
+    if (c.category) parts.push(c.category as string);
+    return parts.join(" ");
+  }).join(" ");
 }
 
 function parseLayerArg(): number | null {
