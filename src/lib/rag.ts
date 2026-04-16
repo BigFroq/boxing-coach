@@ -43,10 +43,16 @@ export async function retrieveChunks(
 export function formatChunksForPrompt(chunks: RetrievedChunk[]): string {
   return chunks
     .map((chunk) => {
-      const source =
-        chunk.source_type === "transcript"
-          ? `[Video: ${chunk.video_title} | ${chunk.video_url}]`
-          : `[Course: ${chunk.pdf_file}]`;
+      let source: string;
+      if (chunk.source_type === "transcript" && chunk.video_title) {
+        source = `[Video: ${chunk.video_title} | ${chunk.video_url}]`;
+      } else if (chunk.pdf_file?.startsWith("concept:")) {
+        source = `[Knowledge Base: ${chunk.pdf_file.replace("concept:", "")}]`;
+      } else if (chunk.pdf_file) {
+        source = `[Course: ${chunk.pdf_file}]`;
+      } else {
+        source = `[Source]`;
+      }
       return `${source}\n${chunk.content}`;
     })
     .join("\n\n---\n\n");
