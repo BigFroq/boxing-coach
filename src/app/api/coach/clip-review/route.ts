@@ -1,0 +1,115 @@
+import Anthropic from "@anthropic-ai/sdk";
+import { NextRequest, NextResponse } from "next/server";
+
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
+
+const ANALYSIS_PROMPT = `You are a boxing technique analyst trained on Dr. Alex Wiant's Power Punching Blueprint methodology.
+
+You are analyzing a DENSE sequence of frames (5 frames per second) from a short boxing clip. Because these frames are closely spaced, you CAN see the progression of movement — use this to analyze timing and sequence.
+
+## What to Analyze
+
+### Phase 1: Loading
+- Is elastic potential energy being stored via weight shift?
+- Is the weight transferring to the appropriate leg?
+- Are cross-body kinetic chains being pre-stretched?
+
+### Phase 2: Hip Explosion
+- Does the hip rotate BEFORE the arm? (Look at frame sequence — hip should lead)
+- Is the hip opening (jab/hook/lead uppercut) or closing (cross/rear uppercut)?
+- Is there visible separation between hip and arm timing?
+
+### Phase 3: Energy Transfer
+- Is the core rotating after the hips?
+- Does the punch follow a slight arc (throw) or go straight (push)?
+- Does the arm appear loose until near impact?
+
+### Phase 4: Follow Through
+- Is there follow-through past the impact point?
+- Does weight transfer through the target?
+- Is there a quick reset to neutral stance?
+
+### Common Errors to Check
+- Push punching (linear movement instead of rotational)
+- Arm in lockstep with hips (no acceleration — hip should fire first)
+- Guard dropping during the punch
+- Stance too narrow or too wide
+- No weight shift in loading phase
+
+## Response Format
+Return a JSON object:
+{
+  "summary": "2-3 sentence overall assessment",
+  "phases": [
+    { "phase": "Loading", "feedback": "what you observe" },
+    { "phase": "Hip Explosion", "feedback": "what you observe" },
+    { "phase": "Energy Transfer", "feedback": "what you observe" },
+    { "phase": "Follow Through", "feedback": "what you observe" }
+  ],
+  "strengths": ["specific strength observed"],
+  "improvements": ["specific improvement needed"]
+}
+
+Be specific about what you SEE in the frames. Reference the frame sequence when relevant (e.g., "In the early frames... by mid-sequence..."). Be encouraging but honest.`;
+
+export async function POST(request: NextRequest) {
+  try {
+    const { frames, filename } = await request.json();
+
+    if (!frames || !Array.isArray(frames) || frames.length === 0) {
+      return NextResponse.json({ error: "No frames provided" }, { status: 400 });
+    }
+
+    if (frames.length > 60) {
+      return NextResponse.json({ error: "Too many frames (max 60)" }, { status: 400 });
+    }
+
+    const content: Anthropic.Messages.ContentBlockParam[] = [
+      {
+        type: "text",
+        text: `Analyze these ${frames.length} sequential frames from a short boxing clip (${filename}). The frames are at 5fps — closely spaced so you can see movement progression. Analyze the technique using the 4-phase framework.`,
+      },
+      ...frames.map(
+        (frame: string) =>
+          ({
+            type: "image",
+            source: { type: "base64", media_type: "image/jpeg", data: frame },
+          }) as Anthropic.Messages.ImageBlockParam
+      ),
+      {
+        type: "text",
+        text: "Analyze the technique. Return ONLY valid JSON matching the specified format.",
+      },
+    ];
+
+    const response = await anthropic.messages.create({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 2048,
+      system: ANALYSIS_PROMPT,
+      messages: [{ role: "user", content }],
+    });
+
+    const text = response.content[0].type === "text" ? response.content[0].text : "";
+    let jsonStr = text;
+    const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (jsonMatch) jsonStr = jsonMatch[1].trim();
+
+    let analysis;
+    try {
+      analysis = JSON.parse(jsonStr);
+    } catch {
+      console.error("Failed to parse analysis JSON:", jsonStr.slice(0, 200));
+      return NextResponse.json(
+        { error: "Failed to parse analysis. Please try again." },
+        { status: 422 }
+      );
+    }
+
+    return NextResponse.json(analysis);
+  } catch (error) {
+    console.error("Clip review error:", error);
+    return NextResponse.json({ error: "Failed to analyze clip" }, { status: 500 });
+  }
+}

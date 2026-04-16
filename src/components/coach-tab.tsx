@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { CoachSession } from "./coach-session";
 import { CoachProgress } from "./coach-progress";
+import { CoachClipReview } from "./coach-clip-review";
 
 interface CoachTabProps {
   userId: string;
 }
 
 export function CoachTab({ userId }: CoachTabProps) {
-  const [view, setView] = useState<"session" | "progress">("session");
+  const [view, setView] = useState<"session" | "clip" | "progress">("session");
 
   return (
     <div className="flex h-full flex-col">
@@ -25,6 +26,16 @@ export function CoachTab({ userId }: CoachTabProps) {
           Log Session
         </button>
         <button
+          onClick={() => setView("clip")}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+            view === "clip"
+              ? "bg-accent text-white"
+              : "bg-surface-hover text-muted hover:text-foreground"
+          }`}
+        >
+          Review Clip
+        </button>
+        <button
           onClick={() => setView("progress")}
           className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
             view === "progress"
@@ -38,6 +49,7 @@ export function CoachTab({ userId }: CoachTabProps) {
 
       <div className="flex-1 overflow-hidden">
         {view === "session" && <CoachSession userId={userId} />}
+        {view === "clip" && <CoachClipReview />}
         {view === "progress" && <CoachProgress userId={userId} />}
       </div>
     </div>
