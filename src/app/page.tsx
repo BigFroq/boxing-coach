@@ -35,7 +35,7 @@ function AppContent() {
       {/* Header */}
       <header className="flex items-center justify-between border-b border-border px-4 sm:px-6 py-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent font-bold text-white text-sm">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent-hover font-bold text-white text-sm">
             PD
           </div>
           <div>

@@ -299,6 +299,7 @@ export function ChatTab({ systemContext, placeholder, suggestions, initialQuery 
           <button
             onClick={() => sendMessage(input)}
             disabled={!input.trim() || loading || streaming}
+            aria-label="Send message"
             className="flex h-[46px] w-[46px] items-center justify-center rounded-xl bg-accent text-white hover:bg-accent-hover disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
             <Send size={16} />

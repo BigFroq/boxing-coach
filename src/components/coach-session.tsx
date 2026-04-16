@@ -209,6 +209,7 @@ export function CoachSession({ userId }: CoachSessionProps) {
           <button
             onClick={handleSend}
             disabled={!input.trim() || loading || streaming}
+            aria-label="Send message"
             className="flex h-[44px] w-[44px] items-center justify-center rounded-lg bg-accent text-white disabled:opacity-50"
           >
             {loading || streaming ? (
