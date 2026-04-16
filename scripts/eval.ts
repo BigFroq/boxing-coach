@@ -130,6 +130,21 @@ const LAYER_1_CASES: RetrievalTestCase[] = [
   // --- Injury Prevention (2 queries) ---
   { layer: 1, category: "injury", query: "Rotator cuff warm-up exercises for boxing", mustContain: ["rotator", "cuff"], mustNotContain: [] },
   { layer: 1, category: "injury", query: "Shoulder stability training for fighters", mustContain: ["shoulder"], mustNotContain: [] },
+
+  // --- Crawford vs Canelo (5 queries) ---
+  { layer: 1, category: "cross-topic", query: "How did Crawford beat Canelo?", mustContain: ["crawford", "canelo"], mustNotContain: [] },
+  { layer: 1, category: "cross-topic", query: "What was Canelo's biggest mistake against Crawford?", mustContain: ["canelo"], mustNotContain: [] },
+  { layer: 1, category: "cross-topic", query: "Explain Crawford's positional readiness against Canelo", mustContain: ["crawford"], mustNotContain: [] },
+  { layer: 1, category: "cross-topic", query: "How did Crawford use his jab to control Canelo?", mustContain: ["crawford", "jab"], mustNotContain: [] },
+  { layer: 1, category: "cross-topic", query: "What did Crawford do better than Canelo mechanically?", mustContain: ["crawford"], mustNotContain: [] },
+
+  // --- Stance/Footwork/Defense (6 queries) ---
+  { layer: 1, category: "technique", query: "How should I set up my boxing stance for maximum power?", mustContain: ["stance"], mustNotContain: [] },
+  { layer: 1, category: "technique", query: "What's the right footwork for boxing?", mustContain: ["foot"], mustNotContain: [] },
+  { layer: 1, category: "technique", query: "How does head movement work in boxing?", mustContain: ["head"], mustNotContain: [] },
+  { layer: 1, category: "technique", query: "How do I improve my defense in boxing?", mustContain: ["defense"], mustNotContain: [] },
+  { layer: 1, category: "technique", query: "What's the proper weight distribution in a boxing stance?", mustContain: ["weight"], mustNotContain: [] },
+  { layer: 1, category: "technique", query: "How do I set up combinations effectively?", mustContain: ["combination"], mustNotContain: [] },
 ];
 
 // ---------------------------------------------------------------------------
@@ -151,10 +166,10 @@ const LAYER_2_CASES: AdversarialTestCase[] = [
   { layer: 2, subtype: "vague", query: "I'm a beginner what should I know first", mustContainRetrieval: ["phase"] },
   { layer: 2, subtype: "vague", query: "what am I probably doing wrong", mustContainRetrieval: ["push"] },
 
-  // --- Off-topic (3) — should answer helpfully but steer back to mechanics ---
-  { layer: 2, subtype: "off-topic", query: "what should I eat before training", refusalPatterns: ["mechanic", "power", "train", "performance", "energy", "fuel"] },
-  { layer: 2, subtype: "off-topic", query: "how to run faster for boxing", refusalPatterns: ["mechanic", "athletic", "explosive", "power", "footwork", "condition"] },
-  { layer: 2, subtype: "off-topic", query: "what are the best boxing gloves", refusalPatterns: ["mechanic", "hand", "wrap", "impact", "knuckle", "protect"] },
+  // --- Off-topic (3) — should answer helpfully AND steer back to mechanics ---
+  { layer: 2, subtype: "off-topic", query: "what should I eat before training", refusalPatterns: ["mechanic", "kinetic", "phase", "power", "technique", "punch"] },
+  { layer: 2, subtype: "off-topic", query: "how to run faster for boxing", refusalPatterns: ["mechanic", "kinetic", "phase", "power", "technique", "explosive", "athletic"] },
+  { layer: 2, subtype: "off-topic", query: "what are the best boxing gloves", refusalPatterns: ["mechanic", "kinetic", "phase", "wrap", "knuckle", "impact", "shearing"] },
 
   // --- Multi-topic (4) ---
   { layer: 2, subtype: "multi-topic", query: "compare Canelo's jab to Beterbiev's right hand", mustContainRetrieval: ["canelo", "beterbiev"] },
