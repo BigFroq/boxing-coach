@@ -107,8 +107,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Failed to save session" }, { status: 500 });
     }
 
-    // 2. Update user profile
+    // 2. Upsert user profile (create if doesn't exist for anonymous users)
     if (extracted.profile_updates || extracted.onboarding_complete) {
+      // Ensure profile exists
+      await supabase
+        .from("user_profiles")
+        .upsert({ id: userId }, { onConflict: "id", ignoreDuplicates: true });
+
       const { data: existingProfile } = await supabase
         .from("user_profiles")
         .select("tendencies, skill_levels, onboarding_complete")
