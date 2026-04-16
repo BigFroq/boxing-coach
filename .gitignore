@@ -49,3 +49,6 @@ scripts/vault-generation/.cache/
 
 # generated vault (regenerated from DB)
 vault/
+
+# git worktrees
+.worktrees/
