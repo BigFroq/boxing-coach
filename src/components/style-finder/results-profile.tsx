@@ -1,10 +1,12 @@
 "use client";
 
-import { RotateCcw, Share2, MessageSquare } from "lucide-react";
+import { RotateCcw, Share2, MessageSquare, Sparkles, TrendingUp, Users, Target, Flame } from "lucide-react";
 import { RadarChart } from "./radar-chart";
 import { DimensionBars } from "./dimension-bars";
 import { FighterMatchCard } from "./fighter-match-card";
 import { RetakeComparison } from "./retake-comparison";
+import { ChatTab } from "@/components/chat-tab";
+import type { Suggestion } from "@/components/chat-tab";
 import type { DimensionScores } from "@/data/fighter-profiles";
 import { DIMENSION_LABELS } from "@/data/fighter-profiles";
 
@@ -30,6 +32,96 @@ interface ResultsProfileProps {
   onRetake: () => void;
   onAskCoach?: (query: string) => void;
   profileId?: string;
+}
+
+function buildStyleSuggestions(result: StyleProfileResult): Suggestion[] {
+  const suggestions: Suggestion[] = [];
+
+  const topFighter = result.matched_fighters[0]?.name;
+  if (topFighter) {
+    suggestions.push({
+      text: `Why does my style match ${topFighter}?`,
+      Icon: Users,
+    });
+  }
+
+  // Lowest dimension score = biggest growth lever
+  const dimEntries = Object.entries(result.dimension_scores) as [keyof DimensionScores, number][];
+  if (dimEntries.length > 0) {
+    const [lowestKey] = dimEntries.reduce((min, cur) => (cur[1] < min[1] ? cur : min));
+    const lowestLabel = DIMENSION_LABELS[lowestKey] ?? lowestKey;
+    suggestions.push({
+      text: `How do I improve my ${lowestLabel.toLowerCase()}?`,
+      Icon: TrendingUp,
+    });
+  }
+
+  const firstGrowth = result.growth_areas[0];
+  if (firstGrowth) {
+    suggestions.push({
+      text: `Give me a drill for my ${firstGrowth.dimension.toLowerCase()}`,
+      Icon: Target,
+    });
+  }
+
+  if (result.punches_to_master.length > 0) {
+    suggestions.push({
+      text: `Walk me through the mechanics of a ${result.punches_to_master[0].toLowerCase()}`,
+      Icon: Flame,
+    });
+  }
+
+  return suggestions.slice(0, 4);
+}
+
+interface StyleChatSectionProps {
+  result: StyleProfileResult;
+  physicalContext: { height: string; build: string; reach: string; stance: string };
+  experienceLevel: string;
+  profileId?: string;
+}
+
+function StyleChatSection({ result, physicalContext, experienceLevel, profileId }: StyleChatSectionProps) {
+  const suggestions = buildStyleSuggestions(result);
+  const extraContext = {
+    styleProfile: {
+      style_name: result.style_name,
+      description: result.description,
+      dimension_scores: result.dimension_scores,
+      strengths: result.strengths,
+      growth_areas: result.growth_areas,
+      matched_fighters: result.matched_fighters.map((f) => ({ name: f.name })),
+      punches_to_master: result.punches_to_master,
+      stance_recommendation: result.stance_recommendation,
+      training_priorities: result.training_priorities,
+      physical_context: physicalContext,
+      experience_level: experienceLevel,
+    },
+  };
+
+  // Namespace conversation storage per profile so different profiles don't bleed into each other.
+  const storageKeyOverride = `boxing-coach-chat-style-${profileId ?? "local"}`;
+
+  return (
+    <div className="bg-surface border border-border rounded-xl overflow-hidden">
+      <div className="px-5 pt-5 pb-3 border-b border-border flex items-center gap-2">
+        <Sparkles size={16} className="text-accent" />
+        <h3 className="text-sm font-semibold">Ask about your style</h3>
+      </div>
+      <div className="h-[640px]">
+        <ChatTab
+          systemContext="style"
+          heroIcon={MessageSquare}
+          heroTitle={`You're a ${result.style_name}. What do you want to dig into?`}
+          heroSubtitle="Your full profile is loaded — dimension scores, matched fighters, growth areas. Ask anything and I'll tailor the answer to you."
+          placeholder="Ask about your style, drills, matchups..."
+          suggestions={suggestions}
+          extraContext={extraContext}
+          storageKeyOverride={storageKeyOverride}
+        />
+      </div>
+    </div>
+  );
 }
 
 const PHYSICAL_LABELS: Record<string, Record<string, string>> = {
@@ -205,6 +297,14 @@ export function ResultsProfile({
           <h3 className="text-sm font-semibold text-accent mb-2">Punch Doctor Insight</h3>
           <p className="text-sm leading-relaxed italic">{result.punch_doctor_insight}</p>
         </div>
+
+        {/* Ask About Your Style — embedded chat */}
+        <StyleChatSection
+          result={result}
+          physicalContext={physicalContext}
+          experienceLevel={experienceLevel}
+          profileId={profileId}
+        />
 
         {/* Actions */}
         <div className="flex items-center justify-center gap-4 pt-2">

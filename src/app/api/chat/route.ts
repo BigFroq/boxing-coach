@@ -82,9 +82,55 @@ Fighters: Reference your analyses by name from the content below.
 
 `;
 
+interface StyleProfilePayload {
+  style_name?: string;
+  description?: string;
+  dimension_scores?: Record<string, number>;
+  strengths?: string[];
+  growth_areas?: { dimension: string; advice: string }[];
+  matched_fighters?: { name: string }[];
+  punches_to_master?: string[];
+  stance_recommendation?: string;
+  training_priorities?: string[];
+  physical_context?: { height?: string; build?: string; reach?: string; stance?: string };
+  experience_level?: string;
+}
+
+function formatStyleProfile(p: StyleProfilePayload): string {
+  const lines: string[] = ["\n\n## This Fighter's Profile (YOU have full access — reference it freely)\n"];
+  if (p.style_name) lines.push(`Style name: ${p.style_name}`);
+  if (p.description) lines.push(`Summary: ${p.description}`);
+  if (p.experience_level) lines.push(`Experience level: ${p.experience_level}`);
+  if (p.physical_context) {
+    const pc = p.physical_context;
+    const parts = [pc.height, pc.build, pc.reach, pc.stance].filter(Boolean).join(", ");
+    if (parts) lines.push(`Physical: ${parts}`);
+  }
+  if (p.dimension_scores) {
+    const dims = Object.entries(p.dimension_scores)
+      .map(([k, v]) => `${k}=${v}`)
+      .join(", ");
+    lines.push(`Dimension scores (0-100): ${dims}`);
+  }
+  if (p.matched_fighters?.length) {
+    lines.push(`Matched fighters: ${p.matched_fighters.map((f) => f.name).join(", ")}`);
+  }
+  if (p.strengths?.length) lines.push(`Strengths: ${p.strengths.join("; ")}`);
+  if (p.growth_areas?.length) {
+    lines.push(`Growth areas: ${p.growth_areas.map((g) => `${g.dimension} — ${g.advice}`).join("; ")}`);
+  }
+  if (p.punches_to_master?.length) lines.push(`Punches to master: ${p.punches_to_master.join(", ")}`);
+  if (p.stance_recommendation) lines.push(`Stance: ${p.stance_recommendation}`);
+  if (p.training_priorities?.length) lines.push(`Training priorities: ${p.training_priorities.join("; ")}`);
+  lines.push(
+    "\nWhen they ask about 'my style', 'my profile', or reference themselves, USE these details. Don't ask them to repeat themselves."
+  );
+  return lines.join("\n");
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { messages, context } = await request.json();
+    const { messages, context, thinkLonger, styleProfile } = await request.json();
 
     if (!messages || !Array.isArray(messages)) {
       return new Response(JSON.stringify({ error: "Messages required" }), {
@@ -107,6 +153,7 @@ export async function POST(request: NextRequest) {
     } else if (context === "technique") {
       categories = ["mechanics", "theory", "analysis"];
     }
+    // "style" context: no category filter — pull from whole corpus so style advice can cite any relevant material.
 
     // Graph-enhanced retrieval: decompose → HyDE → parallel (vector + graph) → rerank
     const { chunks, citations } = await retrieveContext(lastUserMessage.content, {
@@ -121,13 +168,23 @@ export async function POST(request: NextRequest) {
       contextNote = "\n\nThe user is asking about exercises, drills, and training. Focus on practical exercises from the course.";
     } else if (context === "technique") {
       contextNote = "\n\nThe user is asking about punch mechanics and technique. Focus on biomechanical principles.";
+    } else if (context === "style") {
+      contextNote = "\n\nThe user is asking about their own fighting style. Their profile is appended below — weave it into every answer so you sound like you already know them. Be specific to their dimension scores, matched fighters, and growth areas.";
     }
+
+    const styleNote = context === "style" && styleProfile ? formatStyleProfile(styleProfile) : "";
+
+    const thinkLongerNote = thinkLonger
+      ? "\n\nThe user has asked you to think longer. Give a more detailed, thorough answer — work through the mechanics step by step, name specific phases and chains, and include the 'one thing to do' at the end. Still no markdown headings."
+      : "";
+
+    const maxTokens = thinkLonger ? 4000 : 1500;
 
     // Stream the response via SSE
     const stream = anthropic.messages.stream({
       model: "claude-sonnet-4-20250514",
-      max_tokens: 1500,
-      system: SYSTEM_PROMPT + contextText + contextNote,
+      max_tokens: maxTokens,
+      system: SYSTEM_PROMPT + contextText + contextNote + styleNote + thinkLongerNote,
       messages: messages.slice(-10).map((m: { role: string; content: string }) => ({
         role: m.role as "user" | "assistant",
         content: m.content,

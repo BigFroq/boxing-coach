@@ -1,7 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { MessageSquare, ClipboardList, User, Dumbbell } from "lucide-react";
+import {
+  MessageSquare,
+  ClipboardList,
+  User,
+  Dumbbell,
+  Zap,
+  Flame,
+  GitBranch,
+  RotateCw,
+  Shield,
+  Target,
+  Timer,
+} from "lucide-react";
 import { ChatTab } from "@/components/chat-tab";
 import { CoachTab } from "@/components/coach-tab";
 import { StyleFinderTab } from "@/components/style-finder-tab";
@@ -65,12 +77,15 @@ function AppContent() {
         {activeTab === "technique" && (
           <ChatTab
             systemContext="technique"
+            heroIcon={MessageSquare}
+            heroTitle="What technique are you curious about?"
+            heroSubtitle="Ask about punch mechanics, kinetic chains, or break down how a pro generates power."
             placeholder="Ask about punch mechanics, kinetic chains, phases..."
             suggestions={[
-              "How does Canelo use kinetic chains in his jab?",
-              "Break down Beterbiev's power — what makes him hit so hard?",
-              "What's the difference between a push punch and a throw?",
-              "How should I use hip rotation for a left hook?",
+              { text: "How does Canelo use kinetic chains in his jab?", Icon: Zap },
+              { text: "Break down Beterbiev's power — what makes him hit so hard?", Icon: Flame },
+              { text: "What's the difference between a push punch and a throw?", Icon: GitBranch },
+              { text: "How should I use hip rotation for a left hook?", Icon: RotateCw },
             ]}
             initialQuery={coachQuery}
           />
@@ -78,12 +93,15 @@ function AppContent() {
         {activeTab === "drills" && (
           <ChatTab
             systemContext="drills"
+            heroIcon={Dumbbell}
+            heroTitle="Looking for a drill?"
+            heroSubtitle="Exercises, warm-ups, and bag work pulled straight from the Power Punching Blueprint."
             placeholder="Ask about exercises, training routines, bag work..."
             suggestions={[
-              "What exercises build punching power using kinetic chains?",
-              "Give me a rotator cuff warm-up routine for boxing",
-              "How do I practice the 4 phases of torque?",
-              "What's the right way to throw a medicine ball for punching power?",
+              { text: "What exercises build punching power using kinetic chains?", Icon: Zap },
+              { text: "Give me a rotator cuff warm-up routine for boxing", Icon: Shield },
+              { text: "How do I practice the 4 phases of torque?", Icon: Timer },
+              { text: "What's the right way to throw a medicine ball for punching power?", Icon: Target },
             ]}
           />
         )}
