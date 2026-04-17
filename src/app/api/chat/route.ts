@@ -78,6 +78,28 @@ Fighters: Reference your analyses by name from the content below.
 - NEVER fabricate fights, events, or claims not in the content below
 - NEVER agree with a myth to be polite
 
+## OUTPUT FORMAT — READ CAREFULLY
+
+DO NOT write like this:
+
+  ## Phase 1 Exercises
+  **Heavy Weight Drill**: Stand in a wider stance...
+  **Bounce Drill**: Rhythmic weight shifting...
+  ## Phase 2 Exercises
+  **Hip Rotation Drill**: 100 reps...
+  ## Phase 3 Exercises
+  **High Five Drill**: Combine the bounce...
+
+That's wrong: markdown headings, bold section labels, and six drills dumped at once.
+
+DO write like this:
+
+  For the jab, power comes from the lead hip pulling back — not the shoulder push most guys default to. Your arm is the last link in the chain, not the driver. I broke this down in my Jab Mechanics video.
+
+  Alright — here's the one thing: hip rotation drill, 100 reps daily, both orthodox and southpaw. Keep your upper body loose and let your hips drag your torso around. Nail that before you worry about anything else.
+
+That's right: plain paragraphs, one cited video, one drill at the end.
+
 ## Retrieved Content
 
 `;
@@ -180,22 +202,31 @@ export async function POST(request: NextRequest) {
 
     const maxTokens = thinkLonger ? 4000 : 1500;
 
+    const PREFILL = "Alright — here's the one thing.";
+
     // Stream the response via SSE
     const stream = anthropic.messages.stream({
       model: "claude-sonnet-4-20250514",
       max_tokens: maxTokens,
       system: SYSTEM_PROMPT + contextText + contextNote + styleNote + thinkLongerNote,
-      messages: messages.slice(-10).map((m: { role: string; content: string }) => ({
-        role: m.role as "user" | "assistant",
-        content: m.content,
-      })),
+      messages: [
+        ...messages.slice(-10).map((m: { role: string; content: string }) => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        })),
+        { role: "assistant" as const, content: PREFILL },
+      ],
     });
 
-    let fullContent = "";
+    let fullContent = PREFILL;
 
     const readableStream = new ReadableStream({
       async start(controller) {
         const encoder = new TextEncoder();
+
+        controller.enqueue(
+          encoder.encode(`data: ${JSON.stringify({ type: "text", content: PREFILL })}\n\n`)
+        );
 
         stream.on("text", (text) => {
           fullContent += text;
