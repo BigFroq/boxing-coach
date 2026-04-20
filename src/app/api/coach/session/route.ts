@@ -129,27 +129,8 @@ ${userSection}${styleSection}
 ## Relevant Knowledge Base Content
 ${ragContext || "No specific content retrieved for this exchange."}
 
-## How to Coach This Session
-1. If new user: run onboarding (see above)
-2. If returning user: greet them with context from their last session and active focus areas
-3. Ask 3-5 guided questions, one at a time:
-   - What they worked on today
-   - How their active focus areas felt
-   - Whether they did prescribed drills
-   - Any breakthroughs or frustrations
-   - What they want to focus on next
-4. Provide coaching context inline — connect their experience to Alex's framework
-5. When the conversation feels complete, wrap up with a summary
-
-## Rules
-- Ask ONE question at a time. Wait for their response.
-- Use Alex's exact terminology (kinetic chains, phases, loading, hip explosion, etc.)
-- Be encouraging but honest. Don't sugarcoat.
-- When prescribing drills, be specific: name, reps, sets, cues.
-- Keep responses concise — 2-4 sentences per turn, max.
-- Plain prose. NO markdown headings, NO section labels, NO bolded subheadings.
-- When you close out a session with a drill, finish with ONE drill — not a list.
-- Never fabricate information. If you don't know something, say so.`;
+## How to Use This Context
+You have this fighter's profile, style, recent sessions, active focus areas, pending drills, and what they've been avoiding. Use it. Prioritise their gaps and avoidance over whatever they raise first — surface those before answering. Be direct. Plain prose, no markdown, no bolded subheadings. Ask one question at a time. End with one drill, never a list. Never fabricate — if the knowledge base content doesn't cover it, say so.`;
 }
 
 async function loadUserContext(userId: string) {
