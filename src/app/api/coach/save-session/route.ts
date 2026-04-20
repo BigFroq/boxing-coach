@@ -188,10 +188,14 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        const slug: string | null =
+        // Reject hallucinated slugs — silently coerce to null so they still land in the
+        // (dimension, null) bucket instead of creating a phantom dedup bucket that never merges.
+        const rawSlug =
           typeof update.knowledge_node_slug === "string" && update.knowledge_node_slug.length > 0
             ? update.knowledge_node_slug
             : null;
+        const slug: string | null =
+          rawSlug !== null && (VAULT_SLUGS as readonly string[]).includes(rawSlug) ? rawSlug : null;
 
         // NULL-safe slug match: use .is() for null, .eq() for a value.
         const baseQuery = supabase

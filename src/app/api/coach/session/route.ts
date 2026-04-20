@@ -119,7 +119,7 @@ async function loadUserContext(userId: string) {
 
   const [profileRes, focusRes, sessionsRes, drillsRes] = await Promise.all([
     supabase.from("user_profiles").select("tendencies, skill_levels, preferences, onboarding_complete").eq("id", userId).single(),
-    supabase.from("focus_areas").select("name, status, description").eq("user_id", userId).in("status", ["new", "active", "improving"]).order("updated_at", { ascending: false }),
+    supabase.from("focus_areas").select("name, dimension, status, description").eq("user_id", userId).in("status", ["new", "active", "improving"]).order("updated_at", { ascending: false }),
     supabase.from("training_sessions").select("session_type, summary, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(3),
     supabase.from("drill_prescriptions").select("drill_name, details").eq("user_id", userId).eq("followed_up", false),
   ]);
