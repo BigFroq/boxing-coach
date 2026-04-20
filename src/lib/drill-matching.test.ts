@@ -14,7 +14,7 @@ describe("normalizeDrillName", () => {
     expect(normalizeDrillName("  Hip-Rotation Drill!  ")).toBe("hip rotation drill");
   });
 
-  it("strips filler words (drill, exercise)", () => {
+  it("keeps all word tokens including 'drill' and 'exercise'", () => {
     expect(normalizeDrillName("Hip rotation drill")).toBe("hip rotation drill");
     expect(normalizeDrillName("Hip rotation")).toBe("hip rotation");
   });

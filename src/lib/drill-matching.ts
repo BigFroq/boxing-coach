@@ -14,8 +14,7 @@ export function normalizeDrillName(name: string): string {
 
 /**
  * Match a reported drill name to the most likely pending prescription.
- * Strategy: normalize both, prefer exact match, then bidirectional substring containment,
- * then drop the 'drill' suffix and retry to handle "hip rotation" ↔ "hip rotation drill".
+ * Strategy: normalize both, prefer exact match, then bidirectional substring containment.
  */
 export function matchReportedDrill<T extends DrillPrescriptionLike>(
   reportedName: string,
@@ -36,17 +35,6 @@ export function matchReportedDrill<T extends DrillPrescriptionLike>(
     const norm = normalizeDrillName(p.drill_name);
     if (!norm) continue;
     if (reported.includes(norm) || norm.includes(reported)) return p;
-  }
-
-  // 3. Retry with 'drill'/'exercise' suffix stripped — handles "hip rotation" ↔
-  //    "hip rotation drill" when neither is a substring of the other after normalize.
-  const stripSuffix = (s: string) => s.replace(/\s+(drill|exercise)$/i, "").trim();
-  const reportedStripped = stripSuffix(reported);
-  for (const p of pending) {
-    const norm = stripSuffix(normalizeDrillName(p.drill_name));
-    if (!norm) continue;
-    if (reportedStripped === norm) return p;
-    if (reportedStripped.includes(norm) || norm.includes(reportedStripped)) return p;
   }
 
   return null;

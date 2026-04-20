@@ -3,16 +3,9 @@ import { DIMENSION_LABELS } from "@/data/fighter-profiles";
 
 export type DimensionKey = keyof DimensionScores;
 
-export const DIMENSION_KEYS: readonly DimensionKey[] = [
-  "powerMechanics",
-  "positionalReadiness",
-  "rangeControl",
-  "defensiveIntegration",
-  "ringIQ",
-  "outputPressure",
-  "deceptionSetup",
-  "killerInstinct",
-] as const;
+export const DIMENSION_KEYS: readonly DimensionKey[] = Object.keys(
+  DIMENSION_LABELS
+) as DimensionKey[];
 
 /** Canonical human label → key. Built from DIMENSION_LABELS so it stays in sync. */
 export const DIMENSION_LABEL_TO_KEY: Record<string, DimensionKey> = Object.fromEntries(
@@ -21,25 +14,13 @@ export const DIMENSION_LABEL_TO_KEY: Record<string, DimensionKey> = Object.fromE
   )
 );
 
-/** Additional aliases: snake_case, camelCase-as-string, short forms. */
-const ALIASES: Record<string, DimensionKey> = {
-  "power_mechanics": "powerMechanics",
-  "powermechanics": "powerMechanics",
-  "positional_readiness": "positionalReadiness",
-  "positionalreadiness": "positionalReadiness",
-  "range_control": "rangeControl",
-  "rangecontrol": "rangeControl",
-  "defensive_integration": "defensiveIntegration",
-  "defensiveintegration": "defensiveIntegration",
-  "ring_iq": "ringIQ",
-  "ringiq": "ringIQ",
-  "output_pressure": "outputPressure",
-  "outputpressure": "outputPressure",
-  "deception_setup": "deceptionSetup",
-  "deceptionsetup": "deceptionSetup",
-  "killer_instinct": "killerInstinct",
-  "killerinstinct": "killerInstinct",
-};
+/** Auto-derived aliases: lowercase and snake_case forms of every camelCase key. */
+const ALIASES: Record<string, DimensionKey> = Object.fromEntries(
+  DIMENSION_KEYS.flatMap((key) => [
+    [key.toLowerCase(), key],
+    [key.replace(/([a-z])([A-Z])/g, "$1_$2").toLowerCase(), key],
+  ])
+);
 
 export function isDimensionKey(value: unknown): value is DimensionKey {
   return typeof value === "string" && (DIMENSION_KEYS as readonly string[]).includes(value);
