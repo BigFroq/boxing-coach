@@ -54,3 +54,6 @@ vault/
 # git worktrees
 .worktrees/
 .superpowers/
+
+# playwright mcp scratch
+.playwright-mcp/
