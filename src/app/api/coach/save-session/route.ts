@@ -1,6 +1,9 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
+import { VAULT_SLUGS, dimensionLabelToKey, isDimensionKey } from "@/lib/dimensions";
+import { matchReportedDrill } from "@/lib/drill-matching";
+
 async function callWithRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
   for (let i = 0; i < maxRetries; i++) {
     try {
@@ -28,7 +31,13 @@ Extract the following as JSON:
   "focus_areas_worked": ["name of focus area discussed"],
   "drills_done": ["drill name they reported doing"],
   "drills_prescribed": [{"name": "drill name", "details": "reps, sets, cues"}],
-  "focus_area_updates": [{"name": "area name", "status": "new|active|improving|resolved", "description": "current state"}],
+  "focus_area_updates": [{
+    "name": "human-readable label",
+    "dimension": "powerMechanics | positionalReadiness | rangeControl | defensiveIntegration | ringIQ | outputPressure | deceptionSetup | killerInstinct",
+    "knowledge_node_slug": "<optional slug from the list below, or null>",
+    "status": "new | active | improving | resolved",
+    "description": "current state"
+  }],
   "profile_updates": {
     "tendencies": {"key": "observation"},
     "skill_levels": {"key": "level"}
@@ -36,9 +45,35 @@ Extract the following as JSON:
   "onboarding_complete": true | false
 }
 
-Rules:
+## Dimension keys (REQUIRED for every focus_area_update)
+
+Always pick the single best-fit dimension:
+- powerMechanics — kinetic chain quality, how the punch is thrown
+- positionalReadiness — stance, base, ability to fire from anywhere
+- rangeControl — distance management, footwork for distance
+- defensiveIntegration — defence + offence in one motion, head movement, blocking
+- ringIQ — adaptation, reading opponents, pattern recognition
+- outputPressure — volume, work rate, sustaining pace
+- deceptionSetup — feints, combinations, misdirection
+- killerInstinct — finishing, closing the show when they're hurt
+
+Disambiguation rules:
+- positionalReadiness is about STATIC qualities — stance shape, base width, readiness posture.
+- defensiveIntegration is about DYNAMIC defensive actions — slips, rolls, blocks, parries — especially when integrated with offence.
+- If the discussion is about moving the head WHILE punching, use defensiveIntegration.
+- If the discussion is about how the fighter stands BEFORE throwing, use positionalReadiness.
+
+## Knowledge node slugs (optional — only if the focus area maps to a specific vault node)
+
+If the focus area is about a specific technique/drill/concept from the list below, include its slug. Otherwise set knowledge_node_slug to null.
+
+Available slugs: ${VAULT_SLUGS.join(", ")}
+
+## Rules
 - Only include data explicitly discussed in the conversation
 - For focus_area_updates, only include areas that were actively discussed
+- Every focus_area_update MUST include a dimension from the 8 keys above
+- knowledge_node_slug is optional; use null when no specific vault node applies
 - Set onboarding_complete to true if this was an onboarding conversation and the user shared enough info
 - Be conservative — don't infer things not stated
 - Return ONLY valid JSON, no markdown fences`;
@@ -59,7 +94,7 @@ export async function POST(request: NextRequest) {
     const extractionResponse = await callWithRetry(() =>
       anthropic.messages.create({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 1024,
+        max_tokens: 2048,
         system: EXTRACTION_PROMPT,
         messages: [{ role: "user", content: transcript }],
       })
@@ -141,15 +176,37 @@ export async function POST(request: NextRequest) {
       await supabase.from("user_profiles").update(updates).eq("id", userId);
     }
 
-    // 3. Upsert focus areas
+    // 3. Upsert focus areas — dedup by (user_id, dimension, knowledge_node_slug)
     if (extracted.focus_area_updates && Array.isArray(extracted.focus_area_updates)) {
       for (const update of extracted.focus_area_updates) {
-        const { data: existing } = await supabase
+        // Require a valid dimension. If the LLM emitted something unrecognised, try the label
+        // mapper as a fallback before skipping the update.
+        const rawDim = update.dimension;
+        const dimension = isDimensionKey(rawDim) ? rawDim : dimensionLabelToKey(String(rawDim ?? ""));
+        if (!dimension) {
+          console.warn("Skipping focus area update with unrecognised dimension:", update);
+          continue;
+        }
+
+        // Reject hallucinated slugs — silently coerce to null so they still land in the
+        // (dimension, null) bucket instead of creating a phantom dedup bucket that never merges.
+        const rawSlug =
+          typeof update.knowledge_node_slug === "string" && update.knowledge_node_slug.length > 0
+            ? update.knowledge_node_slug
+            : null;
+        const slug: string | null =
+          rawSlug !== null && (VAULT_SLUGS as readonly string[]).includes(rawSlug) ? rawSlug : null;
+
+        // NULL-safe slug match: use .is() for null, .eq() for a value.
+        const baseQuery = supabase
           .from("focus_areas")
           .select("id, history")
           .eq("user_id", userId)
-          .eq("name", update.name)
-          .single();
+          .eq("dimension", dimension);
+        const { data: existing } = await (slug === null
+          ? baseQuery.is("knowledge_node_slug", null)
+          : baseQuery.eq("knowledge_node_slug", slug)
+        ).maybeSingle();
 
         if (existing) {
           const history = [...((existing.history as Array<{ date: string; note: string }>) ?? [])];
@@ -158,6 +215,7 @@ export async function POST(request: NextRequest) {
           await supabase
             .from("focus_areas")
             .update({
+              name: update.name,
               status: update.status,
               description: update.description,
               history,
@@ -165,9 +223,16 @@ export async function POST(request: NextRequest) {
             })
             .eq("id", existing.id);
         } else {
+          // Known limitation: concurrent save-session calls for the same user can cause
+          // a unique-violation (23505) on idx_focus_areas_dedup here, silently dropping
+          // the second call's focus area update. Acceptable for now since save-session
+          // is user-triggered (no auto-fire); revisit if we add server-side retries.
           await supabase.from("focus_areas").insert({
             user_id: userId,
             name: update.name,
+            dimension,
+            knowledge_node_slug: slug,
+            source: "session_extraction",
             status: update.status ?? "new",
             description: update.description,
             history: [{ date: new Date().toISOString().split("T")[0], note: update.description }],
@@ -176,7 +241,33 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 4. Save drill prescriptions
+    // 4a. Flip followed_up on pending prescriptions matching drills_done
+    if (extracted.drills_done && Array.isArray(extracted.drills_done) && extracted.drills_done.length > 0) {
+      const { data: pending } = await supabase
+        .from("drill_prescriptions")
+        .select("id, drill_name")
+        .eq("user_id", userId)
+        .eq("followed_up", false);
+
+      const pendingList = (pending ?? []) as { id: string; drill_name: string }[];
+      const flipIds = new Set<string>();
+      const reportedDrills = (extracted.drills_done as unknown[]).filter(
+        (d): d is string => typeof d === "string"
+      );
+      for (const reported of reportedDrills) {
+        const matched = matchReportedDrill(reported, pendingList);
+        if (matched) flipIds.add(matched.id);
+      }
+
+      if (flipIds.size > 0) {
+        await supabase
+          .from("drill_prescriptions")
+          .update({ followed_up: true, follow_up_notes: "Auto-flipped from session report" })
+          .in("id", Array.from(flipIds));
+      }
+    }
+
+    // 4b. Save new drill prescriptions from this session
     if (extracted.drills_prescribed && Array.isArray(extracted.drills_prescribed)) {
       for (const drill of extracted.drills_prescribed) {
         await supabase.from("drill_prescriptions").insert({
