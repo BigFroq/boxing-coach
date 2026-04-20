@@ -10,6 +10,15 @@ import type { Suggestion } from "@/components/chat-tab";
 import type { DimensionScores } from "@/data/fighter-profiles";
 import { DIMENSION_LABELS } from "@/data/fighter-profiles";
 
+// Stable non-crypto hash for namespacing anonymous/local storage keys.
+// DJB2 is deterministic across retakes for the same style result.
+function hashProfile(r: { style_name?: string; dimension_scores?: DimensionScores }): string {
+  const s = (r.style_name ?? "") + "|" + JSON.stringify(r.dimension_scores ?? {});
+  let h = 5381;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) + h) ^ s.charCodeAt(i);
+  return (h >>> 0).toString(36);
+}
+
 export interface StyleProfileResult {
   style_name: string;
   description: string;
@@ -100,7 +109,9 @@ function StyleChatSection({ result, physicalContext, experienceLevel, profileId 
   };
 
   // Namespace conversation storage per profile so different profiles don't bleed into each other.
-  const storageKeyOverride = `boxing-coach-chat-style-${profileId ?? "local"}`;
+  // For anonymous/local profiles, hash the archetype + dimension scores so retakes don't
+  // inherit the previous profile's chat history.
+  const storageKeyOverride = `boxing-coach-chat-style-${profileId ?? `local-${hashProfile(result)}`}`;
 
   return (
     <div className="bg-surface border border-border rounded-xl overflow-hidden">

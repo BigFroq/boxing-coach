@@ -76,6 +76,7 @@ export function ChatTab({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const slowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastFailedMessageRef = useRef<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   // Typewriter buffer — server chunks land in targetRef, an interval drains
   // displayedRef toward it ~1 char per tick so text types letter by letter.
@@ -114,8 +115,24 @@ export function ChatTab({
 
   // Persist current conversation to localStorage
   useEffect(() => {
-    if (messages.length > 0) {
-      localStorage.setItem(storageKey, JSON.stringify(messages));
+    const MAX_PERSIST_MESSAGES = 30;
+    const persistable = messages
+      .filter((m) => !m.error)
+      .slice(-MAX_PERSIST_MESSAGES);
+    if (persistable.length === 0) return;
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(persistable));
+    } catch (e) {
+      if ((e as { name?: string }).name === "QuotaExceededError") {
+        try {
+          const histKey = `${storageKey}-history`;
+          const hist = JSON.parse(localStorage.getItem(histKey) ?? "[]") as unknown[];
+          localStorage.setItem(histKey, JSON.stringify(hist.slice(-5)));
+          localStorage.setItem(storageKey, JSON.stringify(persistable));
+        } catch {
+          console.warn("chat persist permanently failed; storage full");
+        }
+      }
     }
   }, [messages, storageKey]);
 
@@ -177,6 +194,7 @@ export function ChatTab({
   useEffect(() => {
     return () => {
       if (slowTimerRef.current) clearTimeout(slowTimerRef.current);
+      abortRef.current?.abort();
       stopTypewriter();
     };
   }, [stopTypewriter]);
@@ -196,12 +214,19 @@ export function ChatTab({
       setSlowWarning(true);
     }, 10000);
 
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
-          messages: newMessages.map((m) => ({ role: m.role, content: m.content })),
+          messages: newMessages
+            .filter((m) => !m.error)
+            .map((m) => ({ role: m.role, content: m.content })),
           context: systemContext,
           thinkLonger,
           userId,
@@ -301,6 +326,11 @@ export function ChatTab({
       streamDoneRef.current = true;
       lastFailedMessageRef.current = null;
     } catch (err) {
+      if ((err as Error).name === "AbortError") {
+        setLoading(false);
+        setStreaming(false);
+        return;
+      }
       if (slowTimerRef.current) {
         clearTimeout(slowTimerRef.current);
         slowTimerRef.current = null;

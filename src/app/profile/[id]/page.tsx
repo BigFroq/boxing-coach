@@ -99,7 +99,12 @@ export default async function ProfilePage({ params }: PageProps) {
         <ResultsProfile
           result={result}
           physicalContext={physicalContext}
-          experienceLevel="advanced"
+          experienceLevel={
+            ((profile.experience_level as string) ?? "beginner") as
+              | "beginner"
+              | "intermediate"
+              | "advanced"
+          }
           onRetake={() => {}}
           profileId={id}
         />
