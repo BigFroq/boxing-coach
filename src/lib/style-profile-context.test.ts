@@ -34,9 +34,9 @@ describe("formatStyleProfileBlock", () => {
     expect(block).toContain("Positional Readiness: 85");
     expect(block).toContain("Range Control: 80");
     expect(block).toContain("Defensive Integration: 90");
-    expect(block).toContain("Ring IQ: 88");
-    expect(block).toContain("Output / Pressure: 55");
-    expect(block).toContain("Deception / Setup: 78");
+    expect(block).toContain("Ring IQ & Adaptation: 88");
+    expect(block).toContain("Output & Pressure: 55");
+    expect(block).toContain("Deception & Setup: 78");
     expect(block).toContain("Killer Instinct: 60");
     expect(block).toContain("Top matched fighter: Floyd Mayweather Jr.");
     expect(block).toContain("positionalReadiness, defensiveIntegration");

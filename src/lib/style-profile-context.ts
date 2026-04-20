@@ -1,20 +1,5 @@
 import { DIMENSION_KEYS } from "./dimensions";
-
-/** Prompt-facing labels for the 8 style dimensions.
- * These intentionally differ from DIMENSION_LABELS in fighter-profiles.ts which
- * uses "Ring IQ & Adaptation", "Output & Pressure", "Deception & Setup" for UI display.
- * The prompt-facing labels use "/" separators for brevity and readability in system prompts.
- */
-const PROMPT_LABELS: Record<string, string> = {
-  powerMechanics: "Power Mechanics",
-  positionalReadiness: "Positional Readiness",
-  rangeControl: "Range Control",
-  defensiveIntegration: "Defensive Integration",
-  ringIQ: "Ring IQ",
-  outputPressure: "Output / Pressure",
-  deceptionSetup: "Deception / Setup",
-  killerInstinct: "Killer Instinct",
-};
+import { DIMENSION_LABELS } from "@/data/fighter-profiles";
 
 export interface StyleProfileInput {
   style_name?: string;
@@ -43,7 +28,7 @@ export function formatStyleProfileBlock(profile: StyleProfileInput | null): stri
 
   lines.push("Dimension scores (0-100):");
   for (const key of DIMENSION_KEYS) {
-    const label = PROMPT_LABELS[key] ?? key;
+    const label = DIMENSION_LABELS[key as keyof typeof DIMENSION_LABELS] ?? key;
     const value = typeof scores[key] === "number" ? scores[key] : 0;
     lines.push(`- ${label}: ${value}`);
   }
