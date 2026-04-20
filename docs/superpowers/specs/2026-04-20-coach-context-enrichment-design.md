@@ -139,32 +139,68 @@ If `styleProfile` is null, the entire `## Style Profile` block is omitted, not p
 
 ### Piece 3 — Neglected focus areas
 
-**File:** `src/app/api/coach/session/route.ts`.
+**File:** `src/app/api/coach/session/route.ts` (read path), `src/app/api/coach/save-session/route.ts` (write path).
+
+**Why not name-matching:** "head movement" and "defensive head movement" are two strings for the same focus area. Matching `summary.focus_areas_worked` (free-text names from the LLM extraction) against `focus_areas.name` (also free-text, may have drifted between sessions) will silently miss real overlap and silently collide on different concepts. Phase 1 already shipped the canonical key: `(dimension, knowledge_node_slug || '')` — the same tuple the unique index dedups on. Piece 3 uses that key.
+
+**Schema delta:** Extend the session summary the save-session route writes. Add a parallel field of canonical keys derived from the dimension + slug of every `focus_area_update` the extraction emitted.
+
+In `save-session/route.ts`, where `training_sessions.summary` is constructed, add:
+
+```ts
+summary: {
+  breakthroughs: extracted.breakthroughs ?? [],
+  struggles: extracted.struggles ?? [],
+  focus_areas_worked: extracted.focus_areas_worked ?? [],        // kept for display/history
+  focus_areas_worked_keys: (extracted.focus_area_updates ?? [])   // NEW canonical keys
+    .map((u: { dimension?: string; knowledge_node_slug?: string | null }) => {
+      const dim = isDimensionKey(u.dimension) ? u.dimension : dimensionLabelToKey(String(u.dimension ?? ""));
+      if (!dim) return null;
+      const slug = typeof u.knowledge_node_slug === "string" && (VAULT_SLUGS as readonly string[]).includes(u.knowledge_node_slug) ? u.knowledge_node_slug : "";
+      return `${dim}::${slug}`;
+    })
+    .filter((k: string | null): k is string => k !== null),
+  drills_done: extracted.drills_done ?? [],
+},
+```
+
+No extraction-prompt change needed — the dimension + slug is already emitted per `focus_area_update` in Phase 1. We just persist the derived key into the session summary so future sessions can compare against it.
 
 **Computation (pure function, no new DB call):** `loadUserContext` already fetches:
-- `focusAreas` where `status IN ('new', 'active', 'improving')`
-- `recentSessions` (last 3) with `summary.focus_areas_worked: string[]`
+- `focusAreas` where `status IN ('new', 'active', 'improving')`, now including `dimension` and `knowledge_node_slug`
+- `recentSessions` (last 3) with the new `summary.focus_areas_worked_keys: string[]`
 
 Derive the neglected set:
 
 ```ts
+function focusAreaKey(dim: string | null, slug: string | null): string | null {
+  if (!dim) return null;
+  return `${dim}::${slug ?? ""}`;
+}
+
 function computeNeglected(
-  focusAreas: FocusArea[],
-  recentSessions: RecentSession[]
+  focusAreas: Array<{ name: string; dimension: string | null; knowledge_node_slug: string | null; status: string }>,
+  recentSessions: Array<{ summary?: { focus_areas_worked_keys?: string[] } }>
 ): string[] {
-  const workedNames = new Set<string>();
+  const workedKeys = new Set<string>();
   for (const s of recentSessions) {
-    const worked = (s.summary?.focus_areas_worked ?? []) as string[];
-    for (const name of worked) workedNames.add(name.toLowerCase());
+    for (const k of s.summary?.focus_areas_worked_keys ?? []) {
+      workedKeys.add(k);
+    }
   }
   return focusAreas
-    .filter((f) => f.status === "new" || f.status === "active")
-    .filter((f) => !workedNames.has(f.name.toLowerCase()))
+    .filter((f) => f.dimension !== null && (f.status === "new" || f.status === "active"))
+    .filter((f) => {
+      const key = focusAreaKey(f.dimension, f.knowledge_node_slug);
+      return key !== null && !workedKeys.has(key);
+    })
     .map((f) => f.name);
 }
 ```
 
-`improving` areas are excluded — they're progressing, not being avoided.
+`improving` areas are excluded — they're progressing, not being avoided. Focus areas with `dimension=NULL` (legacy pre-Phase-1 rows) are excluded from the calculation entirely — they'll be superseded naturally as the user touches them again and the extraction emits a dimension.
+
+**Legacy-session fallback:** Training sessions saved before this change have `summary.focus_areas_worked_keys` missing. Those sessions simply don't contribute to `workedKeys` — effectively treating them as if no focus work was recorded. This is acceptable degradation: after ~3 new sessions the `recentSessions` window rolls forward and only keyed sessions remain. No retroactive backfill needed.
 
 **Prompt injection:** Appended to the existing `## This Fighter's Profile` block only when non-empty:
 
@@ -234,12 +270,19 @@ Session finish (user clicks "Finish & save")
 
 Vitest unit tests (no new framework):
 
+- `focusAreaKey`:
+  - `(null, anything)` → null.
+  - `("powerMechanics", null)` → `"powerMechanics::"`.
+  - `("powerMechanics", "hip-rotation")` → `"powerMechanics::hip-rotation"`.
+
 - `computeNeglected`:
   - Empty focus areas → `[]`.
-  - Focus area worked in last 3 sessions → not neglected.
+  - Focus area whose `(dimension, slug)` key appears in any of the last 3 session `focus_areas_worked_keys` → not neglected.
+  - Focus area with `dimension=null` (legacy) → excluded from the result regardless of status.
   - Focus area with `status='improving'` → not neglected (excluded).
-  - Focus area with `status='active'`, not in any recent session → neglected.
-  - Case-insensitive name comparison.
+  - Focus area with `status='active'` and no matching key in any recent session → neglected.
+  - Recent session missing `focus_areas_worked_keys` (legacy session) → contributes nothing to the worked set (no false positives, but also no match).
+  - Same dimension, different slug → counted as distinct focus areas (e.g. `powerMechanics::hip-rotation` worked does NOT cover `powerMechanics::` neglected).
 
 - Drill reconciliation helper (extract to pure function):
   - Valid prescription_id in pending list → update call made.
