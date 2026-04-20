@@ -262,7 +262,12 @@ export async function POST(request: NextRequest) {
       if (flipIds.size > 0) {
         await supabase
           .from("drill_prescriptions")
-          .update({ followed_up: true, follow_up_notes: "Auto-flipped from session report" })
+          .update({
+            followed_up: true,
+            follow_up_notes: "Auto-flipped from session report",
+            followed_up_at: new Date().toISOString(),
+            followed_up_session_id: session.id,
+          })
           .in("id", Array.from(flipIds));
       }
     }
