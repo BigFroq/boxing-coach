@@ -57,6 +57,12 @@ Always pick the single best-fit dimension:
 - deceptionSetup — feints, combinations, misdirection
 - killerInstinct — finishing, closing the show when they're hurt
 
+Disambiguation rules:
+- positionalReadiness is about STATIC qualities — stance shape, base width, readiness posture.
+- defensiveIntegration is about DYNAMIC defensive actions — slips, rolls, blocks, parries — especially when integrated with offence.
+- If the discussion is about moving the head WHILE punching, use defensiveIntegration.
+- If the discussion is about how the fighter stands BEFORE throwing, use positionalReadiness.
+
 ## Knowledge node slugs (optional — only if the focus area maps to a specific vault node)
 
 If the focus area is about a specific technique/drill/concept from the list below, include its slug. Otherwise set knowledge_node_slug to null.
@@ -88,7 +94,7 @@ export async function POST(request: NextRequest) {
     const extractionResponse = await callWithRetry(() =>
       anthropic.messages.create({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 1024,
+        max_tokens: 2048,
         system: EXTRACTION_PROMPT,
         messages: [{ role: "user", content: transcript }],
       })
@@ -213,6 +219,10 @@ export async function POST(request: NextRequest) {
             })
             .eq("id", existing.id);
         } else {
+          // Known limitation: concurrent save-session calls for the same user can cause
+          // a unique-violation (23505) on idx_focus_areas_dedup here, silently dropping
+          // the second call's focus area update. Acceptable for now since save-session
+          // is user-triggered (no auto-fire); revisit if we add server-side retries.
           await supabase.from("focus_areas").insert({
             user_id: userId,
             name: update.name,
@@ -237,7 +247,10 @@ export async function POST(request: NextRequest) {
 
       const pendingList = (pending ?? []) as { id: string; drill_name: string }[];
       const flipIds = new Set<string>();
-      for (const reported of extracted.drills_done as string[]) {
+      const reportedDrills = (extracted.drills_done as unknown[]).filter(
+        (d): d is string => typeof d === "string"
+      );
+      for (const reported of reportedDrills) {
         const matched = matchReportedDrill(reported, pendingList);
         if (matched) flipIds.add(matched.id);
       }
