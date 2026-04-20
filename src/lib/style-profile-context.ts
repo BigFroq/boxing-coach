@@ -28,7 +28,7 @@ export function formatStyleProfileBlock(profile: StyleProfileInput | null): stri
 
   lines.push("Dimension scores (0-100):");
   for (const key of DIMENSION_KEYS) {
-    const label = DIMENSION_LABELS[key as keyof typeof DIMENSION_LABELS] ?? key;
+    const label = DIMENSION_LABELS[key];
     const value = typeof scores[key] === "number" ? scores[key] : 0;
     lines.push(`- ${label}: ${value}`);
   }
