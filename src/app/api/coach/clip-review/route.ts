@@ -1,5 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
+import { enforceRateLimit } from "@/lib/rate-limit";
+import { clipReviewRequestSchema } from "@/lib/validation";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -56,15 +58,18 @@ Be specific about what you SEE in the frames. Reference the frame sequence when 
 
 export async function POST(request: NextRequest) {
   try {
-    const { frames, filename } = await request.json();
-
-    if (!frames || !Array.isArray(frames) || frames.length === 0) {
-      return NextResponse.json({ error: "No frames provided" }, { status: 400 });
+    const raw = await request.json();
+    const parsed = clipReviewRequestSchema.safeParse(raw);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid request", issues: parsed.error.issues },
+        { status: 400 }
+      );
     }
+    const { frames, filename, userId } = parsed.data;
 
-    if (frames.length > 60) {
-      return NextResponse.json({ error: "Too many frames (max 60)" }, { status: 400 });
-    }
+    const limited = await enforceRateLimit(request, userId);
+    if (limited) return limited;
 
     const content: Anthropic.Messages.ContentBlockParam[] = [
       {

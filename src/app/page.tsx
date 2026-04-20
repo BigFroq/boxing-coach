@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   MessageSquare,
   ClipboardList,
@@ -41,6 +41,15 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState<TabId>("technique");
   const [coachQuery, setCoachQuery] = useState<string | undefined>();
   const userId = getAnonymousUserId();
+
+  useEffect(() => {
+    // Once the technique tab mounts ChatTab with the pending query, clear it
+    // so navigating away and back does not re-fire the request.
+    if (activeTab === "technique" && coachQuery) {
+      const id = setTimeout(() => setCoachQuery(undefined), 0);
+      return () => clearTimeout(id);
+    }
+  }, [activeTab, coachQuery]);
 
   return (
     <div className="flex h-full flex-col">
@@ -88,6 +97,7 @@ function AppContent() {
               { text: "How should I use hip rotation for a left hook?", Icon: RotateCw },
             ]}
             initialQuery={coachQuery}
+            userId={userId}
           />
         )}
         {activeTab === "drills" && (
@@ -103,6 +113,7 @@ function AppContent() {
               { text: "How do I practice the 4 phases of torque?", Icon: Timer },
               { text: "What's the right way to throw a medicine ball for punching power?", Icon: Target },
             ]}
+            userId={userId}
           />
         )}
         {activeTab === "coach" && <CoachTab userId={userId} />}

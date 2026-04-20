@@ -49,7 +49,7 @@ export function CoachTab({ userId }: CoachTabProps) {
 
       <div className="flex-1 overflow-hidden">
         {view === "session" && <CoachSession userId={userId} />}
-        {view === "clip" && <CoachClipReview />}
+        {view === "clip" && <CoachClipReview userId={userId} />}
         {view === "progress" && <CoachProgress userId={userId} />}
       </div>
     </div>

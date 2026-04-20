@@ -1,19 +1,11 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback, type ComponentType } from "react";
-import { Send, Loader2, ExternalLink, BookOpen, RefreshCw, History, Sparkles, ChevronDown } from "lucide-react";
-
-interface SourceCitation {
-  type: "video" | "course";
-  title: string;
-  url?: string;
-  file?: string;
-}
+import { Send, Loader2, RefreshCw, History, Sparkles, ChevronDown } from "lucide-react";
 
 interface Message {
   role: "user" | "assistant";
   content: string;
-  citations?: SourceCitation[];
   error?: boolean;
 }
 
@@ -36,31 +28,8 @@ interface ChatTabProps {
   extraContext?: Record<string, unknown>;
   /** Storage namespace override so embedded chats don't collide with tabbed ones. */
   storageKeyOverride?: string;
-}
-
-function CitationCards({ citations }: { citations: SourceCitation[] }) {
-  if (citations.length === 0) return null;
-
-  return (
-    <div className="flex gap-2 mt-3 flex-wrap">
-      {citations.map((c, i) => (
-        <a
-          key={i}
-          href={c.url ?? "#"}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-hover border border-border text-xs hover:border-accent transition-colors max-w-[180px] sm:max-w-[250px]"
-        >
-          {c.type === "video" ? (
-            <ExternalLink size={12} className="text-accent shrink-0" />
-          ) : (
-            <BookOpen size={12} className="text-accent shrink-0" />
-          )}
-          <span className="truncate">{c.title}</span>
-        </a>
-      ))}
-    </div>
-  );
+  /** Anonymous user id, used as the rate-limit key server-side. */
+  userId?: string;
 }
 
 interface SavedConversation {
@@ -91,6 +60,7 @@ export function ChatTab({
   heroSubtitle,
   extraContext,
   storageKeyOverride,
+  userId,
 }: ChatTabProps) {
   const storageKey = storageKeyOverride ?? `boxing-coach-chat-${systemContext}`;
   const thinkLongerKey = `${storageKey}-think-longer`;
@@ -106,6 +76,20 @@ export function ChatTab({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const slowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastFailedMessageRef = useRef<string | null>(null);
+
+  // Typewriter buffer — server chunks land in targetRef, an interval drains
+  // displayedRef toward it ~1 char per tick so text types letter by letter.
+  const targetRef = useRef("");
+  const displayedRef = useRef("");
+  const streamDoneRef = useRef(false);
+  const typewriterIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stopTypewriter = useCallback(() => {
+    if (typewriterIntervalRef.current) {
+      clearInterval(typewriterIntervalRef.current);
+      typewriterIntervalRef.current = null;
+    }
+  }, []);
 
   // Load current conversation, history, and toggle state on mount
   useEffect(() => {
@@ -193,8 +177,9 @@ export function ChatTab({
   useEffect(() => {
     return () => {
       if (slowTimerRef.current) clearTimeout(slowTimerRef.current);
+      stopTypewriter();
     };
-  }, []);
+  }, [stopTypewriter]);
 
   const sendMessage = useCallback(async (text: string) => {
     if (!text.trim() || loading || streaming) return;
@@ -219,6 +204,7 @@ export function ChatTab({
           messages: newMessages.map((m) => ({ role: m.role, content: m.content })),
           context: systemContext,
           thinkLonger,
+          userId,
           ...(extraContext ?? {}),
         }),
       });
@@ -236,9 +222,39 @@ export function ChatTab({
       }
       setSlowWarning(false);
 
+      // Reset typewriter for this message.
+      targetRef.current = "";
+      displayedRef.current = "";
+      streamDoneRef.current = false;
+      stopTypewriter();
+
+      typewriterIntervalRef.current = setInterval(() => {
+        const behind = targetRef.current.length - displayedRef.current.length;
+        if (behind <= 0) {
+          if (streamDoneRef.current) {
+            stopTypewriter();
+            setStreaming(false);
+            inputRef.current?.focus();
+          }
+          return;
+        }
+        // Adaptive pacing — 1 char per tick feels like typing; speed up when the
+        // buffer gets far ahead so we never lag noticeably behind the stream.
+        const step = behind > 300 ? 6 : behind > 100 ? 3 : behind > 25 ? 2 : 1;
+        const nextLen = Math.min(displayedRef.current.length + step, targetRef.current.length);
+        displayedRef.current = targetRef.current.slice(0, nextLen);
+        const snapshot = displayedRef.current;
+        setMessages((prev) => {
+          const updated = [...prev];
+          if (updated[assistantIndex]) {
+            updated[assistantIndex] = { ...updated[assistantIndex], content: snapshot };
+          }
+          return updated;
+        });
+      }, 18);
+
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
-      let accumulated = "";
       let buffer = "";
 
       while (true) {
@@ -258,26 +274,11 @@ export function ChatTab({
           try {
             const event = JSON.parse(jsonStr);
             if (event.type === "text") {
-              accumulated += event.content;
-              setMessages((prev) => {
-                const updated = [...prev];
-                updated[assistantIndex] = {
-                  ...updated[assistantIndex],
-                  content: accumulated,
-                };
-                return updated;
-              });
+              targetRef.current += event.content;
             } else if (event.type === "done") {
-              setMessages((prev) => {
-                const updated = [...prev];
-                updated[assistantIndex] = {
-                  ...updated[assistantIndex],
-                  content: accumulated,
-                  citations: event.citations ?? [],
-                };
-                return updated;
-              });
+              streamDoneRef.current = true;
             } else if (event.type === "error") {
+              stopTypewriter();
               setMessages((prev) => {
                 const updated = [...prev];
                 updated[assistantIndex] = {
@@ -287,6 +288,7 @@ export function ChatTab({
                 };
                 return updated;
               });
+              setStreaming(false);
             }
           } catch {
             // Skip malformed JSON
@@ -294,6 +296,9 @@ export function ChatTab({
         }
       }
 
+      // Belt-and-suspenders: if the server closed without a "done" event,
+      // still let the typewriter finish draining the buffer.
+      streamDoneRef.current = true;
       lastFailedMessageRef.current = null;
     } catch (err) {
       if (slowTimerRef.current) {
@@ -301,6 +306,7 @@ export function ChatTab({
         slowTimerRef.current = null;
       }
       setSlowWarning(false);
+      stopTypewriter();
 
       const isNetworkError = err instanceof TypeError && err.message === "Failed to fetch";
       const errorContent = isNetworkError
@@ -311,12 +317,11 @@ export function ChatTab({
         ...newMessages,
         { role: "assistant", content: errorContent, error: true },
       ]);
-    } finally {
       setLoading(false);
       setStreaming(false);
       inputRef.current?.focus();
     }
-  }, [messages, loading, streaming, systemContext, thinkLonger, extraContext]);
+  }, [messages, loading, streaming, systemContext, thinkLonger, extraContext, userId, stopTypewriter]);
 
   const initialQueryFiredRef = useRef(false);
   useEffect(() => {
@@ -440,9 +445,6 @@ export function ChatTab({
                     >
                       <div className="whitespace-pre-wrap">{m.content}</div>
                     </div>
-                    {m.role === "assistant" && m.citations && (
-                      <CitationCards citations={m.citations} />
-                    )}
                     {m.role === "assistant" && m.error && (
                       <button
                         onClick={handleRetry}

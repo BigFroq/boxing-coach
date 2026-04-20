@@ -2,6 +2,18 @@ import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest } from "next/server";
 import { retrieveContext, formatChunksForPrompt, extractCitations } from "@/lib/graph-rag";
 import { createServerClient } from "@/lib/supabase";
+import { enforceRateLimit } from "@/lib/rate-limit";
+import { chatRequestSchema } from "@/lib/validation";
+
+type AnthropicMsg = { role: "user" | "assistant"; content: string };
+
+export function clampHistoryForAnthropic(messages: AnthropicMsg[]): AnthropicMsg[] {
+  let recent = messages.slice(-10);
+  if (recent.length > 0 && recent[0].role !== "user") {
+    recent = recent.slice(1);
+  }
+  return recent;
+}
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -119,7 +131,7 @@ interface StyleProfilePayload {
 }
 
 function formatStyleProfile(p: StyleProfilePayload): string {
-  const lines: string[] = ["\n\n## This Fighter's Profile (YOU have full access — reference it freely)\n"];
+  const lines: string[] = ["\n\n## This Fighter's Profile (YOU have full access — reference it freely)\n<fighter_profile>"];
   if (p.style_name) lines.push(`Style name: ${p.style_name}`);
   if (p.description) lines.push(`Summary: ${p.description}`);
   if (p.experience_level) lines.push(`Experience level: ${p.experience_level}`);
@@ -144,6 +156,7 @@ function formatStyleProfile(p: StyleProfilePayload): string {
   if (p.punches_to_master?.length) lines.push(`Punches to master: ${p.punches_to_master.join(", ")}`);
   if (p.stance_recommendation) lines.push(`Stance: ${p.stance_recommendation}`);
   if (p.training_priorities?.length) lines.push(`Training priorities: ${p.training_priorities.join("; ")}`);
+  lines.push("</fighter_profile>");
   lines.push(
     "\nWhen they ask about 'my style', 'my profile', or reference themselves, USE these details. Don't ask them to repeat themselves."
   );
@@ -152,14 +165,18 @@ function formatStyleProfile(p: StyleProfilePayload): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const { messages, context, thinkLonger, styleProfile } = await request.json();
-
-    if (!messages || !Array.isArray(messages)) {
-      return new Response(JSON.stringify({ error: "Messages required" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+    const raw = await request.json();
+    const parsed = chatRequestSchema.safeParse(raw);
+    if (!parsed.success) {
+      return new Response(
+        JSON.stringify({ error: "Invalid request", issues: parsed.error.issues }),
+        { status: 400, headers: { "Content-Type": "application/json" } }
+      );
     }
+    const { messages, context, thinkLonger, styleProfile, userId } = parsed.data;
+
+    const limited = await enforceRateLimit(request, userId);
+    if (limited) return limited;
 
     const lastUserMessage = [...messages].reverse().find((m: { role: string }) => m.role === "user");
     if (!lastUserMessage) {
@@ -210,10 +227,12 @@ export async function POST(request: NextRequest) {
       max_tokens: maxTokens,
       system: SYSTEM_PROMPT + contextText + contextNote + styleNote + thinkLongerNote,
       messages: [
-        ...messages.slice(-10).map((m: { role: string; content: string }) => ({
-          role: m.role as "user" | "assistant",
-          content: m.content,
-        })),
+        ...clampHistoryForAnthropic(
+          messages.map((m: { role: string; content: string }) => ({
+            role: m.role as "user" | "assistant",
+            content: m.content,
+          }))
+        ),
         { role: "assistant" as const, content: PREFILL },
       ],
     });

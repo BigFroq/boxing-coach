@@ -10,7 +10,11 @@ interface AnalysisResult {
   improvements: string[];
 }
 
-export function CoachClipReview() {
+interface CoachClipReviewProps {
+  userId?: string;
+}
+
+export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -92,12 +96,24 @@ export function CoachClipReview() {
     const ctx = canvas.getContext("2d")!;
 
     const frames: string[] = [];
+    const SEEK_TIMEOUT_MS = 500;
     for (let i = 0; i < totalFrames; i++) {
       const time = i * interval;
-      video.currentTime = time;
-      await new Promise<void>((r) => {
-        video.onseeked = () => r();
-      });
+      const alreadyThere = Math.abs(video.currentTime - time) < 0.01;
+      if (!alreadyThere) {
+        await new Promise<void>((resolve) => {
+          let done = false;
+          const onSeeked = () => {
+            if (done) return;
+            done = true;
+            video.removeEventListener("seeked", onSeeked);
+            resolve();
+          };
+          video.addEventListener("seeked", onSeeked, { once: true });
+          video.currentTime = time;
+          setTimeout(() => onSeeked(), SEEK_TIMEOUT_MS);
+        });
+      }
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
       const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
       frames.push(dataUrl.split(",")[1]);
@@ -122,7 +138,7 @@ export function CoachClipReview() {
       const response = await fetch("/api/coach/clip-review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ frames, filename: videoFile.name }),
+        body: JSON.stringify({ frames, filename: videoFile.name, userId }),
       });
 
       if (!response.ok) {
@@ -138,7 +154,7 @@ export function CoachClipReview() {
       setAnalyzing(false);
       setStatus("");
     }
-  }, [videoFile, extractFrames]);
+  }, [videoFile, extractFrames, userId]);
 
   // Results view
   if (analysis) {
