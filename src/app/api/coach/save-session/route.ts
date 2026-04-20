@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import { VAULT_SLUGS, dimensionLabelToKey, isDimensionKey } from "@/lib/dimensions";
 import { matchReportedDrill } from "@/lib/drill-matching";
+import { deriveFocusAreaKeys } from "@/lib/focus-area-keys";
 
 async function callWithRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
   for (let i = 0; i < maxRetries; i++) {
@@ -130,6 +131,7 @@ export async function POST(request: NextRequest) {
           breakthroughs: extracted.breakthroughs ?? [],
           struggles: extracted.struggles ?? [],
           focus_areas_worked: extracted.focus_areas_worked ?? [],
+          focus_areas_worked_keys: deriveFocusAreaKeys(extracted.focus_area_updates),
           drills_done: extracted.drills_done ?? [],
         },
         prescriptions_given: extracted.drills_prescribed ?? [],
