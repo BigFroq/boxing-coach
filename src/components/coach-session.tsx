@@ -33,10 +33,27 @@ export function CoachSession({ userId }: CoachSessionProps) {
       setStreaming(false);
 
       try {
+        let styleProfile: unknown = null;
+        if (typeof window !== "undefined") {
+          try {
+            const raw = window.localStorage.getItem("boxing-coach-style-profile");
+            if (raw) {
+              const parsed = JSON.parse(raw) as { result?: unknown };
+              styleProfile = parsed?.result ?? null;
+            }
+          } catch {
+            // malformed localStorage — server will treat missing as null
+          }
+        }
+
         const response = await fetch("/api/coach/session", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, messages: allMessages }),
+          body: JSON.stringify({
+            userId,
+            messages: allMessages,
+            ...(styleProfile ? { styleProfile } : {}),
+          }),
         });
 
         if (!response.ok || !response.body) {

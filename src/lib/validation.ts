@@ -17,7 +17,13 @@ export const styleProfileSchema = z
       .max(10)
       .optional(),
     matched_fighters: z
-      .array(z.object({ name: z.string().max(100) }))
+      .array(
+        z.object({
+          name: z.string().max(100),
+          slug: z.string().max(100).optional(),
+          overlappingDimensions: z.array(z.string().max(50)).max(8).optional(),
+        })
+      )
       .max(10)
       .optional(),
     punches_to_master: z.array(z.string().max(100)).max(20).optional(),
