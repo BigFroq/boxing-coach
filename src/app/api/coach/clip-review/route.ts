@@ -71,10 +71,12 @@ export async function POST(request: NextRequest) {
     const limited = await enforceRateLimit(request, userId);
     if (limited) return limited;
 
+    const safeName = (filename ?? "").replace(/[^\w\s\-.]/g, "").slice(0, 100) || "clip";
+
     const content: Anthropic.Messages.ContentBlockParam[] = [
       {
         type: "text",
-        text: `Analyze these ${frames.length} sequential frames from a short boxing clip (${filename}). The frames are at 5fps — closely spaced so you can see movement progression. Analyze the technique using the 4-phase framework.`,
+        text: `Analyze these ${frames.length} sequential frames from a short boxing clip (${safeName}). The frames are at 5fps — closely spaced so you can see movement progression. Analyze the technique using the 4-phase framework.`,
       },
       ...frames.map(
         (frame: string) =>

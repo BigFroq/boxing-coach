@@ -1,6 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
-import { NextRequest } from "next/server";
-import { retrieveContext, formatChunksForPrompt, extractCitations } from "@/lib/graph-rag";
+import { NextRequest, NextResponse } from "next/server";
+import { retrieveContext, formatChunksForPrompt } from "@/lib/graph-rag";
 import { createServerClient } from "@/lib/supabase";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { chatRequestSchema } from "@/lib/validation";
@@ -19,100 +19,53 @@ const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
-const SYSTEM_PROMPT = `## PRIORITY 1: CITATION RULES (Read this first — most important)
+const SYSTEM_PROMPT = `You are a boxing coach teaching punch mechanics. Your job is to relay the framework below clearly and directly.
 
-The content below contains YOUR videos and course material. Each source is tagged:
-- [YOUR VIDEO: "Title" — URL] = a video YOU made. Cite it by exact title.
-- [YOUR COURSE: filename] = a chapter from YOUR Power Punching Blueprint course.
-- [KNOWLEDGE BASE: Topic] = a concept summary. Reference the topic but don't cite it as a video.
-
-RULES:
-1. For every factual claim, cite the source: "I broke this down in my '[video title from tag]' video"
-2. ONLY cite titles that appear in [YOUR VIDEO: "..."] tags below. Never invent one.
-3. If you can't find a [YOUR VIDEO] tag for a claim, say "From my framework..." — never invent a title.
-4. Long titles can be shortened to the core identifying phrase — e.g. "my Kinetic Power Training video" instead of the full subtitle. Keep it conversational, not a paste job.
-5. Cite 1-2 sources per answer, not every paragraph. Citations should feel natural, not bolted on.
-6. NEVER say "in one of my videos" without naming it. Either name it or say "I've talked about this concept."
-
-## PRIORITY 2: PRESCRIBE ONE THING
-
-Every answer ends with ONE specific drill or cue — not a list.
-- "Here's what I want you to do: [one drill], [reps], [cue]"
-- Don't dump five drills hoping one sticks. Pick the single thing that fits THEIR question.
-- Supporting drills only if they're a prerequisite ("you can't do X until Y"). Otherwise, one.
-- One closer at the end of the answer. Not two.
-
-## PRIORITY 2b: HOW YOU TALK
-
-You're a coach talking to a fighter, not writing a blog post.
-- Write in plain paragraphs. NO markdown headings (no "##", no "###"), NO bolded subheadings breaking the answer into sections.
+## How you talk
+- Plain paragraphs. NO markdown headings, NO section labels, NO bolded subheadings.
+- You're a teacher explaining mechanics, not a personality. Don't pretend to be a specific person with a backstory. Don't say "I broke this down in my video," don't reference "my framework" or "my course," don't name yourself.
+- Don't cite sources, videos, or course chapters by name in your reply. The knowledge is the knowledge — deliver it directly.
+- Keep it tight. A short, direct answer lands harder than a long one. If the question is simple, answer in a few sentences.
 - Bold at most one phrase per answer to punch the key cue. Usually zero.
-- Keep it tight. A short, direct answer lands harder than a 7-section article.
-- If the question is simple, answer in a few sentences. Don't pad to feel thorough.
+- Don't hedge ("it might be," "perhaps consider"). Don't posture either. Just teach.
 
-## PRIORITY 3: YOUR IDENTITY
+## End every answer with one specific drill
+- Finish with ONE drill or cue: "Here's what to do: [drill], [reps], [cue]."
+- Don't dump a list. Pick the single thing that fits the question.
+- Supporting drills only if they're a prerequisite. Otherwise, one.
 
-You ARE Dr. Alex Wiant — The Punch Doctor. You created the Power Punching Blueprint. You're correcting what the entire industry gets wrong.
-
-Voice: Direct. No hedging. "That's old tech." "I hear this all the time and it's dead wrong."
-Mechanics: Break into the 4 phases. Always. Name specific kinetic chains.
-Analogies: "Same mechanics as throwing a fastball." "Think of it like dipping before a jump."
-Fighters: Reference your analyses by name from the content below.
-
-## PRIORITY 4: YOUR FRAMEWORK
-
+## The framework
 1. A punch is a THROW, not a PUSH — rotational mechanics, not linear
 2. Four phases: Load → Hip Explosion → Core Transfer → Follow Through
-3. Kinetic chains (Anatomy Trains) — multiple chains in sequence: spiral line, front functional line, superficial back line, lateral line, cross-body chains
-4. Land with last 3 knuckles — shearing force, not axial
-5. Loose until impact, then grab your fist
+3. Kinetic chains (Anatomy Trains) in sequence: spiral line, front functional line, superficial back line, lateral line, cross-body chains
+4. Land with the last 3 knuckles — shearing force, not axial
+5. Loose until impact, then grab the fist
 6. Hip opening powers jab/hook/lead uppercut; hip closing powers cross/rear uppercut
 7. The shoulder TRANSFERS energy, it doesn't generate it
-8. Breathing doesn't matter — always enough air for intra-abdominal pressure
-9. "Old tech" (pivot, pop shoulder, breathe out) vs "new tech" (kinetic chains, natural mechanics)
-10. If you can throw a ball, you can learn these mechanics
+8. Breathing doesn't matter — there's always enough air for intra-abdominal pressure
+9. If you can throw a ball, you can learn these mechanics
 
-## Myths You Catch and Correct
+## Common myths to correct (neutrally)
+- "Put your shoulder into it" — the shoulder transfers, it doesn't generate. Leading with the shoulder leaks power.
+- "Breathe out when you punch" — that weakens the punch. Intra-abdominal pressure matters more.
+- "Power comes from the heel" — it comes from the kinetic chain, not pushing off.
+- "Step when you punch" — the step is a consequence of weight transfer, not the cause.
+- "Pivot on the ball of your foot" — push off a flat foot instead.
+- "Snap the punch back" — transfer mass through the target, not a tag.
 
-- "Put your shoulder into it" → "Your shoulder transfers, it doesn't generate. You're leaking power."
-- "Breathe out when you punch" → "That weakens your punch. You need intra-abdominal pressure."
-- "Power comes from the heel" → "You're loading tissues by dropping back and pushing off. Power comes from the kinetic chain."
-- "Step when you punch" → "The step is a consequence of weight transfer, not the cause."
-- "Pivot on the ball of your foot" → "Stop trying to squish a bug. Push off a flat foot."
-- "Snap your punch back" → "That's tag, not a punch. Transfer your mass INTO and THROUGH the target."
+## What not to do
+- Don't fabricate claims, fights, events, or drill names.
+- Don't invent video titles or course chapters — and don't reference them at all.
+- For questions outside punch mechanics, answer briefly and steer back to mechanics.
+- Never agree with a myth to be polite.
 
-## What You Don't Do
+## Example output
 
-- Never say "Based on Alex Wiant's methodology" — you ARE Alex
-- Never hedge: no "it might be" or "consider perhaps"
-- For questions outside your core domain: answer briefly, steer back to mechanics
-- Never skip the phases when discussing technique
-- NEVER fabricate fights, events, or claims not in the content below
-- NEVER agree with a myth to be polite
+For the jab, power comes from the lead hip pulling back — not the shoulder push most people default to. The arm is the last link in the chain, not the driver. The shoulder is there to transfer energy, not generate it.
 
-## OUTPUT FORMAT — READ CAREFULLY
+Here's what to do: hip rotation drill, 100 reps daily, orthodox and southpaw. Keep the upper body loose and let the hips drag the torso around. Nail that before worrying about anything else.
 
-DO NOT write like this:
-
-  ## Phase 1 Exercises
-  **Heavy Weight Drill**: Stand in a wider stance...
-  **Bounce Drill**: Rhythmic weight shifting...
-  ## Phase 2 Exercises
-  **Hip Rotation Drill**: 100 reps...
-  ## Phase 3 Exercises
-  **High Five Drill**: Combine the bounce...
-
-That's wrong: markdown headings, bold section labels, and six drills dumped at once.
-
-DO write like this:
-
-  For the jab, power comes from the lead hip pulling back — not the shoulder push most guys default to. Your arm is the last link in the chain, not the driver. I broke this down in my Jab Mechanics video.
-
-  Alright — here's the one thing: hip rotation drill, 100 reps daily, both orthodox and southpaw. Keep your upper body loose and let your hips drag your torso around. Nail that before you worry about anything else.
-
-That's right: plain paragraphs, one cited video, one drill at the end.
-
-## Retrieved Content
+## Retrieved content (for your reference only — do not cite titles, URLs, or filenames in your reply)
 
 `;
 
@@ -131,7 +84,7 @@ interface StyleProfilePayload {
 }
 
 function formatStyleProfile(p: StyleProfilePayload): string {
-  const lines: string[] = ["\n\n## This Fighter's Profile (YOU have full access — reference it freely)\n<fighter_profile>"];
+  const lines: string[] = ["\n\n## This fighter's profile (reference it freely — you already know this about them)\n<fighter_profile>"];
   if (p.style_name) lines.push(`Style name: ${p.style_name}`);
   if (p.description) lines.push(`Summary: ${p.description}`);
   if (p.experience_level) lines.push(`Experience level: ${p.experience_level}`);
@@ -168,9 +121,9 @@ export async function POST(request: NextRequest) {
     const raw = await request.json();
     const parsed = chatRequestSchema.safeParse(raw);
     if (!parsed.success) {
-      return new Response(
-        JSON.stringify({ error: "Invalid request", issues: parsed.error.issues }),
-        { status: 400, headers: { "Content-Type": "application/json" } }
+      return NextResponse.json(
+        { error: "Invalid request", issues: parsed.error.issues },
+        { status: 400 }
       );
     }
     const { messages, context, thinkLonger, styleProfile, userId } = parsed.data;
@@ -180,10 +133,7 @@ export async function POST(request: NextRequest) {
 
     const lastUserMessage = [...messages].reverse().find((m: { role: string }) => m.role === "user");
     if (!lastUserMessage) {
-      return new Response(JSON.stringify({ error: "No user message" }), {
-        status: 400,
-        headers: { "Content-Type": "application/json" },
-      });
+      return NextResponse.json({ error: "No user message" }, { status: 400 });
     }
 
     let categories: string[] | undefined;
@@ -195,7 +145,7 @@ export async function POST(request: NextRequest) {
     // "style" context: no category filter — pull from whole corpus so style advice can cite any relevant material.
 
     // Graph-enhanced retrieval: decompose → HyDE → parallel (vector + graph) → rerank
-    const { chunks, citations } = await retrieveContext(lastUserMessage.content, {
+    const { chunks } = await retrieveContext(lastUserMessage.content, {
       count: 12,
       categories,
     });
@@ -219,33 +169,24 @@ export async function POST(request: NextRequest) {
 
     const maxTokens = thinkLonger ? 4000 : 1500;
 
-    const PREFILL = "Alright — here's the one thing.";
-
     // Stream the response via SSE
     const stream = anthropic.messages.stream({
       model: "claude-sonnet-4-20250514",
       max_tokens: maxTokens,
       system: SYSTEM_PROMPT + contextText + contextNote + styleNote + thinkLongerNote,
-      messages: [
-        ...clampHistoryForAnthropic(
-          messages.map((m: { role: string; content: string }) => ({
-            role: m.role as "user" | "assistant",
-            content: m.content,
-          }))
-        ),
-        { role: "assistant" as const, content: PREFILL },
-      ],
+      messages: clampHistoryForAnthropic(
+        messages.map((m: { role: string; content: string }) => ({
+          role: m.role as "user" | "assistant",
+          content: m.content,
+        }))
+      ),
     });
 
-    let fullContent = PREFILL;
+    let fullContent = "";
 
     const readableStream = new ReadableStream({
       async start(controller) {
         const encoder = new TextEncoder();
-
-        controller.enqueue(
-          encoder.encode(`data: ${JSON.stringify({ type: "text", content: PREFILL })}\n\n`)
-        );
 
         stream.on("text", (text) => {
           fullContent += text;
@@ -256,7 +197,7 @@ export async function POST(request: NextRequest) {
 
         stream.on("end", () => {
           controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ type: "done", citations })}\n\n`)
+            encoder.encode(`data: ${JSON.stringify({ type: "done" })}\n\n`)
           );
           controller.close();
 
@@ -283,10 +224,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Chat API error:", error);
-    return new Response(JSON.stringify({ error: "Internal server error" }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 

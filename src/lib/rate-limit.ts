@@ -1,5 +1,6 @@
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import { NextResponse } from "next/server";
 
 const url = process.env.UPSTASH_REDIS_REST_URL;
 const token = process.env.UPSTASH_REDIS_REST_TOKEN;
@@ -32,12 +33,11 @@ export async function enforceRateLimit(
   const key = getRateLimitKey(request, userId);
   const { success, limit, remaining, reset } = await ratelimit.limit(key);
   if (!success) {
-    return new Response(
-      JSON.stringify({ error: "Too many requests", retryAfter: reset }),
+    return NextResponse.json(
+      { error: "Too many requests", retryAfter: reset },
       {
         status: 429,
         headers: {
-          "Content-Type": "application/json",
           "X-RateLimit-Limit": String(limit),
           "X-RateLimit-Remaining": String(remaining),
           "X-RateLimit-Reset": String(reset),

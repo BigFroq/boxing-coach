@@ -250,19 +250,6 @@ export function ResultsProfile({
               {result.growth_areas.map((ga, i) => (
                 <div key={i}>
                   <p className="text-sm">{ga.advice}</p>
-                  {onAskCoach && (
-                    <button
-                      onClick={() =>
-                        onAskCoach(
-                          `How do I improve my ${ga.dimension.toLowerCase()}? My current profile shows it as a growth area.`
-                        )
-                      }
-                      className="flex items-center gap-1 text-xs text-accent hover:text-accent/80 mt-1 transition-colors"
-                    >
-                      <MessageSquare size={12} />
-                      Ask the coach about this
-                    </button>
-                  )}
                 </div>
               ))}
             </div>

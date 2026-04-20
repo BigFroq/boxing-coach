@@ -78,7 +78,7 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
     }
 
     const duration = video.duration;
-    if (duration > 25) {
+    if (duration > 20) {
       setError(
         "Clip must be under 20 seconds. This video is " +
           Math.round(duration) +
