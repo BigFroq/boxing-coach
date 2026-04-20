@@ -5,6 +5,8 @@ import { createServerClient } from "@/lib/supabase";
 import { retrieveContext, formatChunksForPrompt, extractCitations, type SourceCitation } from "@/lib/graph-rag";
 import { FOUR_PHASES, CORE_PRINCIPLES, MYTHS } from "@/lib/framework";
 import { styleProfileSchema } from "@/lib/validation";
+import { formatStyleProfileBlock } from "@/lib/style-profile-context";
+import { computeNeglected } from "@/lib/neglected-focus-areas";
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
@@ -26,14 +28,31 @@ function buildMythsText(): string {
 
 function buildCoachSystemPrompt(
   userContext: {
-    profile: { tendencies: Record<string, string>; skill_levels: Record<string, string>; preferences: Record<string, string>; onboarding_complete: boolean };
-    focusAreas: { name: string; status: string; description: string | null }[];
+    profile: {
+      tendencies: Record<string, string>;
+      skill_levels: Record<string, string>;
+      preferences: Record<string, string>;
+      onboarding_complete: boolean;
+    };
+    focusAreas: {
+      name: string;
+      status: string;
+      description: string | null;
+      dimension: string | null;
+      knowledge_node_slug: string | null;
+    }[];
     recentSessions: { session_type: string; summary: Record<string, unknown>; created_at: string }[];
     pendingDrills: { drill_name: string; details: string | null }[];
+    styleProfile: {
+      style_name?: string;
+      dimension_scores?: Record<string, number>;
+      matched_fighters?: Array<{ name: string; overlappingDimensions?: string[] }>;
+    } | null;
+    neglected: string[];
   },
   ragContext: string
 ): string {
-  const { profile, focusAreas, recentSessions, pendingDrills } = userContext;
+  const { profile, focusAreas, recentSessions, pendingDrills, styleProfile, neglected } = userContext;
 
   const phasesText = FOUR_PHASES.join("\n");
   const principlesText = CORE_PRINCIPLES.join("\n");
@@ -70,6 +89,11 @@ After 3-4 exchanges, summarize what you've learned and set their first focus are
       .map((d) => `- ${d.drill_name}: ${d.details ?? ""}`)
       .join("\n");
 
+    const avoidingBlock =
+      neglected.length > 0
+        ? `\n\n**Been avoiding (focus areas not touched in recent sessions):**\n${neglected.map((n) => `- ${n}`).join("\n")}`
+        : "";
+
     userSection = `\n## This Fighter's Profile
 **Known tendencies:**
 ${tendenciesText || "None recorded yet"}
@@ -84,8 +108,11 @@ ${focusText || "None set yet"}
 ${sessionsText || "No sessions logged yet"}
 
 **Pending drills (not yet followed up on):**
-${drillsText || "None pending"}`;
+${drillsText || "None pending"}${avoidingBlock}`;
   }
+
+  const styleBlock = formatStyleProfileBlock(styleProfile);
+  const styleSection = styleBlock ? `\n\n${styleBlock}` : "";
 
   return `You are a boxing coach powered by Dr. Alex Wiant's Power Punching Blueprint methodology. You guide fighters through post-training reflection using a structured conversation.
 
@@ -97,7 +124,7 @@ ${principlesText}
 
 ## Myth Corrections
 ${mythsText}
-${userSection}
+${userSection}${styleSection}
 
 ## Relevant Knowledge Base Content
 ${ragContext || "No specific content retrieved for this exchange."}
@@ -188,9 +215,15 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return new Response(JSON.stringify({ error: "Invalid request body" }), { status: 400 });
     }
-    const { messages, userId, styleProfile: _bodyStyleProfile } = parsed.data;
+    const { messages, userId, styleProfile: bodyStyleProfile } = parsed.data;
 
     const userContext = await loadUserContext(userId);
+
+    const styleProfile = userContext.styleProfile ?? bodyStyleProfile ?? null;
+    const neglected = computeNeglected(
+      userContext.focusAreas,
+      userContext.recentSessions as { summary?: { focus_areas_worked_keys?: string[] } | null }[]
+    );
 
     const lastUserMsg = [...messages].reverse().find((m: { role: string }) => m.role === "user");
     let ragContext = "";
@@ -202,7 +235,10 @@ export async function POST(request: NextRequest) {
       citations = ragCitations;
     }
 
-    const systemPrompt = buildCoachSystemPrompt(userContext, ragContext);
+    const systemPrompt = buildCoachSystemPrompt(
+      { ...userContext, styleProfile, neglected },
+      ragContext
+    );
 
     const stream = anthropic.messages.stream({
       model: "claude-sonnet-4-20250514",
