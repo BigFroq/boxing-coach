@@ -1,10 +1,21 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest } from "next/server";
+import { z } from "zod";
 import { createServerClient } from "@/lib/supabase";
 import { retrieveContext, formatChunksForPrompt, extractCitations, type SourceCitation } from "@/lib/graph-rag";
 import { FOUR_PHASES, CORE_PRINCIPLES, MYTHS } from "@/lib/framework";
+import { styleProfileSchema } from "@/lib/validation";
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
+});
+
+const coachSessionRequestSchema = z.object({
+  messages: z
+    .array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().max(8000) }))
+    .min(1)
+    .max(100),
+  userId: z.string().max(128),
+  styleProfile: styleProfileSchema.optional(),
 });
 
 function buildMythsText(): string {
@@ -117,28 +128,67 @@ ${ragContext || "No specific content retrieved for this exchange."}
 async function loadUserContext(userId: string) {
   const supabase = createServerClient();
 
-  const [profileRes, focusRes, sessionsRes, drillsRes] = await Promise.all([
-    supabase.from("user_profiles").select("tendencies, skill_levels, preferences, onboarding_complete").eq("id", userId).single(),
-    supabase.from("focus_areas").select("name, dimension, status, description").eq("user_id", userId).in("status", ["new", "active", "improving"]).order("updated_at", { ascending: false }),
-    supabase.from("training_sessions").select("session_type, summary, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(3),
-    supabase.from("drill_prescriptions").select("drill_name, details").eq("user_id", userId).eq("followed_up", false),
+  const [profileRes, focusRes, sessionsRes, drillsRes, styleRes] = await Promise.all([
+    supabase
+      .from("user_profiles")
+      .select("tendencies, skill_levels, preferences, onboarding_complete")
+      .eq("id", userId)
+      .single(),
+    supabase
+      .from("focus_areas")
+      .select("name, status, description, dimension, knowledge_node_slug")
+      .eq("user_id", userId)
+      .in("status", ["new", "active", "improving"])
+      .order("updated_at", { ascending: false }),
+    supabase
+      .from("training_sessions")
+      .select("session_type, summary, created_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(3),
+    supabase
+      .from("drill_prescriptions")
+      .select("drill_name, details")
+      .eq("user_id", userId)
+      .eq("followed_up", false),
+    supabase
+      .from("style_profiles")
+      .select("dimension_scores, matched_fighters, ai_result")
+      .eq("user_id", userId)
+      .eq("is_current", true)
+      .maybeSingle(),
   ]);
+
+  const dbStyle = styleRes.data as {
+    ai_result: { style_name?: string } | null;
+    dimension_scores: Record<string, number>;
+    matched_fighters: Array<{ name: string; slug?: string; overlappingDimensions?: string[] }>;
+  } | null;
+  const styleProfile = dbStyle
+    ? {
+        style_name: dbStyle.ai_result?.style_name,
+        dimension_scores: dbStyle.dimension_scores,
+        matched_fighters: dbStyle.matched_fighters,
+      }
+    : null;
 
   return {
     profile: profileRes.data ?? { tendencies: {}, skill_levels: {}, preferences: {}, onboarding_complete: false },
     focusAreas: focusRes.data ?? [],
     recentSessions: sessionsRes.data ?? [],
     pendingDrills: drillsRes.data ?? [],
+    styleProfile,
   };
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const { messages, userId } = await request.json();
-
-    if (!messages || !Array.isArray(messages)) {
-      return new Response(JSON.stringify({ error: "Missing messages" }), { status: 400 });
+    const rawBody = await request.json();
+    const parsed = coachSessionRequestSchema.safeParse(rawBody);
+    if (!parsed.success) {
+      return new Response(JSON.stringify({ error: "Invalid request body" }), { status: 400 });
     }
+    const { messages, userId, styleProfile: _bodyStyleProfile } = parsed.data;
 
     const userContext = await loadUserContext(userId);
 
