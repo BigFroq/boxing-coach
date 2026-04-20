@@ -16,7 +16,7 @@ const coachSessionRequestSchema = z.object({
     .array(z.object({ role: z.enum(["user", "assistant"]), content: z.string().max(8000) }))
     .min(1)
     .max(100),
-  userId: z.string().max(128),
+  userId: z.string().min(1).max(128),
   styleProfile: styleProfileSchema.optional(),
 });
 
@@ -196,7 +196,14 @@ export async function POST(request: NextRequest) {
     if (!parsed.success) {
       return new Response(JSON.stringify({ error: "Invalid request body" }), { status: 400 });
     }
-    const { messages, userId, styleProfile: bodyStyleProfile } = parsed.data;
+    const { messages, userId, styleProfile: rawBodyStyleProfile } = parsed.data;
+    const bodyStyleProfile = rawBodyStyleProfile
+      ? {
+          style_name: rawBodyStyleProfile.style_name,
+          dimension_scores: rawBodyStyleProfile.dimension_scores,
+          matched_fighters: rawBodyStyleProfile.matched_fighters,
+        }
+      : null;
 
     const userContext = await loadUserContext(userId);
 
