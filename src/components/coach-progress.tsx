@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Loader2, TrendingUp, Target, Calendar } from "lucide-react";
+import { formatRelativeTime } from "@/lib/relative-time";
 
 interface FocusArea {
   id: string;
@@ -10,6 +11,8 @@ interface FocusArea {
   status: string;
   history: { date: string; note: string }[];
   created_at: string;
+  dimension?: string | null;
+  knowledge_node_slug?: string | null;
 }
 
 interface SessionSummary {
@@ -24,10 +27,23 @@ interface SessionSummary {
   created_at: string;
 }
 
+interface DrillPrescription {
+  id: string;
+  drill_name: string;
+  details: string | null;
+  followed_up: boolean;
+  followed_up_at: string | null;
+  followed_up_session_id: string | null;
+  created_at: string;
+}
+
 interface ProgressData {
   stats: { totalSessions: number; areasImproving: number; activeFocusAreas: number };
   focusAreas: FocusArea[];
   recentSessions: SessionSummary[];
+  neglectedFocusAreas?: string[];
+  drillPrescriptions?: { pending: DrillPrescription[]; recent: DrillPrescription[] };
+  focusAreaLastWorked?: Record<string, string | null>;
 }
 
 export function CoachProgress({ userId }: { userId: string }) {
@@ -123,8 +139,11 @@ export function CoachProgress({ userId }: { userId: string }) {
                       </span>
                     </div>
                     {fa.description && (
-                      <p className="text-xs text-muted leading-relaxed mb-3">{fa.description}</p>
+                      <p className="text-xs text-muted leading-relaxed mb-2">{fa.description}</p>
                     )}
+                    <p className="text-xs text-muted mb-3">
+                      Last worked: {formatRelativeTime(data.focusAreaLastWorked?.[fa.id] ?? null)}
+                    </p>
                     <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all ${statusBarColor[fa.status] ?? "bg-blue-500"}`}
@@ -145,8 +164,7 @@ export function CoachProgress({ userId }: { userId: string }) {
         </h3>
         <div className="border-l-2 border-white/10 ml-2 pl-4 space-y-4">
           {data.recentSessions.map((s) => {
-            const date = new Date(s.created_at);
-            const label = formatRelativeDate(date);
+            const label = formatRelativeTime(s.created_at);
             const breakthroughs = s.summary?.breakthroughs ?? [];
             const struggles = s.summary?.struggles ?? [];
 
@@ -181,17 +199,6 @@ export function CoachProgress({ userId }: { userId: string }) {
   );
 }
 
-function formatRelativeDate(date: Date): string {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Yesterday";
-  if (diffDays < 7) return `${diffDays} days ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-  return date.toLocaleDateString();
-}
 
 function formatSessionType(type: string): string {
   const labels: Record<string, string> = {
