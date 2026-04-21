@@ -221,7 +221,7 @@ export function CoachSession({ userId }: CoachSessionProps) {
             onKeyDown={handleKeyDown}
             placeholder="Tell your coach..."
             rows={1}
-            className="flex-1 resize-none rounded-lg border border-border bg-surface-hover px-4 py-3 text-sm text-foreground placeholder:text-muted outline-none focus:border-accent"
+            className="flex-1 resize-none rounded-lg border border-border bg-surface-hover px-4 py-3 text-base sm:text-sm text-foreground placeholder:text-muted outline-none focus:border-accent"
           />
           <button
             onClick={handleSend}

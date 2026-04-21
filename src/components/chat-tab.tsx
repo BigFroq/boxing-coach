@@ -429,7 +429,7 @@ export function ChatTab({
             )}
 
             {/* Hero + suggestion grid */}
-            <div className="flex-1 flex flex-col items-center justify-center px-4 sm:px-6 py-10">
+            <div className="flex-1 flex flex-col items-center justify-start sm:justify-center px-4 sm:px-6 py-6 sm:py-10">
               <div className="w-full max-w-3xl flex flex-col items-center">
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 border border-accent/20 mb-5">
                   <HeroIcon size={26} className="text-accent" />
@@ -524,7 +524,7 @@ export function ChatTab({
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             rows={1}
-            className="flex-1 resize-none rounded-xl border border-border bg-surface px-4 py-3 text-sm placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
+            className="flex-1 resize-none rounded-xl border border-border bg-surface px-4 py-3 text-base sm:text-sm placeholder:text-muted focus:outline-none focus:border-accent transition-colors"
           />
           <button
             onClick={() => sendMessage(input)}
@@ -539,7 +539,7 @@ export function ChatTab({
           <button
             onClick={toggleThinkLonger}
             aria-pressed={thinkLonger}
-            className={`flex items-center gap-1.5 text-xs transition-colors ${
+            className={`flex items-center gap-1.5 text-xs py-2 -my-2 transition-colors ${
               thinkLonger
                 ? "text-accent"
                 : "text-muted hover:text-foreground"

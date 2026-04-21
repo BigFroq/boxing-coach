@@ -341,7 +341,7 @@ export function Questionnaire({ userId, onComplete }: QuestionnaireProps) {
         <button
           onClick={goBack}
           disabled={currentIndex === 0}
-          className="flex items-center gap-1 text-sm text-muted hover:text-foreground disabled:opacity-30 transition-colors"
+          className="flex items-center gap-1 px-3 py-2 -mx-3 -my-2 text-sm text-muted hover:text-foreground disabled:opacity-30 transition-colors"
         >
           <ChevronLeft size={16} />
           Back
@@ -349,7 +349,7 @@ export function Questionnaire({ userId, onComplete }: QuestionnaireProps) {
         {hasAnswer && (
           <button
             onClick={goNext}
-            className="flex items-center gap-1 text-sm text-accent hover:text-accent/80 transition-colors"
+            className="flex items-center gap-1 px-3 py-2 -mx-3 -my-2 text-sm text-accent hover:text-accent/80 transition-colors"
           >
             {currentIndex === totalQuestions - 1 ? "See results" : "Next"}
             <ChevronRight size={16} />

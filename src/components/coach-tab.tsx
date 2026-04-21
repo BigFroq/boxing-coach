@@ -17,7 +17,7 @@ export function CoachTab({ userId }: CoachTabProps) {
       <div className="flex gap-2 px-4 sm:px-6 pt-4">
         <button
           onClick={() => setView("session")}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+          className={`rounded-lg px-4 py-2.5 min-h-[44px] text-sm font-medium transition-colors ${
             view === "session"
               ? "bg-accent text-white"
               : "bg-surface-hover text-muted hover:text-foreground"
@@ -27,7 +27,7 @@ export function CoachTab({ userId }: CoachTabProps) {
         </button>
         <button
           onClick={() => setView("clip")}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+          className={`rounded-lg px-4 py-2.5 min-h-[44px] text-sm font-medium transition-colors ${
             view === "clip"
               ? "bg-accent text-white"
               : "bg-surface-hover text-muted hover:text-foreground"
@@ -37,7 +37,7 @@ export function CoachTab({ userId }: CoachTabProps) {
         </button>
         <button
           onClick={() => setView("progress")}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+          className={`rounded-lg px-4 py-2.5 min-h-[44px] text-sm font-medium transition-colors ${
             view === "progress"
               ? "bg-accent text-white"
               : "bg-surface-hover text-muted hover:text-foreground"

@@ -19,10 +19,10 @@ import { CoachTab } from "@/components/coach-tab";
 import { StyleFinderTab } from "@/components/style-finder-tab";
 
 const tabs = [
-  { id: "technique", label: "Technique", icon: MessageSquare, description: "Ask about punching mechanics" },
-  { id: "drills", label: "Drills", icon: Dumbbell, description: "Exercises & training" },
-  { id: "coach", label: "My Coach", icon: ClipboardList, description: "Log sessions & track progress" },
-  { id: "style", label: "Find Your Style", icon: User, description: "Discover your fighting style" },
+  { id: "technique", label: "Technique", shortLabel: "Technique", icon: MessageSquare, description: "Ask about punching mechanics" },
+  { id: "drills", label: "Drills", shortLabel: "Drills", icon: Dumbbell, description: "Exercises & training" },
+  { id: "coach", label: "My Coach", shortLabel: "Coach", icon: ClipboardList, description: "Log sessions & track progress" },
+  { id: "style", label: "Find Your Style", shortLabel: "Style", icon: User, description: "Discover your fighting style" },
 ] as const;
 
 type TabId = (typeof tabs)[number]["id"];
@@ -67,14 +67,15 @@ function AppContent() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-3 text-xs sm:text-sm font-medium transition-colors border-b-2 -mb-px ${
+              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-3 min-h-[44px] text-xs sm:text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px ${
                 isActive
                   ? "border-accent text-accent"
                   : "border-transparent text-muted hover:text-foreground"
               }`}
             >
               <Icon size={16} />
-              {tab.label}
+              <span className="sm:hidden">{tab.shortLabel}</span>
+              <span className="hidden sm:inline">{tab.label}</span>
             </button>
           );
         })}
