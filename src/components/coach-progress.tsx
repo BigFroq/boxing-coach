@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, TrendingUp, Target, Calendar } from "lucide-react";
+import { Loader2, TrendingUp, Target, Calendar, AlertTriangle } from "lucide-react";
+import { formatRelativeTime } from "@/lib/relative-time";
 
 interface FocusArea {
   id: string;
@@ -10,6 +11,8 @@ interface FocusArea {
   status: string;
   history: { date: string; note: string }[];
   created_at: string;
+  dimension?: string | null;
+  knowledge_node_slug?: string | null;
 }
 
 interface SessionSummary {
@@ -24,10 +27,23 @@ interface SessionSummary {
   created_at: string;
 }
 
+interface DrillPrescription {
+  id: string;
+  drill_name: string;
+  details: string | null;
+  followed_up: boolean;
+  followed_up_at: string | null;
+  followed_up_session_id: string | null;
+  created_at: string;
+}
+
 interface ProgressData {
   stats: { totalSessions: number; areasImproving: number; activeFocusAreas: number };
   focusAreas: FocusArea[];
   recentSessions: SessionSummary[];
+  neglectedFocusAreas?: string[];
+  drillPrescriptions?: { pending: DrillPrescription[]; recent: DrillPrescription[] };
+  focusAreaLastWorked?: Record<string, string | null>;
 }
 
 export function CoachProgress({ userId }: { userId: string }) {
@@ -100,6 +116,28 @@ export function CoachProgress({ userId }: { userId: string }) {
         </div>
       </div>
 
+      {/* Been Avoiding */}
+      {(data.neglectedFocusAreas?.length ?? 0) > 0 && (
+        <div>
+          <h3 className="mb-1 flex items-center gap-2 text-sm font-semibold text-red-400">
+            <AlertTriangle size={14} /> Been Avoiding
+          </h3>
+          <p className="mb-3 text-xs text-muted">
+            Focus areas not touched in your last 3 sessions.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {data.neglectedFocusAreas!.map((name, i) => (
+              <span
+                key={`${i}-${name}`}
+                className="inline-block rounded-full bg-red-500/10 px-3 py-1 text-xs font-medium text-red-300"
+              >
+                {name}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Focus Areas */}
       {data.focusAreas.length > 0 && (
         <div>
@@ -123,8 +161,11 @@ export function CoachProgress({ userId }: { userId: string }) {
                       </span>
                     </div>
                     {fa.description && (
-                      <p className="text-xs text-muted leading-relaxed mb-3">{fa.description}</p>
+                      <p className="text-xs text-muted leading-relaxed mb-2">{fa.description}</p>
                     )}
+                    <p className="text-xs text-muted mb-3">
+                      Last worked: {formatRelativeTime(data.focusAreaLastWorked?.[fa.id] ?? null)}
+                    </p>
                     <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all ${statusBarColor[fa.status] ?? "bg-blue-500"}`}
@@ -138,6 +179,58 @@ export function CoachProgress({ userId }: { userId: string }) {
         </div>
       )}
 
+      {/* Drill History */}
+      {((data.drillPrescriptions?.pending.length ?? 0) > 0 ||
+        (data.drillPrescriptions?.recent.length ?? 0) > 0) && (
+        <div>
+          <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+            <Target size={14} /> Drill History
+          </h3>
+          <div className="space-y-4">
+            {(data.drillPrescriptions!.pending.length > 0) && (
+              <div>
+                <p className="mb-2 text-xs font-semibold text-muted uppercase">
+                  Pending ({data.drillPrescriptions!.pending.length})
+                </p>
+                <div className="space-y-2">
+                  {data.drillPrescriptions!.pending.map((d) => (
+                    <div key={d.id} className="rounded-xl bg-surface-hover p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">{d.drill_name}</span>
+                        <span className="text-xs text-muted">
+                          Prescribed {formatRelativeTime(d.created_at).toLowerCase()}
+                        </span>
+                      </div>
+                      {d.details && <p className="mt-1 text-xs text-muted">{d.details}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {(data.drillPrescriptions!.recent.length > 0) && (
+              <div>
+                <p className="mb-2 text-xs font-semibold text-muted uppercase">
+                  Recently Done ({data.drillPrescriptions!.recent.length})
+                </p>
+                <div className="space-y-2">
+                  {data.drillPrescriptions!.recent.map((d) => (
+                    <div key={d.id} className="rounded-xl bg-surface-hover p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">{d.drill_name}</span>
+                        <span className="text-xs text-green-400">
+                          Done {formatRelativeTime(d.followed_up_at).toLowerCase()}
+                        </span>
+                      </div>
+                      {d.details && <p className="mt-1 text-xs text-muted">{d.details}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Session Timeline */}
       <div>
         <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
@@ -145,8 +238,7 @@ export function CoachProgress({ userId }: { userId: string }) {
         </h3>
         <div className="border-l-2 border-white/10 ml-2 pl-4 space-y-4">
           {data.recentSessions.map((s) => {
-            const date = new Date(s.created_at);
-            const label = formatRelativeDate(date);
+            const label = formatRelativeTime(s.created_at);
             const breakthroughs = s.summary?.breakthroughs ?? [];
             const struggles = s.summary?.struggles ?? [];
 
@@ -181,17 +273,6 @@ export function CoachProgress({ userId }: { userId: string }) {
   );
 }
 
-function formatRelativeDate(date: Date): string {
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffDays === 0) return "Today";
-  if (diffDays === 1) return "Yesterday";
-  if (diffDays < 7) return `${diffDays} days ago`;
-  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-  return date.toLocaleDateString();
-}
 
 function formatSessionType(type: string): string {
   const labels: Record<string, string> = {

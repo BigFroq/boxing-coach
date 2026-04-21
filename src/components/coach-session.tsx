@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Loader2, CheckCircle } from "lucide-react";
+import { Send, Loader2, CheckCircle, AlertTriangle, X, ChevronDown } from "lucide-react";
 
 interface Message {
   role: "user" | "assistant";
@@ -20,12 +20,35 @@ export function CoachSession({ userId }: CoachSessionProps) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [initialized, setInitialized] = useState(false);
+  const [neglected, setNeglected] = useState<string[]>([]);
+  const [bannerCollapsed, setBannerCollapsed] = useState<boolean>(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const storedCollapsed = window.localStorage.getItem("coach-avoiding-banner-collapsed");
+        setBannerCollapsed(storedCollapsed === "true");
+      } catch {
+        // ignore
+      }
+    }
+    fetch(`/api/coach/progress?userId=${encodeURIComponent(userId)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { neglectedFocusAreas?: string[] } | null) => {
+        if (data && Array.isArray(data.neglectedFocusAreas)) {
+          setNeglected(data.neglectedFocusAreas);
+        }
+      })
+      .catch(() => {
+        // Banner just doesn't render; don't block chat.
+      });
+  }, [userId]);
 
   const sendToCoach = useCallback(
     async (allMessages: Message[]) => {
@@ -149,6 +172,24 @@ export function CoachSession({ userId }: CoachSessionProps) {
     }
   }, [userId, messages, saving]);
 
+  const collapseBanner = useCallback(() => {
+    setBannerCollapsed(true);
+    try {
+      window.localStorage.setItem("coach-avoiding-banner-collapsed", "true");
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const expandBanner = useCallback(() => {
+    setBannerCollapsed(false);
+    try {
+      window.localStorage.setItem("coach-avoiding-banner-collapsed", "false");
+    } catch {
+      // ignore
+    }
+  }, []);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -184,6 +225,42 @@ export function CoachSession({ userId }: CoachSessionProps) {
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-4">
+        {neglected.length > 0 && !bannerCollapsed && (
+          <div className="rounded-xl border border-red-500/30 bg-red-500/5 p-3">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="h-4 w-4 flex-shrink-0 text-red-400 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-red-300">Coach flagged: you&apos;ve been avoiding</p>
+                <div className="mt-1 flex flex-wrap gap-1.5">
+                  {neglected.map((name, i) => (
+                    <span
+                      key={`${i}-${name}`}
+                      className="inline-block rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-300"
+                    >
+                      {name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <button
+                onClick={collapseBanner}
+                aria-label="Dismiss"
+                className="flex-shrink-0 rounded-md p-1 text-red-400 hover:bg-red-500/10"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        )}
+        {neglected.length > 0 && bannerCollapsed && (
+          <button
+            onClick={expandBanner}
+            className="flex items-center gap-1 text-xs font-medium text-muted hover:text-foreground"
+          >
+            <ChevronDown className="h-3.5 w-3.5" />
+            Show avoidance list ({neglected.length})
+          </button>
+        )}
         {messages.map((msg, i) => (
           <div
             key={i}
