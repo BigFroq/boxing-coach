@@ -19,12 +19,29 @@ function hashProfile(r: { style_name?: string; dimension_scores?: DimensionScore
   return (h >>> 0).toString(36);
 }
 
+export interface CounterExplanation {
+  name: string;
+  slug: string;
+  attack_vector: string;
+  paragraph: string;
+  exploited_dimensions: Array<{
+    dimension: string;
+    user_score: number;
+    fighter_score: number;
+    gap: number;
+  }>;
+  one_shot_notes: string | null;
+  recommended_drills: Array<{ slug: string; name: string; why: string }>;
+  citations: Array<{ title: string; url_or_path: string }>;
+}
+
 export interface StyleProfileResult {
   style_name: string;
   description: string;
   dimension_scores: DimensionScores;
   fighter_explanations: { name: string; explanation: string }[];
   matched_fighters: { name: string; slug: string; overlappingDimensions: (keyof DimensionScores)[] }[];
+  counter_fighters: CounterExplanation[];
   strengths: string[];
   growth_areas: { dimension: string; advice: string }[];
   punches_to_master: string[];
