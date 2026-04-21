@@ -4,6 +4,7 @@ import { RotateCcw, Share2, MessageSquare, Sparkles, TrendingUp, Users, Target, 
 import { RadarChart } from "./radar-chart";
 import { DimensionBars } from "./dimension-bars";
 import { FighterMatchCard } from "./fighter-match-card";
+import { FighterCounterCard } from "./fighter-counter-card";
 import { RetakeComparison } from "./retake-comparison";
 import { ChatTab } from "@/components/chat-tab";
 import type { Suggestion } from "@/components/chat-tab";
@@ -19,12 +20,29 @@ function hashProfile(r: { style_name?: string; dimension_scores?: DimensionScore
   return (h >>> 0).toString(36);
 }
 
+export interface CounterExplanation {
+  name: string;
+  slug: string;
+  attack_vector: string;
+  paragraph: string;
+  exploited_dimensions: Array<{
+    dimension: string;
+    user_score: number;
+    fighter_score: number;
+    gap: number;
+  }>;
+  one_shot_notes: string | null;
+  recommended_drills: Array<{ slug: string; name: string; why: string }>;
+  citations: Array<{ title: string; url_or_path: string }>;
+}
+
 export interface StyleProfileResult {
   style_name: string;
   description: string;
   dimension_scores: DimensionScores;
   fighter_explanations: { name: string; explanation: string }[];
   matched_fighters: { name: string; slug: string; overlappingDimensions: (keyof DimensionScores)[] }[];
+  counter_fighters: CounterExplanation[];
   strengths: string[];
   growth_areas: { dimension: string; advice: string }[];
   punches_to_master: string[];
@@ -230,6 +248,26 @@ export function ResultsProfile({
             })}
           </div>
         </div>
+
+        {/* Fighters Strongest Against You */}
+        {result.counter_fighters.length > 0 && (
+          <div className="bg-surface border border-border rounded-xl p-5">
+            <h3 className="text-sm font-semibold text-red-400 mb-1">Fighters Strongest Against You</h3>
+            <p className="text-xs text-muted mb-4">
+              Archetypes that exploit your lowest dimensions. Train the gap, not the headline.
+            </p>
+            <div className="space-y-4">
+              {result.counter_fighters.map((counter, i) => (
+                <FighterCounterCard
+                  key={counter.slug}
+                  rank={i + 1}
+                  counter={counter}
+                  onAskMatchup={onAskCoach}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Strengths vs Growth Areas */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

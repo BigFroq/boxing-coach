@@ -42,9 +42,10 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
             .single() as { data: Record<string, unknown> | null };
           if (data) {
             setResult({
-              ...(data.ai_result as Omit<StyleProfileResult, "dimension_scores" | "matched_fighters">),
+              ...(data.ai_result as Omit<StyleProfileResult, "dimension_scores" | "matched_fighters" | "counter_fighters">),
               dimension_scores: data.dimension_scores as DimensionScores,
               matched_fighters: data.matched_fighters as StyleProfileResult["matched_fighters"],
+              counter_fighters: (data.counter_fighters as StyleProfileResult["counter_fighters"]) ?? [],
             });
             setPhysicalContext(data.physical_context as typeof physicalContext);
             setExperienceLevel((data.experience_level as string) ?? "beginner");
@@ -62,7 +63,10 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
         const saved = localStorage.getItem("boxing-coach-style-profile");
         if (saved) {
           const parsed = JSON.parse(saved);
-          setResult(parsed.result);
+          setResult({
+            ...parsed.result,
+            counter_fighters: parsed.result?.counter_fighters ?? [],
+          });
           setPhysicalContext(parsed.physicalContext);
           setExperienceLevel(parsed.experienceLevel);
           setView("results");
@@ -124,6 +128,7 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
           slug: m.fighter.slug,
           overlappingDimensions: m.overlappingDimensions,
         })),
+        counter_fighters: Array.isArray(data.counter_fighters) ? data.counter_fighters : [],
         strengths: data.strengths,
         growth_areas: data.growth_areas,
         punches_to_master: data.punches_to_master,
@@ -177,6 +182,7 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
                 slug: m.fighter.slug,
                 overlappingDimensions: m.overlappingDimensions,
               })),
+              counter_fighters: Array.isArray(data.counter_fighters) ? data.counter_fighters : [],
             })
             .select("id")
             .single();

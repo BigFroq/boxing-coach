@@ -74,6 +74,7 @@ export default async function ProfilePage({ params }: PageProps) {
     dimension_scores: dimensionScores,
     fighter_explanations: aiResult.fighter_explanations as StyleProfileResult["fighter_explanations"],
     matched_fighters: matchedFighters,
+    counter_fighters: (profile.counter_fighters as StyleProfileResult["counter_fighters"]) ?? [],
     strengths: aiResult.strengths as string[],
     growth_areas: aiResult.growth_areas as StyleProfileResult["growth_areas"],
     punches_to_master: aiResult.punches_to_master as string[],
