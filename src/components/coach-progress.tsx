@@ -126,9 +126,9 @@ export function CoachProgress({ userId }: { userId: string }) {
             Focus areas not touched in your last 3 sessions.
           </p>
           <div className="flex flex-wrap gap-2">
-            {data.neglectedFocusAreas!.map((name) => (
+            {data.neglectedFocusAreas!.map((name, i) => (
               <span
-                key={name}
+                key={`${i}-${name}`}
                 className="inline-block rounded-full bg-red-500/10 px-3 py-1 text-xs font-medium text-red-300"
               >
                 {name}

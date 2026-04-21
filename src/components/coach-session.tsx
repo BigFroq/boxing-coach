@@ -32,8 +32,8 @@ export function CoachSession({ userId }: CoachSessionProps) {
   useEffect(() => {
     if (typeof window !== "undefined") {
       try {
-        const saved = window.localStorage.getItem("coach-avoiding-banner-collapsed");
-        setBannerCollapsed(saved === "true");
+        const storedCollapsed = window.localStorage.getItem("coach-avoiding-banner-collapsed");
+        setBannerCollapsed(storedCollapsed === "true");
       } catch {
         // ignore
       }
@@ -232,9 +232,9 @@ export function CoachSession({ userId }: CoachSessionProps) {
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-red-300">Coach flagged: you&apos;ve been avoiding</p>
                 <div className="mt-1 flex flex-wrap gap-1.5">
-                  {neglected.map((name) => (
+                  {neglected.map((name, i) => (
                     <span
-                      key={name}
+                      key={`${i}-${name}`}
                       className="inline-block rounded-full bg-red-500/10 px-2 py-0.5 text-xs font-medium text-red-300"
                     >
                       {name}
