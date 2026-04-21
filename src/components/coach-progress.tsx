@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, TrendingUp, Target, Calendar } from "lucide-react";
+import { Loader2, TrendingUp, Target, Calendar, AlertTriangle } from "lucide-react";
 import { formatRelativeTime } from "@/lib/relative-time";
 
 interface FocusArea {
@@ -115,6 +115,28 @@ export function CoachProgress({ userId }: { userId: string }) {
           <div className="mt-1 text-xs text-muted uppercase">Active focus</div>
         </div>
       </div>
+
+      {/* Been Avoiding */}
+      {(data.neglectedFocusAreas?.length ?? 0) > 0 && (
+        <div>
+          <h3 className="mb-1 flex items-center gap-2 text-sm font-semibold text-red-400">
+            <AlertTriangle size={14} /> Been Avoiding
+          </h3>
+          <p className="mb-3 text-xs text-muted">
+            Focus areas not touched in your last 3 sessions.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {data.neglectedFocusAreas!.map((name) => (
+              <span
+                key={name}
+                className="inline-block rounded-full bg-red-500/10 px-3 py-1 text-xs font-medium text-red-300"
+              >
+                {name}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Focus Areas */}
       {data.focusAreas.length > 0 && (
