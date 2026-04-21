@@ -63,7 +63,10 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
         const saved = localStorage.getItem("boxing-coach-style-profile");
         if (saved) {
           const parsed = JSON.parse(saved);
-          setResult(parsed.result);
+          setResult({
+            ...parsed.result,
+            counter_fighters: parsed.result?.counter_fighters ?? [],
+          });
           setPhysicalContext(parsed.physicalContext);
           setExperienceLevel(parsed.experienceLevel);
           setView("results");

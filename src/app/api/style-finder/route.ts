@@ -354,6 +354,19 @@ export async function POST(request: NextRequest) {
       };
     });
 
+    // Cross-check: the LLM was told to echo counter slugs in the same order as our ranking.
+    // If slugs mismatch, log a warning — paragraphs may have been attached to the wrong fighter.
+    // We don't reorder (that would silently misrepresent the ranking); log only so this surfaces.
+    for (let i = 0; i < Math.min(validatedCounters.length, counters.length); i++) {
+      const expected = counters[i].fighter.slug;
+      const got = validatedCounters[i].slug;
+      if (got !== expected) {
+        console.warn(
+          `counter_explanations[${i}].slug mismatch: expected "${expected}", got "${got}". Paragraphs may be attributed to the wrong fighter.`
+        );
+      }
+    }
+
     return NextResponse.json({
       style_name: result.style_name,
       description: result.description,
