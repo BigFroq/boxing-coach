@@ -179,6 +179,58 @@ export function CoachProgress({ userId }: { userId: string }) {
         </div>
       )}
 
+      {/* Drill History */}
+      {((data.drillPrescriptions?.pending.length ?? 0) > 0 ||
+        (data.drillPrescriptions?.recent.length ?? 0) > 0) && (
+        <div>
+          <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
+            <Target size={14} /> Drill History
+          </h3>
+          <div className="space-y-4">
+            {(data.drillPrescriptions!.pending.length > 0) && (
+              <div>
+                <p className="mb-2 text-xs font-semibold text-muted uppercase">
+                  Pending ({data.drillPrescriptions!.pending.length})
+                </p>
+                <div className="space-y-2">
+                  {data.drillPrescriptions!.pending.map((d) => (
+                    <div key={d.id} className="rounded-xl bg-surface-hover p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">{d.drill_name}</span>
+                        <span className="text-xs text-muted">
+                          Prescribed {formatRelativeTime(d.created_at).toLowerCase()}
+                        </span>
+                      </div>
+                      {d.details && <p className="mt-1 text-xs text-muted">{d.details}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            {(data.drillPrescriptions!.recent.length > 0) && (
+              <div>
+                <p className="mb-2 text-xs font-semibold text-muted uppercase">
+                  Recently Done ({data.drillPrescriptions!.recent.length})
+                </p>
+                <div className="space-y-2">
+                  {data.drillPrescriptions!.recent.map((d) => (
+                    <div key={d.id} className="rounded-xl bg-surface-hover p-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium">{d.drill_name}</span>
+                        <span className="text-xs text-green-400">
+                          Done {formatRelativeTime(d.followed_up_at).toLowerCase()}
+                        </span>
+                      </div>
+                      {d.details && <p className="mt-1 text-xs text-muted">{d.details}</p>}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Session Timeline */}
       <div>
         <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
