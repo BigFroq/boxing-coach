@@ -50,6 +50,7 @@ const DIMENSION_KEYS: (keyof DimensionScores)[] = [
 
 const ONE_SHOT_FIGHTER_THRESHOLD = 85;
 const ONE_SHOT_USER_THRESHOLD = 40;
+const ONE_SHOT_BONUS = 25;
 const GATE_FIGHTER_THRESHOLD = 75;
 const GATE_USER_THRESHOLD = 40;
 
@@ -137,10 +138,11 @@ export function matchCounters(
       }));
       const primary = vectorScores.reduce((max, cur) => (cur.threat > max.threat ? cur : max));
       const oneShots = oneShotDims(userScores, fighter.scores);
+      const oneShotBonus = oneShots.length * ONE_SHOT_BONUS;
 
       return {
         fighter,
-        threatScore: primary.threat,
+        threatScore: primary.threat + oneShotBonus,
         primaryAttackVector: primary.vector.id,
         exploitedDimensions: topExploitedDims(userScores, fighter.scores),
         oneShotDominance: oneShots,
