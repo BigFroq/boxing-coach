@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { clipReviewRequestSchema } from "@/lib/validation";
+import { withRetry } from "@/lib/retry";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -91,12 +92,16 @@ export async function POST(request: NextRequest) {
       },
     ];
 
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 2048,
-      system: ANALYSIS_PROMPT,
-      messages: [{ role: "user", content }],
-    });
+    const response = await withRetry(
+      () =>
+        anthropic.messages.create({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 2048,
+          system: ANALYSIS_PROMPT,
+          messages: [{ role: "user", content }],
+        }),
+      { label: "clip-review", maxAttempts: 3 }
+    );
 
     const text = response.content[0].type === "text" ? response.content[0].text : "";
     let jsonStr = text;

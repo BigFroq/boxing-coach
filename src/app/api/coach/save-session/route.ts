@@ -4,18 +4,7 @@ import { createServerClient } from "@/lib/supabase";
 import { VAULT_SLUGS, dimensionLabelToKey, isDimensionKey } from "@/lib/dimensions";
 import { matchReportedDrill } from "@/lib/drill-matching";
 import { deriveFocusAreaKeys } from "@/lib/focus-area-keys";
-
-async function callWithRetry<T>(fn: () => Promise<T>, maxRetries = 3): Promise<T> {
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      return await fn();
-    } catch (err) {
-      if (i === maxRetries - 1) throw err;
-      await new Promise((r) => setTimeout(r, 1000 * Math.pow(2, i)));
-    }
-  }
-  throw new Error("Unreachable");
-}
+import { withRetry } from "@/lib/retry";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -92,13 +81,15 @@ export async function POST(request: NextRequest) {
       .map((m: { role: string; content: string }) => `${m.role === "user" ? "Fighter" : "Coach"}: ${m.content}`)
       .join("\n\n");
 
-    const extractionResponse = await callWithRetry(() =>
-      anthropic.messages.create({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 2048,
-        system: EXTRACTION_PROMPT,
-        messages: [{ role: "user", content: transcript }],
-      })
+    const extractionResponse = await withRetry(
+      () =>
+        anthropic.messages.create({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 2048,
+          system: EXTRACTION_PROMPT,
+          messages: [{ role: "user", content: transcript }],
+        }),
+      { label: "save-session:extract", maxAttempts: 3 }
     );
 
     const extractionText =
