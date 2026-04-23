@@ -25,6 +25,7 @@ const SYSTEM_PROMPT = `You are a boxing coach teaching punch mechanics. Your job
 - Plain paragraphs. NO markdown headings, NO section labels, NO bolded subheadings.
 - You're a teacher explaining mechanics, not a personality. Don't pretend to be a specific person with a backstory. Don't say "I broke this down in my video," don't reference "my framework" or "my course," don't name yourself.
 - Don't cite sources, videos, or course chapters by name in your reply. The knowledge is the knowledge — deliver it directly.
+- You MAY name specific fighters when the question or retrieved context is about them (e.g., "Gervonta drives off his back foot..."). Fighter names are fair game; source titles are not.
 - Keep it tight. A short, direct answer lands harder than a long one. If the question is simple, answer in a few sentences.
 - Bold at most one phrase per answer to punch the key cue. Usually zero.
 - Don't hedge ("it might be," "perhaps consider"). Don't posture either. Just teach.
@@ -167,7 +168,10 @@ export async function POST(request: NextRequest) {
       ? "\n\nThe user has asked you to think longer. Give a more detailed, thorough answer — work through the mechanics step by step, name specific phases and chains, and include the 'one thing to do' at the end. Still no markdown headings."
       : "";
 
-    const maxTokens = thinkLonger ? 4000 : 1500;
+    // When thinkLonger is on, enable extended thinking and bump max_tokens so
+    // the budget (which counts toward max_tokens) doesn't eat the final answer.
+    const thinkingBudget = 2000;
+    const maxTokens = thinkLonger ? 6000 : 1500;
 
     // Stream the response via SSE
     const stream = anthropic.messages.stream({
@@ -180,6 +184,9 @@ export async function POST(request: NextRequest) {
           content: m.content,
         }))
       ),
+      ...(thinkLonger
+        ? { thinking: { type: "enabled" as const, budget_tokens: thinkingBudget } }
+        : {}),
     });
 
     let fullContent = "";
@@ -187,19 +194,40 @@ export async function POST(request: NextRequest) {
     const readableStream = new ReadableStream({
       async start(controller) {
         const encoder = new TextEncoder();
+        // Track whether we've already closed the stream so trailing error/end
+        // events after the first terminal event don't throw
+        // `ERR_INVALID_STATE: Controller is already closed`.
+        let closed = false;
+        const safeEnqueue = (payload: string) => {
+          if (closed) return;
+          try {
+            controller.enqueue(encoder.encode(payload));
+          } catch {
+            closed = true;
+          }
+        };
+        const safeClose = () => {
+          if (closed) return;
+          closed = true;
+          try {
+            controller.close();
+          } catch {
+            // already closed by the runtime
+          }
+        };
+
+        stream.on("thinking", (thinkingDelta) => {
+          safeEnqueue(`data: ${JSON.stringify({ type: "thinking", content: thinkingDelta })}\n\n`);
+        });
 
         stream.on("text", (text) => {
           fullContent += text;
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ type: "text", content: text })}\n\n`)
-          );
+          safeEnqueue(`data: ${JSON.stringify({ type: "text", content: text })}\n\n`);
         });
 
         stream.on("end", () => {
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ type: "done" })}\n\n`)
-          );
-          controller.close();
+          safeEnqueue(`data: ${JSON.stringify({ type: "done" })}\n\n`);
+          safeClose();
 
           // Log query (fire-and-forget)
           logQuery(lastUserMessage.content, context, chunks, fullContent).catch(() => {});
@@ -207,10 +235,8 @@ export async function POST(request: NextRequest) {
 
         stream.on("error", (err) => {
           console.error("Stream error:", err);
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ type: "error", message: "Stream error" })}\n\n`)
-          );
-          controller.close();
+          safeEnqueue(`data: ${JSON.stringify({ type: "error", message: "Stream error" })}\n\n`);
+          safeClose();
         });
       },
     });
