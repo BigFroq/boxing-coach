@@ -3,20 +3,35 @@
  *
  * Layer 1: Retrieval Coverage (50 queries) — keyword matching on RAG chunks
  * Layer 2: Adversarial (20 queries) — misspellings, vague, off-topic, multi-topic, myth
- * Layer 3: Answer Quality (30 queries) — LLM-as-Judge scoring via Claude Sonnet
+ * Layer 3: Answer Quality (38 queries) — LLM-as-Judge scoring via Claude Sonnet
  *
  * Usage:
  *   npm run eval              # Run all 3 layers
  *   npm run eval -- --layer=1 # Run only Layer 1
  *   npm run eval -- --layer=2 # Run only Layer 2
  *   npm run eval -- --layer=3 # Run only Layer 3
+ *
+ * Env vars:
+ *   CHAT_API_URL   Override chat endpoint (default: http://localhost:3001/api/chat)
+ *
+ * Outputs:
+ *   docs/outreach/eval-results.json  — full structured results, saved incrementally
+ *   docs/outreach/blueprint-fidelity.md — human-readable summary report
  */
 
 import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
 
+import * as fs from "fs";
+import * as path from "path";
 import { retrieveContext } from "../src/lib/graph-rag";
+import { withRetry } from "../src/lib/retry";
 import Anthropic from "@anthropic-ai/sdk";
+
+const CHAT_API_URL = process.env.CHAT_API_URL ?? "http://localhost:3001/api/chat";
+const RESULTS_DIR = path.resolve(process.cwd(), "docs/outreach");
+const RESULTS_JSON = path.join(RESULTS_DIR, "eval-results.json");
+const RESULTS_MD = path.join(RESULTS_DIR, "blueprint-fidelity.md");
 
 // ---------------------------------------------------------------------------
 // Types
@@ -61,6 +76,223 @@ interface JudgeScores {
 }
 
 type TestCase = RetrievalTestCase | AdversarialTestCase | JudgeTestCase;
+
+// ---------------------------------------------------------------------------
+// Incremental results store
+// ---------------------------------------------------------------------------
+
+interface Layer1CaseResult {
+  query: string;
+  category: string;
+  pass: boolean;
+  recall: number;
+  found: string[];
+  missing: string[];
+  falsePositives: string[];
+  error?: string;
+}
+
+interface Layer2CaseResult {
+  query: string;
+  subtype: string;
+  pass: boolean;
+  detail: string;
+  error?: string;
+}
+
+interface Layer3CaseResult {
+  query: string;
+  source: string;
+  response?: string;
+  scores?: JudgeScores;
+  error?: string;
+}
+
+interface EvalResultsFile {
+  startedAt: string;
+  completedAt?: string;
+  chatApiUrl: string;
+  layer1: Layer1CaseResult[];
+  layer2: Layer2CaseResult[];
+  layer3: Layer3CaseResult[];
+  summary?: {
+    layer1?: { passed: number; total: number };
+    layer2?: { passed: number; total: number };
+    layer3?: { averages: Record<string, number>; total: number };
+  };
+}
+
+const evalState: EvalResultsFile = {
+  startedAt: new Date().toISOString(),
+  chatApiUrl: CHAT_API_URL,
+  layer1: [],
+  layer2: [],
+  layer3: [],
+};
+
+function ensureResultsDir() {
+  fs.mkdirSync(RESULTS_DIR, { recursive: true });
+}
+
+function saveResultsIncremental() {
+  try {
+    ensureResultsDir();
+    fs.writeFileSync(RESULTS_JSON, JSON.stringify(evalState, null, 2), "utf8");
+  } catch (err) {
+    // Don't crash the run over a failed save; just warn.
+    console.warn(`[saveResultsIncremental] failed: ${err instanceof Error ? err.message : err}`);
+  }
+}
+
+function writeMarkdownReport() {
+  ensureResultsDir();
+
+  const lines: string[] = [];
+  lines.push("# Blueprint Fidelity — Eval Baseline");
+  lines.push("");
+  lines.push(`**Run started:** ${evalState.startedAt}  `);
+  if (evalState.completedAt) lines.push(`**Run completed:** ${evalState.completedAt}  `);
+  lines.push(`**Chat endpoint:** \`${evalState.chatApiUrl}\`  `);
+  lines.push(`**Raw results:** \`docs/outreach/eval-results.json\``);
+  lines.push("");
+  lines.push("This report is regenerated every time the eval runs. The JSON sidecar has the full detail; this file is the human-readable summary for the pre-outreach plan.");
+  lines.push("");
+  lines.push("---");
+  lines.push("");
+
+  // Summary header
+  lines.push("## Summary");
+  lines.push("");
+  if (evalState.summary?.layer1) {
+    const { passed, total } = evalState.summary.layer1;
+    lines.push(`- **Layer 1 (Retrieval Coverage):** ${passed}/${total} passed — ${Math.round((passed / total) * 100)}%`);
+  }
+  if (evalState.summary?.layer2) {
+    const { passed, total } = evalState.summary.layer2;
+    lines.push(`- **Layer 2 (Adversarial):** ${passed}/${total} passed — ${Math.round((passed / total) * 100)}%`);
+  }
+  if (evalState.summary?.layer3) {
+    const a = evalState.summary.layer3.averages;
+    const overall = (a.accuracy + a.voice + a.groundedness + a.actionability) / 4;
+    lines.push(`- **Layer 3 (Answer Quality):** avg ${overall.toFixed(2)}/5 across ${evalState.summary.layer3.total} queries`);
+    lines.push(`  - accuracy ${a.accuracy.toFixed(2)} · voice ${a.voice.toFixed(2)} · groundedness ${a.groundedness.toFixed(2)} · actionability ${a.actionability.toFixed(2)} · myth ${a.myth_correction.toFixed(2)}`);
+  }
+  lines.push("");
+
+  // Baseline delta (persisted across reruns by referencing eval-results.baseline.json).
+  // See `.baseline.json` / `.baseline.md` siblings for the pre-judge-fix baseline.
+  const BASELINE_L3 = { accuracy: 4.0, voice: 4.0, groundedness: 2.0, actionability: 3.8, myth_correction: 4.1 };
+  if (evalState.summary?.layer3) {
+    const a = evalState.summary.layer3.averages;
+    lines.push("### Delta vs. baseline (pre-judge-fix)");
+    lines.push("");
+    lines.push("The baseline scored the coach against a rubric that penalized the product for not citing sources it's explicitly forbidden to cite. The fixed rubric uses retrieved chunks as ground truth and scores groundedness as methodological fidelity.");
+    lines.push("");
+    lines.push("| Dimension | Baseline | Current | Δ |");
+    lines.push("|---|---|---|---|");
+    for (const [k, base] of Object.entries(BASELINE_L3) as [keyof typeof BASELINE_L3, number][]) {
+      const now = a[k];
+      if (typeof now === "number") {
+        const d = now - base;
+        const sign = d >= 0 ? "+" : "";
+        lines.push(`| ${k} | ${base.toFixed(2)} | ${now.toFixed(2)} | ${sign}${d.toFixed(2)} |`);
+      }
+    }
+    lines.push("");
+  }
+
+  // Accuracy misses (anything <= 2 on accuracy — these are the questions Alex is
+  // most likely to probe, so flag them in the summary even when they're rare).
+  const misses = evalState.layer3.filter((r) => r.scores && r.scores.accuracy <= 2);
+  if (misses.length > 0) {
+    lines.push("### Remaining accuracy misses (accuracy ≤ 2)");
+    lines.push("");
+    lines.push("These are worth flagging even at a high average — Alex will probe the topics he's taught directly. Each is linked to the detailed scoring below.");
+    lines.push("");
+    for (const r of misses) {
+      lines.push(`- **${escapeMd(r.query)}** — accuracy ${r.scores?.accuracy}, source: \`${r.source}\``);
+    }
+    lines.push("");
+  }
+
+  // Layer 1 failures
+  const l1fails = evalState.layer1.filter((r) => !r.pass);
+  if (l1fails.length > 0) {
+    lines.push("## Layer 1 — Retrieval failures");
+    lines.push("");
+    lines.push("| Query | Recall | Missing keywords | False positives |");
+    lines.push("|---|---|---|---|");
+    for (const r of l1fails) {
+      const rec = `${Math.round(r.recall * 100)}%`;
+      const miss = r.missing.length ? r.missing.join(", ") : "—";
+      const fp = r.falsePositives.length ? r.falsePositives.join(", ") : "—";
+      lines.push(`| ${escapeMd(r.query)} | ${rec} | ${escapeMd(miss)} | ${escapeMd(fp)} |`);
+    }
+    lines.push("");
+  }
+
+  // Layer 2 failures
+  const l2fails = evalState.layer2.filter((r) => !r.pass);
+  if (l2fails.length > 0) {
+    lines.push("## Layer 2 — Adversarial failures");
+    lines.push("");
+    lines.push("| Query | Subtype | Detail |");
+    lines.push("|---|---|---|");
+    for (const r of l2fails) {
+      lines.push(`| ${escapeMd(r.query)} | ${r.subtype} | ${escapeMd(r.detail)} |`);
+    }
+    lines.push("");
+  }
+
+  // Layer 3 — all scores + reasoning (Alex will want to see these)
+  if (evalState.layer3.length > 0) {
+    lines.push("## Layer 3 — Answer Quality (per query)");
+    lines.push("");
+    lines.push("Scored 1–5 on accuracy, voice, groundedness, actionability, myth correction.");
+    lines.push("");
+    for (const r of evalState.layer3) {
+      lines.push(`### ${escapeMd(r.query)}`);
+      if (r.scores) {
+        const s = r.scores;
+        lines.push(`- Scores — accuracy **${s.accuracy}** · voice **${s.voice}** · grounded **${s.groundedness}** · actionable **${s.actionability}** · myth ${s.myth_correction ?? "N/A"}`);
+        lines.push(`- Judge reasoning: ${s.reasoning}`);
+      } else if (r.error) {
+        lines.push(`- **ERROR**: ${escapeMd(r.error)}`);
+      }
+      if (r.response) {
+        lines.push("");
+        lines.push("<details><summary>Coach response</summary>");
+        lines.push("");
+        lines.push("```");
+        lines.push(r.response);
+        lines.push("```");
+        lines.push("</details>");
+      }
+      lines.push("");
+    }
+  }
+
+  // Errors (any layer)
+  const allErrors = [
+    ...evalState.layer1.filter((r) => r.error).map((r) => ({ layer: 1, query: r.query, error: r.error! })),
+    ...evalState.layer2.filter((r) => r.error).map((r) => ({ layer: 2, query: r.query, error: r.error! })),
+    ...evalState.layer3.filter((r) => r.error).map((r) => ({ layer: 3, query: r.query, error: r.error! })),
+  ];
+  if (allErrors.length > 0) {
+    lines.push("## Errors");
+    lines.push("");
+    for (const e of allErrors) {
+      lines.push(`- **L${e.layer}** \`${escapeMd(e.query)}\` — ${escapeMd(e.error)}`);
+    }
+    lines.push("");
+  }
+
+  fs.writeFileSync(RESULTS_MD, lines.join("\n"), "utf8");
+}
+
+function escapeMd(s: string): string {
+  return s.replace(/\|/g, "\\|").replace(/\n/g, " ");
+}
 
 // ---------------------------------------------------------------------------
 // Layer 1: Retrieval Coverage (50 queries)
@@ -227,6 +459,18 @@ const LAYER_3_CASES: JudgeTestCase[] = [
   { layer: 3, query: "power comes from the heel right", source: "myth" },
   // From adversarial — off-topic
   { layer: 3, query: "what should I eat before training", source: "off-topic" },
+  // Blueprint Fidelity — signature Alex teachings where drift is easy to spot.
+  // Ground truth drawn from vault "What Alex Teaches" sections — these are questions
+  // Alex would instantly recognize: either "yes that's exactly my framework" or
+  // "no you got it wrong." If any of these score accuracy ≤3 it's a real fidelity issue.
+  { layer: 3, query: "Should I land a hook with my palm facing me or palm down?", source: "blueprint-fidelity" },
+  { layer: 3, query: "Should I pivot on the ball of my front foot for a hook?", source: "blueprint-fidelity" },
+  { layer: 3, query: "Which knuckles should I land with when I punch?", source: "blueprint-fidelity" },
+  { layer: 3, query: "Should I snap my punches back after contact?", source: "blueprint-fidelity" },
+  { layer: 3, query: "Should I step forward when I throw a punch?", source: "blueprint-fidelity" },
+  { layer: 3, query: "Should my shoulders be tense or loose when I punch?", source: "blueprint-fidelity" },
+  { layer: 3, query: "How does arc trajectory work in a hook?", source: "blueprint-fidelity" },
+  { layer: 3, query: "What does 'loose until impact' mean in punching?", source: "blueprint-fidelity" },
 ];
 
 // ---------------------------------------------------------------------------
@@ -257,76 +501,168 @@ function parseLayerArg(): number | null {
   process.exit(1);
 }
 
-async function chatAPI(query: string): Promise<string> {
-  const res = await fetch("http://localhost:3001/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      messages: [{ role: "user", content: query }],
-      context: "technique",
-    }),
-  });
-  if (!res.ok) {
-    throw new Error(`Chat API returned ${res.status}: ${await res.text()}`);
-  }
-  const data = await res.json();
-  // The response shape may vary — try common patterns
-  if (typeof data === "string") return data;
-  if (data.content) return data.content;
-  if (data.message) return data.message;
-  if (data.response) return data.response;
-  if (data.text) return data.text;
-  // If it's a streaming response with choices
-  if (data.choices?.[0]?.message?.content) return data.choices[0].message.content;
-  return JSON.stringify(data);
+function parseSourceArg(): string | null {
+  const arg = process.argv.find((a) => a.startsWith("--source="));
+  if (!arg) return null;
+  return arg.split("=")[1] ?? null;
 }
 
-const JUDGE_PROMPT = `You are evaluating a boxing AI coach response. The coach is supposed to sound like Dr. Alex Wiant (The Punch Doctor) — direct, authoritative, technically precise, uses his specific terminology (kinetic chains, 4 phases, stretch-shortening cycle, shearing force), corrects myths bluntly, prescribes specific drills, references fighters he's analyzed.
+async function chatAPI(query: string): Promise<string> {
+  return withRetry(
+    async () => {
+      const res = await fetch(CHAT_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
+        body: JSON.stringify({
+          messages: [{ role: "user", content: query }],
+          context: "technique",
+        }),
+      });
+      if (!res.ok) {
+        throw new Error(`Chat API returned ${res.status}: ${await res.text()}`);
+      }
+
+      const contentType = res.headers.get("content-type") ?? "";
+
+      // Streaming SSE response — concatenate text content from `data:` events.
+      if (contentType.includes("text/event-stream") || contentType.includes("stream")) {
+        return await consumeSSE(res);
+      }
+
+      // JSON fallback (covers future non-streaming variants).
+      const data = await res.json();
+      if (typeof data === "string") return data;
+      if (data.content) return data.content;
+      if (data.message) return data.message;
+      if (data.response) return data.response;
+      if (data.text) return data.text;
+      if (data.choices?.[0]?.message?.content) return data.choices[0].message.content;
+      return JSON.stringify(data);
+    },
+    { label: "chatAPI", maxAttempts: 4 }
+  );
+}
+
+/**
+ * Consume a Server-Sent Events stream from the chat endpoint.
+ *
+ * Event format (from src/app/api/chat/route.ts): lines like
+ *   data: {"type":"text","content":"..."}
+ *   data: {"type":"done"}
+ * We concatenate the `content` fields of all `type:"text"` events.
+ */
+async function consumeSSE(res: Response): Promise<string> {
+  if (!res.body) throw new Error("Streaming response had no body");
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let text = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    // Events are separated by blank lines, but we parse line-by-line for simplicity.
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (!line.startsWith("data:")) continue;
+      const payload = line.slice(5).trim();
+      if (!payload) continue;
+      try {
+        const ev = JSON.parse(payload);
+        if (ev.type === "text" && typeof ev.content === "string") {
+          text += ev.content;
+        }
+      } catch {
+        // Non-JSON data line; ignore.
+      }
+    }
+  }
+
+  // Flush any final buffered line.
+  const last = buffer.trim();
+  if (last.startsWith("data:")) {
+    const payload = last.slice(5).trim();
+    try {
+      const ev = JSON.parse(payload);
+      if (ev.type === "text" && typeof ev.content === "string") text += ev.content;
+    } catch {
+      // ignore
+    }
+  }
+
+  return text;
+}
+
+const JUDGE_PROMPT = `You are evaluating a boxing AI coach's response.
+
+## What the product actually is (read carefully — the rubric depends on this)
+This is a web app coach built on Dr. Alex Wiant's (The Punch Doctor) Power Punching Blueprint and his YouTube catalog. By DELIBERATE product design:
+- The AI is a NEUTRAL boxing coach that teaches Alex's methodology. It does NOT claim to BE Alex (no first-person "I", no "my video," no "my course," no "I covered this in…").
+- The AI does NOT cite video titles or course chapters by name. It does NOT invent source titles.
+- The AI MAY name specific fighters when relevant (e.g., "Gervonta drives off his back foot…"), because fighter names are public domain.
+- The AI delivers Alex's specific framework: kinetic chains, 4 phases (Load → Hip Explosion → Core Transfer → Follow Through), throw-not-push, shearing force, stretch-shortening cycle, cross-body chains, lateral hip muscles, last-3-knuckles landing.
+- Format: plain paragraphs (no markdown headings), ends with exactly ONE specific drill, direct/tight, no hedging.
+
+You will be given: USER QUESTION, COACH RESPONSE, and RETRIEVED CONTEXT (the RAG chunks the chat used). Use the retrieved context as GROUND TRUTH — do not rely on your own boxing knowledge to flag "hallucinations." If the coach references a fight or concept that appears in the retrieved context, that's grounded, even if you don't recognize it.
 
 Score 1-5 on each criterion:
 
 ACCURACY (1-5):
-- 5: Perfectly matches Alex's methodology, no hallucinations
-- 3: Mostly correct but includes some generic advice
-- 1: Contains hallucinated or incorrect claims
+- 5: Biomechanically correct AND consistent with the retrieved context. No invented fights, drills, or facts.
+- 3: Mostly correct, but includes generic advice not supported by the retrieved context.
+- 1: Contains claims contradicted by the retrieved context, or fabricates specific fights/drills/events not present in retrieval.
 
 VOICE (1-5):
-- 5: Sounds exactly like Alex — direct, opinionated, uses his phrases
-- 3: Sounds like a knowledgeable assistant, not Alex specifically
-- 1: Generic AI chatbot voice, no personality
+- 5: Direct, confident, no hedging. Plain paragraphs without markdown headings. Corrects myths without apology. Does NOT impersonate Alex (no first-person "I", no "my framework").
+- 3: Mostly direct but drifts into generic AI politeness, bullet lists, or markdown structure.
+- 1: Chatbot voice — hedged, listy, apologetic, OR it incorrectly role-plays as Alex himself.
 
-GROUNDEDNESS (1-5):
-- 5: References specific videos, course sections, fighters by name
-- 3: General references ("as Alex teaches...")
-- 1: No citations, could be any boxing AI
+GROUNDEDNESS (methodological fidelity, 1-5):
+- 5: Unmistakably rooted in Alex's specific framework — uses his terminology (kinetic chains, 4 phases, stretch-shortening, shearing force, cross-body chains), applies his concepts, names specific fighters when relevant. This answer could NOT have come from a generic boxing AI.
+- 3: Uses some of Alex's concepts, but also leans on generic boxing advice.
+- 1: Could be from any boxing AI — no specific methodology, platitudes only.
+- NOTE: Do NOT reward naming of video titles, course chapters, or self-citations. Those are explicitly disallowed by the product design. Reward USE of the methodology.
 
 ACTIONABILITY (1-5):
-- 5: Specific drills, reps, cues — user knows exactly what to do
-- 3: General advice ("work on hip rotation")
-- 1: Just explains theory, no action steps
+- 5: Ends with exactly ONE specific drill with reps/cues/stance. The user knows what to do today.
+- 3: General advice, or multiple drills listed without a pick.
+- 1: Just explains theory, no action step.
 
-MYTH_CORRECTION (1-5, or N/A if no myth in the question):
-- 5: Catches the misconception immediately, corrects bluntly with evidence
-- 3: Partially addresses the myth
-- 1: Agrees with or ignores the misconception
+MYTH_CORRECTION (1-5, or null if no myth in the question):
+- 5: Catches the misconception immediately and corrects directly with the underlying mechanic.
+- 3: Partially addresses the myth.
+- 1: Agrees with or ignores the misconception.
 
-Return JSON only, no markdown fences: { "accuracy": N, "voice": N, "groundedness": N, "actionability": N, "myth_correction": N or null, "reasoning": "brief explanation" }`;
+Return JSON only, no markdown fences: { "accuracy": N, "voice": N, "groundedness": N, "actionability": N, "myth_correction": N or null, "reasoning": "brief explanation citing specific evidence from the retrieved context when relevant" }`;
 
 async function judgeResponse(
   query: string,
   response: string,
+  retrievedContext: string,
   anthropic: Anthropic
 ): Promise<JudgeScores> {
-  const result = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 500,
-    messages: [
-      {
-        role: "user",
-        content: `USER QUESTION: "${query}"\n\nCOACH RESPONSE:\n${response}\n\n${JUDGE_PROMPT}`,
-      },
-    ],
-  });
+  const retrievedBlock = retrievedContext
+    ? `\n\nRETRIEVED CONTEXT (ground truth — what the RAG pulled):\n<retrieved>\n${retrievedContext.slice(0, 12000)}\n</retrieved>`
+    : "\n\nRETRIEVED CONTEXT: (none available — judge on biomechanical plausibility only)";
+
+  const result = await withRetry(
+    () =>
+      anthropic.messages.create({
+        model: "claude-sonnet-4-20250514",
+        max_tokens: 700,
+        messages: [
+          {
+            role: "user",
+            content: `USER QUESTION: "${query}"\n\nCOACH RESPONSE:\n${response}${retrievedBlock}\n\n${JUDGE_PROMPT}`,
+          },
+        ],
+      }),
+    { label: "judgeResponse", maxAttempts: 4 }
+  );
 
   const text =
     result.content[0].type === "text" ? result.content[0].text : "";
@@ -375,7 +711,10 @@ async function runLayer1(): Promise<{ passed: number; total: number }> {
 
   for (const tc of LAYER_1_CASES) {
     try {
-      const { chunks } = await retrieveContext(tc.query, { count: 12 });
+      const { chunks } = await withRetry(
+        () => retrieveContext(tc.query, { count: 12 }),
+        { label: "retrieveContext", maxAttempts: 3 }
+      );
       const combined = allChunksText(chunks);
 
       const found: string[] = [];
@@ -393,6 +732,16 @@ async function runLayer1(): Promise<{ passed: number; total: number }> {
       const recall = tc.mustContain.length > 0 ? found.length / tc.mustContain.length : 1;
       const pass = recall >= 0.8 && falsePositives.length === 0;
 
+      evalState.layer1.push({
+        query: tc.query,
+        category: tc.category,
+        pass,
+        recall,
+        found,
+        missing,
+        falsePositives,
+      });
+
       if (pass) {
         console.log(
           `[PASS] "${tc.query}" — recall: ${Math.round(recall * 100)}% (${found.length}/${tc.mustContain.length})`
@@ -407,9 +756,24 @@ async function runLayer1(): Promise<{ passed: number; total: number }> {
         );
       }
     } catch (err) {
-      console.log(`[ERROR] "${tc.query}" — ${err instanceof Error ? err.message : String(err)}`);
+      const errMsg = err instanceof Error ? err.message : String(err);
+      console.log(`[ERROR] "${tc.query}" — ${errMsg}`);
+      evalState.layer1.push({
+        query: tc.query,
+        category: tc.category,
+        pass: false,
+        recall: 0,
+        found: [],
+        missing: tc.mustContain,
+        falsePositives: [],
+        error: errMsg,
+      });
     }
+    saveResultsIncremental();
   }
+
+  evalState.summary = { ...(evalState.summary ?? {}), layer1: { passed, total } };
+  saveResultsIncremental();
 
   console.log();
   console.log(`Layer 1: ${passed}/${total} passed (${Math.round((passed / total) * 100)}%)`);
@@ -431,13 +795,15 @@ async function runLayer2(): Promise<{ passed: number; total: number }> {
   const total = LAYER_2_CASES.length;
 
   for (const tc of LAYER_2_CASES) {
+    let pass = false;
+    let detail = "";
+    let errorMsg: string | undefined;
     try {
-      let pass = false;
-      let detail = "";
-
       if (tc.subtype === "misspelling") {
-        // Test retrieval — misspelled query should still find correct content
-        const { chunks } = await retrieveContext(tc.query, { count: 12 });
+        const { chunks } = await withRetry(
+          () => retrieveContext(tc.query, { count: 12 }),
+          { label: "retrieveContext", maxAttempts: 3 }
+        );
         const combined = allChunksText(chunks);
         const keywords = tc.mustContain ?? [];
         const found = keywords.filter((kw) => containsKeyword(combined, kw));
@@ -448,8 +814,10 @@ async function runLayer2(): Promise<{ passed: number; total: number }> {
           ? `recall: ${Math.round(recall * 100)}%`
           : `recall: ${Math.round(recall * 100)}% — missing: [${missing.join(", ")}]`;
       } else if (tc.subtype === "vague" || tc.subtype === "multi-topic") {
-        // Test retrieval — vague/multi-topic queries should retrieve relevant content
-        const { chunks } = await retrieveContext(tc.query, { count: 12 });
+        const { chunks } = await withRetry(
+          () => retrieveContext(tc.query, { count: 12 }),
+          { label: "retrieveContext", maxAttempts: 3 }
+        );
         const combined = allChunksText(chunks);
         const keywords = tc.mustContainRetrieval ?? [];
         const found = keywords.filter((kw) => containsKeyword(combined, kw));
@@ -460,7 +828,6 @@ async function runLayer2(): Promise<{ passed: number; total: number }> {
           ? `recall: ${Math.round(recall * 100)}%`
           : `recall: ${Math.round(recall * 100)}% — missing: [${missing.join(", ")}]`;
       } else if (tc.subtype === "off-topic") {
-        // Test chat API — should refuse gracefully
         const response = await chatAPI(tc.query);
         const lower = response.toLowerCase();
         const patterns = tc.refusalPatterns ?? [];
@@ -468,7 +835,6 @@ async function runLayer2(): Promise<{ passed: number; total: number }> {
         pass = matched;
         detail = pass ? "correctly refused" : `no refusal pattern found in response`;
       } else if (tc.subtype === "myth") {
-        // Test chat API — should correct the myth
         const response = await chatAPI(tc.query);
         const lower = response.toLowerCase();
         const patterns = tc.correctionPatterns ?? [];
@@ -485,9 +851,24 @@ async function runLayer2(): Promise<{ passed: number; total: number }> {
         console.log(`[FAIL] "${tc.query}" ${subtypeLabel} — ${detail}`);
       }
     } catch (err) {
-      console.log(`[ERROR] "${tc.query}" — ${err instanceof Error ? err.message : String(err)}`);
+      errorMsg = err instanceof Error ? err.message : String(err);
+      console.log(`[ERROR] "${tc.query}" — ${errorMsg}`);
+      pass = false;
+      detail = `error: ${errorMsg}`;
     }
+
+    evalState.layer2.push({
+      query: tc.query,
+      subtype: tc.subtype,
+      pass,
+      detail,
+      error: errorMsg,
+    });
+    saveResultsIncremental();
   }
+
+  evalState.summary = { ...(evalState.summary ?? {}), layer2: { passed, total } };
+  saveResultsIncremental();
 
   console.log();
   console.log(`Layer 2: ${passed}/${total} passed (${Math.round((passed / total) * 100)}%)`);
@@ -505,18 +886,39 @@ async function runLayer3(): Promise<{
   total: number;
 }> {
   console.log("=".repeat(70));
-  console.log("  Layer 3: Answer Quality (30 queries)");
+  console.log("  Layer 3: Answer Quality (38 queries)");
   console.log("=".repeat(70));
 
   const anthropic = new Anthropic();
 
-  const allScores: JudgeScores[] = [];
-  const total = LAYER_3_CASES.length;
+  const sourceFilter = parseSourceArg();
+  const cases = sourceFilter
+    ? LAYER_3_CASES.filter((c) => c.source === sourceFilter)
+    : LAYER_3_CASES;
+  if (sourceFilter) {
+    console.log(`  Filtered to source="${sourceFilter}": ${cases.length} of ${LAYER_3_CASES.length}`);
+  }
 
-  for (const tc of LAYER_3_CASES) {
+  const allScores: JudgeScores[] = [];
+  const total = cases.length;
+
+  for (const tc of cases) {
+    let response: string | undefined;
+    let scores: JudgeScores | undefined;
+    let errorMsg: string | undefined;
     try {
-      const response = await chatAPI(tc.query);
-      const scores = await judgeResponse(tc.query, response, anthropic);
+      // Retrieve the same context the chat API would see, so the judge can
+      // use it as ground truth. Small extra cost (~1 Voyage + 1 Supabase query
+      // per case), but prevents false-positive hallucination flags when the
+      // vault contains information past the judge model's training cutoff.
+      const { chunks: judgeChunks } = await withRetry(
+        () => retrieveContext(tc.query, { count: 12 }),
+        { label: "retrieveContext(judge)", maxAttempts: 3 }
+      );
+      const retrievedForJudge = allChunksText(judgeChunks);
+
+      response = await chatAPI(tc.query);
+      scores = await judgeResponse(tc.query, response, retrievedForJudge, anthropic);
       allScores.push(scores);
 
       console.log(`"${tc.query}"`);
@@ -525,8 +927,18 @@ async function runLayer3(): Promise<{
       );
       console.log(`  Reasoning: ${scores.reasoning}`);
     } catch (err) {
-      console.log(`[ERROR] "${tc.query}" — ${err instanceof Error ? err.message : String(err)}`);
+      errorMsg = err instanceof Error ? err.message : String(err);
+      console.log(`[ERROR] "${tc.query}" — ${errorMsg}`);
     }
+
+    evalState.layer3.push({
+      query: tc.query,
+      source: tc.source,
+      response,
+      scores,
+      error: errorMsg,
+    });
+    saveResultsIncremental();
   }
 
   // Compute averages
@@ -549,6 +961,9 @@ async function runLayer3(): Promise<{
     myth_correction: avg(mythScores),
   };
 
+  evalState.summary = { ...(evalState.summary ?? {}), layer3: { averages, total } };
+  saveResultsIncremental();
+
   console.log();
   console.log("Layer 3 Averages:");
   console.log(`  Accuracy:      ${averages.accuracy.toFixed(1)}/5`);
@@ -568,6 +983,24 @@ async function runLayer3(): Promise<{
 // ---------------------------------------------------------------------------
 
 async function main() {
+  // `--report-only` regenerates the markdown report from the existing JSON
+  // without rerunning the eval. Useful after tweaks to the report format
+  // (delta tables, misses section, etc.) so we don't need to burn ~18 min
+  // and ~$1 of judge cost just to refresh formatting.
+  if (process.argv.includes("--report-only")) {
+    try {
+      const raw = fs.readFileSync(RESULTS_JSON, "utf8");
+      const loaded = JSON.parse(raw) as EvalResultsFile;
+      Object.assign(evalState, loaded);
+      writeMarkdownReport();
+      console.log(`Regenerated report at ${RESULTS_MD}`);
+      return;
+    } catch (err) {
+      console.error(`--report-only failed to load ${RESULTS_JSON}: ${err instanceof Error ? err.message : err}`);
+      process.exit(1);
+    }
+  }
+
   const layerFilter = parseLayerArg();
   let anyFailed = false;
 
@@ -626,6 +1059,17 @@ async function main() {
 
   console.log("=".repeat(70));
 
+  // Finalize: stamp completion, save JSON, write markdown report
+  evalState.completedAt = new Date().toISOString();
+  saveResultsIncremental();
+  try {
+    writeMarkdownReport();
+    console.log(`\n  Report: ${RESULTS_MD}`);
+    console.log(`  JSON:   ${RESULTS_JSON}\n`);
+  } catch (err) {
+    console.warn(`[writeMarkdownReport] failed: ${err instanceof Error ? err.message : err}`);
+  }
+
   if (anyFailed) {
     process.exit(1);
   }
@@ -633,5 +1077,14 @@ async function main() {
 
 main().catch((err) => {
   console.error("Eval suite crashed:", err);
+  // Even on crash, try to save the partial report
+  try {
+    evalState.completedAt = new Date().toISOString();
+    saveResultsIncremental();
+    writeMarkdownReport();
+    console.error(`  Partial report saved to: ${RESULTS_MD}`);
+  } catch {
+    // swallow — we're already crashing
+  }
   process.exit(2);
 });
