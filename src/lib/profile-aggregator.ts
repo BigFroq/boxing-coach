@@ -18,7 +18,7 @@ export type UserProfileRow = {
 
 export type StyleProfileRow = {
   id: string;
-  experience_level: string | null;
+  experience_level?: string | null;
   physical_context: {
     height?: string;
     build?: string;

@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
         .maybeSingle(),
       supabase
         .from("style_profiles")
-        .select("id, experience_level, physical_context, ai_result, matched_fighters")
+        .select("id, physical_context, ai_result, matched_fighters")
         .eq("user_id", userId)
         .eq("is_current", true)
         .order("created_at", { ascending: false })
