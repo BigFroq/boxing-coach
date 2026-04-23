@@ -55,6 +55,7 @@ function AppContent() {
     const tab = params.get("tab");
     let changed = false;
     if (seed) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setCoachQuery(seed);
       params.delete("q");
       changed = true;
