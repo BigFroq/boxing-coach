@@ -57,3 +57,11 @@ vault/
 
 # playwright mcp scratch
 .playwright-mcp/
+
+# playwright test artifacts (videos, traces)
+/test-results/
+/playwright-report/
+
+# editor / agent local configs
+/.claude/
+/.obsidian/
