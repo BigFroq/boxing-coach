@@ -104,23 +104,24 @@ async function main() {
   // 6. Diagnosis
   console.log("\n=== Diagnosis ===");
   if (orphansMissing === ORPHAN_SLUGS.length) {
-    console.log("All 8 orphans have ZERO edges in the DB. This is a pass3-edges problem —");
-    console.log("edges were never discovered/saved for these nodes. Fix: re-run pass3-edges");
-    console.log("for the affected nodes (expensive — Opus calls), OR investigate whether a");
-    console.log("batch parse failure swallowed them silently during the original run.");
+    console.log("All 8 original orphans have ZERO edges in the DB.");
+    console.log("Fix: run scripts/rerun-pass3-edges.ts (dry-run first, then --execute).");
   } else if (orphansWithEdges === ORPHAN_SLUGS.length) {
-    console.log("All 8 orphans HAVE edges in the DB. This is a write-vault.ts bug —");
-    console.log("the renderer isn't using them. Fix: investigate why buildConnectionsSection");
-    console.log("returns empty for these nodes (slug mismatch? edge type filter?).");
+    console.log("All 8 original orphans have edges in the DB. If vault files still show");
+    console.log("empty Connections, regenerate: scripts/regenerate-vault-from-db.ts");
   } else {
     console.log(`Mixed: ${orphansWithEdges} have edges, ${orphansMissing} have zero edges.`);
-    console.log("Fix combines both approaches per-orphan.");
+    console.log("Fix: run scripts/rerun-pass3-edges.ts --slug=<comma,separated,list> for");
+    console.log("the still-missing ones, then regenerate the vault.");
   }
 
-  console.log("\nSecondary finding — write-vault.ts:104 has an orthogonal bug:");
-  console.log("the 'if (connections && ...)' check skips replacement when connections is empty,");
-  console.log("leaving the [Leave empty — to be filled in Pass 3] placeholder in rendered files.");
-  console.log("Even if pass3 genuinely has zero edges for a node, the placeholder shouldn't survive.");
+  if (allZeroEdge.length > 0) {
+    console.log(`\nStill ${allZeroEdge.length} zero-edge node(s) overall — typically thin stubs`);
+    console.log("(content < 200 chars) that rerun-pass3-edges deliberately skips. To include them,");
+    console.log("pass --slug explicitly, or first synthesize richer content via pass2.");
+  } else {
+    console.log("\nAll DB nodes have at least one non-SOURCED_FROM edge.");
+  }
 }
 
 main().catch(e => {

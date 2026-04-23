@@ -123,6 +123,23 @@ export async function writeVaultFiles(
 
   console.log(`Wrote ${nodes.length} node files`);
 
+  // Remove orphaned .md files — nodes deleted from the DB (merge, stub cleanup, etc.)
+  // leave stale files on disk unless we prune them here.
+  const currentFiles = new Set(nodes.map(n => `${TYPE_FOLDERS[n.node_type] ?? "concepts"}/${n.slug}.md`));
+  let pruned = 0;
+  for (const folder of folders) {
+    const folderPath = path.join(VAULT_DIR, folder);
+    let entries: string[];
+    try { entries = await fs.readdir(folderPath); } catch { continue; }
+    for (const entry of entries) {
+      if (!entry.endsWith(".md")) continue;
+      if (currentFiles.has(`${folder}/${entry}`)) continue;
+      await fs.unlink(path.join(folderPath, entry));
+      pruned++;
+    }
+  }
+  if (pruned) console.log(`Pruned ${pruned} orphaned file(s)`);
+
   // Write _MOC.md
   const grouped: Record<string, SynthesizedNode[]> = {};
   for (const node of nodes) {
