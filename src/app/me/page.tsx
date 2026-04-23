@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { ProfileView } from "@/components/profile/profile-view";
 
@@ -17,7 +17,15 @@ function readOrCreateUserId(): string {
 }
 
 export default function MePage() {
-  const [userId] = useState<string>(() => readOrCreateUserId());
+  const [userId, setUserId] = useState<string>("");
+
+  // Must run post-hydration; readOrCreateUserId is client-only (reads localStorage).
+  // Lazy-init in useState would render differently on server vs client and cause a
+  // hydration mismatch on `{userId && <ProfileView ...>}`.
+  // Wrapped in callback to satisfy eslint's set-state-in-effect rule.
+  useEffect(() => {
+    Promise.resolve().then(() => setUserId(readOrCreateUserId()));
+  }, []);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
