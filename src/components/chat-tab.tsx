@@ -5,6 +5,7 @@ import { Send, RefreshCw, History, Sparkles, ChevronDown, Brain } from "lucide-r
 import { FeedbackWidget } from "@/components/feedback-widget";
 import { track } from "@/lib/analytics";
 import { renderInlineBold } from "@/lib/render-inline-bold";
+import { getThinkingSequence } from "@/lib/thinking-sequence";
 
 interface Message {
   role: "user" | "assistant";
@@ -57,47 +58,6 @@ function saveHistory(key: string, history: SavedConversation[]) {
   localStorage.setItem(key + "-history", JSON.stringify(history.slice(0, 20)));
 }
 
-// Contextual loading lines — rotate while we wait for the first stream token.
-// Narrates real work (retrieval → framework lookup → answer draft) so it feels
-// alive without fabricating chain-of-thought.
-function pickThinkingOpener(msg: string): string | null {
-  const m = msg.toLowerCase();
-  if (/\bjab\b/.test(m)) return "Looking at jab mechanics…";
-  if (/\bcross\b|\bstraight right\b|\bstraight left\b/.test(m)) return "Looking at cross mechanics…";
-  if (/\bhook\b/.test(m)) return "Looking at hook mechanics…";
-  if (/\buppercut\b/.test(m)) return "Looking at uppercut mechanics…";
-  if (/\bcombo\b|\bcombination\b/.test(m)) return "Thinking through the combo…";
-  if (/\bbody shot\b|\bbody work\b|\bto the body\b/.test(m)) return "Looking at body work…";
-  if (/\bsouthpaw\b/.test(m)) return "Thinking about the southpaw angle…";
-  if (/\borthodox\b/.test(m)) return "Looking at orthodox mechanics…";
-  if (/\bfoot(work)?\b|\bpivot\b|\bstep\b/.test(m)) return "Checking footwork…";
-  if (/\bhip\b/.test(m)) return "Tracing hip rotation…";
-  if (/\bshoulder\b/.test(m)) return "Checking shoulder transfer…";
-  if (/\bpower\b|\bknockout\b|\bko\b/.test(m)) return "Tracing where power comes from…";
-  if (/\bstance\b|\bguard\b/.test(m)) return "Checking stance…";
-  if (/\bdefense\b|\bslip\b|\broll\b|\bblock\b|\bparry\b/.test(m)) return "Looking at defensive mechanics…";
-  if (/\bgas(sing)?\b|\btired\b|\bbreath(ing)?\b|\bcardio\b/.test(m)) return "Thinking about conditioning…";
-  const fighters = ["gervonta", "mayweather", "pacquiao", "canelo", "lomachenko", "fury", "usyk", "ali", "tyson", "roy jones", "crawford", "inoue"];
-  for (const f of fighters) {
-    if (m.includes(f)) {
-      const cap = f.replace(/\b\w/g, (c) => c.toUpperCase());
-      return `Pulling up ${cap}'s footage…`;
-    }
-  }
-  return null;
-}
-
-function getThinkingSequence(lastUserMessage: string, context: string): string[] {
-  const opener = pickThinkingOpener(lastUserMessage) ?? "Reading your question…";
-  if (context === "drills") {
-    return [opener, "Pulling relevant drills…", "Picking reps and cues…", "Writing it up…"];
-  }
-  if (context === "style") {
-    return [opener, "Reading your fighter profile…", "Matching similar fighters…", "Tailoring to your style…"];
-  }
-  // technique / default
-  return [opener, "Checking the kinetic chain…", "Mapping to the four phases…", "Writing it up…"];
-}
 
 export function ChatTab({
   systemContext,

@@ -1,0 +1,799 @@
+# Blueprint Fidelity — Eval Baseline
+
+**Run started:** 2026-04-22T12:24:06.500Z  
+**Run completed:** 2026-04-22T12:51:01.989Z  
+**Chat endpoint:** `http://localhost:3001/api/chat`  
+**Raw results:** `docs/outreach/eval-results.json`
+
+This report is regenerated every time the eval runs. The JSON sidecar has the full detail; this file is the human-readable summary for the pre-outreach plan.
+
+---
+
+## Summary
+
+- **Layer 3 (Answer Quality):** avg 4.83/5 across 38 queries
+  - accuracy 4.68 · voice 4.82 · groundedness 4.87 · actionability 4.95 · myth 5.00
+
+### Delta vs. baseline (pre-judge-fix)
+
+The baseline scored the coach against a rubric that penalized the product for not citing sources it's explicitly forbidden to cite. The fixed rubric uses retrieved chunks as ground truth and scores groundedness as methodological fidelity.
+
+| Dimension | Baseline | Current | Δ |
+|---|---|---|---|
+| accuracy | 4.00 | 4.68 | +0.68 |
+| voice | 4.00 | 4.82 | +0.82 |
+| groundedness | 2.00 | 4.87 | +2.87 |
+| actionability | 3.80 | 4.95 | +1.15 |
+| myth_correction | 4.10 | 5.00 | +0.90 |
+
+### Remaining accuracy misses (accuracy ≤ 2)
+
+These are worth flagging even at a high average — Alex will probe the topics he's taught directly. Each is linked to the detailed scoring below.
+
+- **How does Terence Crawford switch stances?** — accuracy 2, source: `fighter`
+- **what should I eat before training** — accuracy 2, source: `off-topic`
+- **Which knuckles should I land with when I punch?** — accuracy 2, source: `blueprint-fidelity`
+
+## Layer 3 — Answer Quality (per query)
+
+Scored 1–5 on accuracy, voice, groundedness, actionability, myth correction.
+
+### How does Canelo Alvarez use his jab?
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth 5
+- Judge reasoning: The response is biomechanically accurate and fully grounded in the retrieved context, which specifically shows Canelo 'opening his hips,' 'moving his rear hip backwards to rotate his trunk,' with 'back to front movement' and details the exact kinetic chains mentioned (spiral line, front functional line, superficial front line). The coach correctly explains the hip-driven mechanics versus arm-push myth, uses Alex's specific terminology throughout (kinetic chains, cross-body chains, stretch-shortening cycle), maintains neutral coaching voice without impersonating Alex, and provides exactly one specific drill with reps and stance variations.
+
+<details><summary>Coach response</summary>
+
+```
+Canelo uses his jab with excellent hip-driven mechanics that demonstrate the proper kinetic chain sequencing. His jab isn't an arm push - it's powered by his hips moving in two planes simultaneously: back-to-front and rotational.
+
+Watch Canelo's jab and you'll see him opening his hips, moving his rear hip backwards to rotate his trunk while also creating back-to-front momentum. His lead hip pulls back slightly, then drives forward as he pushes off his back foot. This hip rotation stretches his cross-body kinetic chains - the spiral line connecting his internal and external obliques, the front functional line from his adductor through his abs to the opposite pec, and the superficial front line with his quads.
+
+The power transfers from his rotating hips through his core into his shoulder and arm. The shoulder doesn't generate the power - it transfers the energy created by the hip explosion. His arm accelerates as the last link in the chain, landing with his last three knuckles while he grabs the fist at impact.
+
+Canelo also demonstrates proper weight transfer with his jab. When he steps, it's not marching in place - he's catching his forward momentum with his lead foot, which allows him to push back and reset for the next punch. This maintains his balance and keeps him ready to explode again.
+
+The key is that multiple kinetic chains fire in sequence, not simultaneously. Hip rotation comes first, creating stretch in those cross-body chains, then they contract to accelerate the punch. It's the same mechanics you'd use throwing a ball.
+
+**Here's what to do: hip rotation drill, 100 reps daily, orthodox and southpaw. Keep the upper body loose and let the hips drag the torso around.**
+```
+</details>
+
+### How does Artur Beterbiev generate power?
+- Scores — accuracy **5** · voice **4** · grounded **5** · actionable **5** · myth N/A
+- Judge reasoning: The response is highly accurate and grounded in the retrieved context. It correctly explains Beterbiev's power generation through kinetic chains, shoulder integrity, and arc trajectory - all concepts detailed in the retrieved material. The explanation of sequential rotation (hips → torso → arm) and the critical insight about arm movement in an arc to maintain tension matches exactly what's described in the context: 'if he didn't bring that towards the center it would exhaust itself, it would run out of steam, but that arc allows the tension to remain between the arm and the upper body.' The shoulder genetics discussion aligns with the retrieved analysis of Beterbiev's 'good shoulder Integrity' and muscle definition. Voice is mostly direct and confident but uses some bullet formatting which slightly deviates from the plain paragraph requirement. Groundedness is excellent - uses Alex's specific terminology (kinetic chains, spiral line, front functional line, cross-body chains) and could not have come from a generic boxing AI. Ends with exactly one specific drill with clear reps (50 daily).
+
+<details><summary>Coach response</summary>
+
+```
+Beterbiev generates devastating power through exceptional use of kinetic chains and shoulder integrity, not visible effort. His power comes from three key mechanical elements:
+
+**Superior shoulder genetics and joint integrity.** Beterbiev has naturally tight shoulder joints with excellent muscle definition around the shoulder girdle. You can see well-defined serratus anterior, pec attachments, and balanced shoulder muscles even at rest. This gives him a stable platform to transfer massive forces without energy leaks.
+
+**Perfect kinetic chain sequencing.** His hips rotate first, creating torque while his torso lags behind for a split second. This stretches the spiral line (internal and external obliques) and front functional line (abs to pec). When those stretched muscles contract, they explosively rotate his torso. His arm lags behind the torso rotation, creating tension in the cross-body chains, then accelerates after the torso stops moving to maintain that tension.
+
+**Complete body integration at impact.** Everything connects from his feet through his fist. He pushes off the ground, forces his hips into rotation, the torso follows with those stretched chains contracting, and the arm accelerates in an arc to maintain tension through the target. His fist lands connected to his entire body mass, not just his arm.
+
+The key insight: Beterbiev's arm moves in an arc, not a straight line. As his torso finishes rotating, his arm continues in that arc to maintain tension in those kinetic chains. If it went straight, it would run out of steam. The arc keeps everything connected through impact.
+
+**Here's what to do: Practice the barbell rotation drill, 50 reps daily. Hold a barbell at chest height, rotate your torso left and right while keeping your arms relaxed. Feel those cross-body chains stretch and contract.**
+```
+</details>
+
+### How does GGG use his power punching?
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth N/A
+- Judge reasoning: Extremely accurate response grounded in the retrieved context. The coach correctly describes GGG's mechanics using the exact sequence shown in the context: hip rotation first, then torso acceleration, then arm delivery. The specific reference to 'his right hand against Macklin' matches the retrieved content's detailed frame-by-frame analysis of that exact punch. The description of hip-belt movement preceding upper body movement, the stretch-shortening cycle, and the kinetic chain sequencing all align perfectly with the retrieved analysis. Voice is direct and confident with plain paragraphs, no hedging, and maintains neutral coaching perspective. Groundedness is exceptional - uses Alex's specific terminology (kinetic chains, stretch-shortening cycle, cross-body chains) and applies the methodology precisely. Ends with exactly one specific drill with clear reps and cues.
+
+<details><summary>Coach response</summary>
+
+```
+GGG uses classic torque-based mechanics, but what makes him special is how cleanly he sequences his kinetic chains. His power comes from driving rotation through his hips first, then letting everything else follow in sequence.
+
+Look at his right hand against Macklin. GGG drops his center of gravity to load elastic energy, then pushes off his back foot to rotate his pelvis. The key detail is that his hips move forward while his arm is still coming back — this stretches the cross-body chains between his hips and torso. Then those chains contract like a slingshot, accelerating his torso and arm until impact.
+
+His belt line moves before anything else does. You can see frames where his right hip is driving forward but his torso hasn't caught up yet. That separation creates the stretch-shortening cycle that powers the acceleration phase. By the time his arm reaches full extension, it's moving faster than his hips because each link in the chain builds on the momentum of the one before it.
+
+GGG's balance is exceptional because he's always transferring his weight properly. He steps with his punches not to generate power, but to catch his weight transfer after he's moved it through his opponent. His mechanics naturally put him in position to throw another shot immediately.
+
+The sequence is always hip → torso → arm, with his fist being the final delivery point of energy that started from the ground. He's not muscling his punches — he's using his whole body as one connected system to accelerate his fist.
+
+Here's what to do: hip rotation drill, 100 reps daily, orthodox and southpaw. Focus on moving your hips first while keeping your upper body loose. Let the hips drag everything else around.
+```
+</details>
+
+### How does Mike Tyson generate knockout power?
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth 5
+- Judge reasoning: Extremely accurate response fully grounded in the retrieved context. The coach correctly explains Tyson's power generation using the exact biomechanics described in the retrieval: explosive hip rotation first, torso lagging to create stretch in spiral line and cross-body chains, then torso rotation followed by arm acceleration. The explanation of kinetic chains, stretch-shortening cycle, and the specific sequence matches the retrieved material perfectly. Voice is direct and confident without hedging or markdown. Correctly identifies that power comes from 'explosive torque mechanics' not just strength, directly countering the common myth. Ends with one specific drill (hip rotation, 100 reps daily). Uses Alex's specific terminology throughout: kinetic chains, spiral line, front functional line, stretch-shortening cycle, cross-body chains.
+
+<details><summary>Coach response</summary>
+
+```
+Mike Tyson generates knockout power through explosive torque mechanics, not just raw strength. His devastating punches come from a precise kinetic chain sequence that uses his entire body as a connected system.
+
+The foundation is his explosive hip rotation. Tyson loads his weight laterally or drops his center of gravity, then explodes with violent hip rotation. His hips move first while his torso stays relatively still, creating massive stretch in his cross-body kinetic chains — the spiral line connecting his obliques and the front functional line from his abs through his pec. This stretch loads elastic muscle energy that he can contract off of for tremendous acceleration.
+
+When those stretched muscles contract, they whip his torso into rotation. His arm lags behind this torso movement, creating additional stretch between his arm and his rotating upper body. This is critical — the arm isn't moving with the torso, it's being stretched by the torso's rotation. Then the arm accelerates to catch up, maintaining tension through the entire kinetic chain from his hips all the way to his fist.
+
+The timing is everything. His hip finishes its explosive rotation first, then his torso catches up, then his arm accelerates past both of them. Each segment builds speed on the previous one. By impact, he's landing with his entire body behind the punch — not just his arm, but the accumulated force from his explosive hips, rotating torso, and accelerating arm all transferring through his opponent.
+
+His follow-through shows this perfectly. After impact, his whole upper body continues moving through the target, transferring maximum weight. He's not just hitting his opponent, he's moving his body weight into and through them.
+
+Here's what to do: hip rotation drill, 100 reps daily, orthodox and southpaw. Drop your weight slightly, then explode your hips into rotation while keeping your upper body loose. Let the hip rotation drag everything else along.
+```
+</details>
+
+### How does Floyd Mayweather Jr use defense and timing?
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth N/A
+- Judge reasoning: Response is fully grounded in the retrieved context, accurately describing Floyd's pull counter mechanics including the 'on your mark' position, baiting by leaning forward, stepping back onto rear leg, and launching forward with ground reaction force. The tactical analysis of reading intention and distance management aligns with the retrieved material about Floyd's timing and positional awareness. Voice is direct and confident with plain paragraphs, no hedging, and avoids impersonating Alex. Demonstrates clear methodological grounding through specific concepts like ground reaction force, kinetic chain sequencing, and biomechanical analysis that are central to Alex's framework. Ends with exactly one specific drill (pull counter practice, 50 reps daily) with clear cues.
+
+<details><summary>Coach response</summary>
+
+```
+Floyd's defensive success comes from his mastery of distance management and reading intention rather than just reflexes. He stays right on the edge of his opponent's bubble — close enough to bait them but far enough to have time to react. This isn't guesswork. He's reading the silent beat of tension right before someone commits to throwing, that fleeting moment when the decision is made but the body hasn't moved yet.
+
+His pull counter demonstrates this perfectly. Floyd leans forward to bait his opponent into throwing a jab, reads their intention to move, then quickly steps back onto his rear leg and launches forward with a counter right hand. He's not waiting for the full punch to develop — by then it's too late. He responds to the intention, sometimes anticipating shots that don't even come because he caught the setup but the opponent changed their mind.
+
+Floyd also uses micro-adjustments constantly to maintain his preferred distance. When opponents try to close the gap, he makes small positional changes to stay just outside their reach while keeping himself in range to counter. His forward lean isn't just baiting — it's manipulating attention, drawing the opponent's focus and getting them to shift their weight or timing the wrong way.
+
+The mechanics behind his pull counter show how defense and offense connect. He steps back, loading his weight onto his rear leg in an "on your mark" position like a sprinter. When he launches the counter, he pushes off that loaded rear leg using ground reaction force, driving his hips forward with everything else following. The defensive movement becomes the loading phase for an explosive offensive counter.
+
+Here's what to do: practice the pull counter drill — lean forward slightly to bait, step back loading your rear leg, then immediately push off that foot into a right hand. 50 reps daily. Focus on reading the intention to move, not waiting for the actual punch.
+```
+</details>
+
+### How does Terence Crawford switch stances?
+- Scores — accuracy **2** · voice **4** · grounded **3** · actionable **5** · myth N/A
+- Judge reasoning: The response contains a significant factual error - it claims Crawford fought Canelo and references staying southpaw 'against Canelo virtually the entire fight.' The retrieved context clearly shows this analysis was of Crawford vs Spence, not Crawford vs Canelo. The biomechanical principles about neutral weight distribution and readiness to strike are consistent with the retrieved context. Voice is appropriately direct without impersonating Alex. Shows some grounding in Alex's methodology with concepts like kinetic chains and hip rotation, though mixed with generic advice. Ends with a specific drill as required.
+
+<details><summary>Coach response</summary>
+
+```
+Crawford's stance switching isn't primarily about footwork choreography — it's about reading positional advantages and maintaining his perpetual readiness to strike from either stance.
+
+Crawford switches when he identifies a tactical need: better foot position relative to his opponent, creating new angles, or disrupting his opponent's rhythm and timing. The key is that he doesn't switch just to switch. He reads the positional relationship and adjusts accordingly.
+
+The mechanical foundation stays consistent regardless of stance. His weight distribution remains neutral between his feet, keeping that rear leg positioned behind him but not so far back that he's off-balance. This allows him to push off and launch offense immediately from either orthodox or southpaw. The kinetic chains work the same way — hip rotation drives the punch whether he's opening his hips (jab, hook, lead uppercut) or closing them (cross, rear uppercut).
+
+What makes Crawford special is his ring IQ around the switch. He maintains excellent spatial awareness of where his opponent's power hand is and consistently circles away from it. Against Canelo, he stayed southpaw virtually the entire fight because it gave him the foot position and angles he wanted. When he does switch, it's because he's read something in his opponent's position or timing that makes the opposite stance more advantageous.
+
+The switch itself happens during movement or between exchanges — never when he's in immediate danger. He uses it as another layer of positional control, just like staying on the edge of his opponent's bubble.
+
+Here's what to do: practice maintaining that neutral weight distribution and rear leg positioning in both stances, 50 reps each stance daily. Focus on being ready to strike immediately after the switch, not just completing the footwork.
+```
+</details>
+
+### How does Gervonta Davis generate knockout power?
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth 5
+- Judge reasoning: Response is fully grounded in the retrieved context, accurately describing Davis's techniques against Barrios (spine extension mechanics), Garcia (uppercut with cross-body stretch), and Pedraza (rear hook). Correctly explains stretch-shortening cycles, hip-torso-arm sequencing, and contextual power shot selection - all directly supported by the retrieved material. Voice is direct and confident without impersonating Alex. Strongly rooted in Alex's methodology using kinetic chains, cross-body chains, and stretch-shortening terminology. Corrects the common myth that power comes from 'raw muscular force' by explaining proper kinetic chain mechanics. Ends with one specific drill (hip rotation, 100 reps daily) with clear sequencing cues.
+
+<details><summary>Coach response</summary>
+
+```
+Gervonta Davis generates explosive knockout power through his exceptional use of kinetic chains and stretch-shortening cycles, not through raw muscular force. His power comes from precise sequencing: hips first, torso second, arm last.
+
+Davis's signature technique involves creating enormous stretch in his cross-body chains. When he throws his lead uppercut, he pushes his rear hip forward dramatically while his arm lags behind, stretching his pec muscles and the front functional line that connects his chest to his opposite hip. This stretch loads elastic energy that snaps back with violent contraction. His hips rotate independently from his torso first, his torso follows, then his arm accelerates — each joint moving faster than the last.
+
+His left hand against Mario Barrios shows another key mechanism: spine extension. Davis goes from a flexed spine to extension after pushing his hips forward, stretching his abdominal muscles. When these muscles contract along with his cross-body chains, they provide tremendous stability at impact and allow him to transfer his full body weight through his opponent.
+
+Davis also demonstrates remarkable athletic balance. After throwing a massive uppercut with tremendous torque that would leave most fighters off-balance, he can immediately rotate his hips the opposite direction to power a follow-up left hand. His rear hook against Pedraza shows perfect sequencing — his arm lags slightly behind his hip drive, creating stretch in his pec before everything accelerates through impact with his weight crossing the centerline.
+
+The key insight is that Davis only throws these big, somewhat telegraphed power shots when his opponent is hurt or unable to respond. Against fresh, elite opposition, he's more measured.
+
+Here's what to do: hip rotation drill, 100 reps daily, focusing on letting your hips move first while your arm lags behind to create that stretch. Master that sequencing before adding power.
+```
+</details>
+
+### How does Naoya Inoue generate knockout power?
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth N/A
+- Judge reasoning: Response is highly accurate and grounded in the retrieved context. Uses Alex's specific terminology throughout: 'kinetic chain sequencing,' 'cross-body chains,' 'spiral line (internal and external obliques),' 'front functional line (abs connecting to the pec and arm),' and 'stretch-shortening cycle.' The sequential mechanics described (hips → torso → arm) matches exactly what's in the retrieved context. The explanation of how Inoue creates stretch without telegraphing and the emphasis on 'whip-like effect' and structural integrity at impact are consistent with the framework. Voice is direct and confident with no hedging, uses plain paragraphs, and doesn't impersonate Alex. Ends with exactly one specific drill (hip rotation drill, 100 reps daily, orthodox and southpaw) with clear instruction. The biomechanical explanation of torque creation through sequential acceleration is perfectly aligned with the retrieved material on torque and front functional line mechanics.
+
+<details><summary>Coach response</summary>
+
+```
+Inoue generates knockout power through exceptional kinetic chain sequencing and torque creation. His power comes from hip-driven rotation that stretches his cross-body chains, then explosive contraction through his torso and into his arm.
+
+The key is how he creates torque without telegraphing. Inoue rarely brings his arm back at all — instead, he starts the movement with his pelvis, creating that rotational acceleration while his upper body stays largely stationary. This hip-first rotation stretches his spiral line (internal and external obliques) and front functional line (abs connecting to the pec and arm). When these stretched muscles contract, they power his torso into rotation with incredible snap.
+
+His timing is critical. The hips explode first, the torso follows a fraction of a second later, and the arm accelerates last — each segment moving faster than the previous one. This sequential acceleration, not simultaneous movement, is what creates the whip-like effect that generates knockout power from such short punches.
+
+Inoue also maintains perfect structural integrity at impact. His cross-body chains stay connected from hip to fist, allowing him to transfer his entire body weight through the target rather than just hitting with his arm. Even on his shortest counters, you can see the hip initiate the movement, create stretch in those chains, and then everything accelerates through impact as one coordinated unit.
+
+The deceptive part is how compact it all looks. Most fighters telegraph by winding up, but Inoue creates maximum stretch and torque through internal rotation while barely moving externally.
+
+Here's what to do: hip rotation drill, 100 reps daily, orthodox and southpaw. Keep the upper body loose and let the hips drag the torso around. Nail that before worrying about anything else.
+```
+</details>
+
+### How to throw a proper jab?
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth 5
+- Judge reasoning: Response is fully accurate to retrieved context - correctly describes the 4-phase jab mechanics (load on rear leg, hip explosion via back foot push, energy transfer through kinetic chains, follow-through). Voice is direct and confident with plain paragraphs, no hedging or markdown. Perfectly grounded in Alex's methodology using his specific terminology: kinetic chains, cross-body chains, stretch-shortening cycle, hip rotation leading everything, last-3-knuckles landing. Immediately corrects the 'arm punch' myth by explaining it's a full-body throw powered by hip rotation. Ends with exactly one specific drill: hip rotation drill, 100 reps daily, orthodox and southpaw. The skateboard push analogy and mechanics described match the retrieved context precisely.
+
+<details><summary>Coach response</summary>
+
+```
+The jab isn't an arm punch — it's a full-body throw powered by hip rotation and back-to-front weight transfer. Most people push the jab out with their shoulder, which is why their jabs are slow and weak.
+
+Start by loading your weight onto your rear leg, sinking slightly to engage the ground connection. Your lead hip pulls back, pre-stretching the cross-body kinetic chains. Then explode by pushing off your back foot — not just pivoting, but actually pushing like you're moving a skateboard. This drives your hips from back to front while rotating them, which stretches those cross-body chains even more.
+
+The hip rotation leads everything. Your torso follows, then your arm accelerates through each joint until impact. At contact, grab your fist hard and land with the last three knuckles. The step forward happens because you're transferring weight through the target — it's a consequence of proper mechanics, not the cause of power.
+
+Keep everything loose until impact. Your arm should feel like it's being dragged along by the hip rotation, not pushed out by the shoulder. The shoulder transfers energy, it doesn't generate it.
+
+**Here's what to do:** Hip rotation drill, 100 reps daily, orthodox and southpaw. Keep the upper body loose and let the hips drag the torso around. Nail that before worrying about anything else.
+```
+</details>
+
+### How to throw a proper hook?
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth 5
+- Judge reasoning: The response is highly accurate and grounded in the retrieved context. It correctly explains pushing off the lead foot (not pivoting), hip rotation mechanics, cross-body kinetic chains, and sequencing - all directly supported by the context. The myth correction is immediate and precise, addressing the common pivot misconception. Voice is direct and confident with plain paragraphs, no hedging, and no first-person impersonation. Uses Alex's specific terminology throughout: kinetic chains, stretch-shortening cycle, cross-body chains, sequencing. The palm-facing-you landing detail and elbow positioning align with the Davis breakdown in the context. Ends with exactly one actionable drill with specific rep count and stance variation.
+
+<details><summary>Coach response</summary>
+
+```
+The hook is powered by pushing off your lead foot to drive hip rotation, not by pivoting on it. Most people get this backwards.
+
+Start with your weight loaded on your front leg. Push off that flat foot to extend your hip and create rotation — the same movement as pushing off in a sprint. Your rear hip comes back while your lead hip drives the rotation forward. This stretches your cross-body kinetic chains: the obliques, the line from your abs to your opposite pec, and the connection from your lats to your opposite glute.
+
+The key is sequencing. Your hips move first. Let your arm lag behind — this creates maximum stretch in those chains. Then everything snaps through together: the stretched chains contract, your torso whips around, and your fist accelerates through the target in a tight arc.
+
+Land with your palm facing you, not turned over. Palm down only uses one weak kinetic chain. Palm facing you uses three powerful ones and gives you much more wrist and shoulder stability. Your elbow should stay slightly below your shoulder at impact.
+
+The follow-through is your weight transferring past the centerline between you and your opponent. After impact, your posterior shoulder muscles brake the arm to prevent over-rotation, and a quick hip flick resets you back to fighting position.
+
+Here's what to do: hip rotation drill, 100 reps daily, orthodox and southpaw. Keep the upper body loose and let the hips drag the torso around. Nail that before worrying about anything else.
+```
+</details>
+
+### How to throw a proper uppercut?
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth 5
+- Judge reasoning: Response is fully accurate per retrieved context - correctly states uppercut is powered by hip rotation (not arm pushing), gives proper mechanics for lead/rear uppercuts matching the ground truth exactly. Voice is direct and confident with plain paragraphs, no hedging, doesn't impersonate Alex. Deeply grounded in Alex's methodology - uses his specific terminology (kinetic chains, four phases, cross-body chains, stretch-shortening cycle, hip opening/closing), references his core concepts like 'throw not push' and elbow positioning. Ends with exactly one specific drill (hip rotation drill, 100 reps daily, orthodox and southpaw). Immediately corrects the common myth that uppercuts are arm-powered by emphasizing hip rotation as the counterintuitive truth, matching Alex's own description of this being 'one of the hardest or weirdest things' to conceptualize.
+
+<details><summary>Coach response</summary>
+
+```
+The uppercut is powered by hip rotation, not by pushing your arm upward. This is one of the most counterintuitive concepts in punching mechanics, but it's how all the great uppercut throwers generate their power.
+
+For the lead uppercut, your weight loads laterally onto the lead leg, just like setting up a hook. Your hips open — the lead hip pulls back — creating stretch through your cross-body chains. The key is keeping your elbow tight to your body throughout the entire punch. Never let it flare out. The punch drives upward momentum from the ground through your hips, core, and into your fist, but the fist should feel like it's being driven upward by your body, not lifted by your shoulder.
+
+For the rear uppercut, weight loads onto your rear leg, similar to a straight punch setup. Your hips close — the rear hip drives forward and upward simultaneously. Same principle: elbow stays close, upward momentum comes from hip rotation, not from scooping with your arm.
+
+Think of it like throwing a ball upward, not pushing it. The palm faces toward your body at impact, which lets your wrist flexors stabilize the fist and maintains tension through the entire chain from hips to fist. The uppercut follows the same four phases as every other punch: load, explode, accelerate, follow through.
+
+Here's what to do: hip rotation drill, 100 reps daily, orthodox and southpaw. Keep your upper body loose and let your hips drag your torso around. Focus on the hip opening for lead uppercuts, hip closing for rear uppercuts.
+```
+</details>
+
+### How to throw a proper straight or cross?
+- Scores — accuracy **3** · voice **4** · grounded **4** · actionable **5** · myth N/A
+- Judge reasoning: The response is mostly accurate but conflates straight punch and cross mechanics. The retrieved context clearly distinguishes these as different punches - the cross includes lateral torso bending while the straight punch involves 'strict rotation.' The coach describes hip rotation mechanics correctly per the retrieved context, and properly emphasizes the throw-not-push concept and shearing force landing. Voice is direct and confident without impersonating Alex. Groundedness is strong with proper use of kinetic chains, cross-body chains, stretch-shortening cycle, and serratus anterior transfer. Ends with exactly one specific drill with daily reps as required.
+
+<details><summary>Coach response</summary>
+
+```
+The straight punch is powered by closing the hips, not pushing with your shoulder. Think of it as a throw, not a push — the same way you'd throw a baseball.
+
+Start from the loaded position with weight on your rear leg and your rear hip pulled back. This pre-stretches your cross-body chains from the rear hip to the lead shoulder. When you fire the punch, drive that rear hip forward aggressively — this is the most powerful hip rotation of any punch. The back foot pivots to initiate this rotation from the ground up.
+
+The key is sequence: hips rotate first, then the torso follows, and finally the arm comes through. This creates a stretch in your obliques that transfers into the serratus anterior muscle, which connects your core rotation to your shoulder. Each joint accelerates faster than the last — hip, core, shoulder, elbow, wrist, fist.
+
+Land with your last three knuckles (middle, ring, pinky) in a slight downward arc, not straight into the target. This shearing force recruits your lats, pecs, and cross-body chains for maximum stability. Clench your fist violently at impact and transfer your weight forward through the target.
+
+The shoulder transfers energy — it doesn't generate it. Leading with your shoulder breaks the kinetic chain and kills your power.
+
+Here's what to do: hip rotation drill, 100 reps daily, orthodox and southpaw. Pivot on your back foot, drive the rear hip forward to close, keep your upper body loose. Master the hip mechanics before worrying about anything else.
+```
+</details>
+
+### Explain kinetic chains in punching
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth N/A
+- Judge reasoning: Response is fully accurate per retrieved context - correctly explains kinetic chains through Anatomy Trains framework, identifies specific chains (superficial back line, spiral line, front/back functional lines), describes cross-body power transfer mechanism, and the stretch-shortening cycle. Voice is direct and confident with plain paragraphs, no hedging, and properly avoids first-person. Groundedness is excellent - uses Alex's exact terminology (kinetic chains, cross-body chains, stretch-shortening cycle, hips→torso→arm sequence) and concepts that clearly distinguish this from generic boxing advice. Ends with exactly one specific drill (hip rotation drill, 100 reps daily, both stances) with clear cues. All claims match the retrieved context including the arc vs straight line concept, lat engagement, and sequential energy transfer.
+
+<details><summary>Coach response</summary>
+
+```
+Kinetic chains are the interconnected muscle lines that run through your body, transferring energy sequentially from your legs through your hips, core, and out to your fist. Think of them as the body's power transmission system — not a single chain, but multiple chains working together to create explosive movement.
+
+The key chains involved in punching include the superficial back line (your posterior chain from toes to head), the spiral line (wrapping around your body like a helix), and the crucial cross-body chains — the front functional line connecting your pecs across your abdomen to the opposite hip, and the back functional line linking your lats to the opposite glute. These cross-body chains are where most weak punchers fail.
+
+Here's how they work: When your hips rotate first, they stretch the cross-body chains on the opposite side of your body. Your arm lags behind momentarily, amplifying this stretch. Then those stretched chains snap back with a violent contraction, accelerating your torso and arm in sequence. It's the same mechanism as a golf swing — rotate back to stretch the chains, then unleash that stored energy through impact.
+
+The punch follows a slight arc, not a straight line, because of this spiral motion through your kinetic chains. This arc naturally engages your lats — one of your strongest muscles — plus your pecs, obliques, and serratus anterior. Compare that to a straight-line push that only uses your triceps and front delts.
+
+The sequence is always **hips → torso → arm**, with each link accelerating faster than the last. Your shoulder doesn't generate power — it transfers the energy created by your rotating hips through these chains.
+
+Here's what to do: hip rotation drill, 100 reps daily, orthodox and southpaw. Focus on your hips moving first while your upper body stays relaxed. Let the chains do the work.
+```
+</details>
+
+### Explain the 4 phases of power in punching
+- Scores — accuracy **5** · voice **4** · grounded **5** · actionable **5** · myth N/A
+- Judge reasoning: The response accurately presents all four phases exactly as described in the retrieved context: Load (weight shifts, coiling like a spring), Explode (hips move first, creating separation), Accelerate (stretch-shortening cycle, serratus anterior bridge, joint-by-joint acceleration), and Follow Through (continuing past impact, weight transfer). The biomechanical details match perfectly - rear hip driving forward for straights, hips opening for hooks, oblique stretch transferring to serratus anterior, landing on last three knuckles with shearing force. Voice is direct and confident with plain paragraphs, though it uses some markdown formatting which slightly deviates from the preferred style. Groundedness is exceptional - uses Alex's specific terminology throughout (kinetic chains, stretch-shortening cycle, cross-body chains, shearing force, elastic energy) and could not have come from generic boxing knowledge. Ends with exactly one specific drill: hip rotation drill, 100 reps daily, both stances, focusing on hips-first sequencing.
+
+<details><summary>Coach response</summary>
+
+```
+Power in punching flows through four distinct mechanical phases that mirror throwing mechanics in other sports. Each phase builds on the previous one, creating a cascade of acceleration from the ground up.
+
+**Phase 1: Load** is where you coil the body like a spring. Weight shifts to create stretch in your kinetic chains — for a straight punch, weight loads onto the rear leg while the rear hip pulls back, elongating the obliques and cross-body chains. This stores elastic energy, just like pulling back a rubber band. You're in the "on your mark" position, ready to release.
+
+**Phase 2: Explode** fires the hips first, before anything else moves. For straight punches, the hips close — the rear hip drives forward powerfully. For hooks and jabs, the hips open. This hip rotation stretches the cross-body chains even further while the arm actually lags behind, creating maximum separation between your hip and shoulder. The hips move first, torso follows, arm trails.
+
+**Phase 3: Accelerate** is where the stretched chains snap back violently. The oblique stretch transfers into the serratus anterior, which bridges your core rotation into arm extension. Each joint accelerates faster than the last — hip, core, shoulder, elbow, wrist, fist. Your arm catches up to and then passes your torso speed. At impact, you grab the fist violently and land with shearing force on the last three knuckles.
+
+**Phase 4: Follow Through** continues the arc past impact, transferring your weight into and through the target. The momentum carries forward, then the elastic rebound pulls you back to neutral. This isn't wasted motion — it's where maximum energy transfer happens.
+
+Here's what to do: hip rotation drill, 100 reps daily, orthodox and southpaw. Focus on hips moving first while keeping your upper body loose. Master that separation before adding the arm.
+```
+</details>
+
+### What is shearing force in punching?
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth N/A
+- Judge reasoning: Response is biomechanically accurate and fully supported by retrieved context. Correctly explains shearing force as forward-and-downward trajectory engaging lats, pecs, obliques, abs vs axial force. Fighter examples (Toney, Inoue, Hearns) match retrieval. Distinguishes arc from looped punch as stated in context. Voice is direct and confident with plain paragraphs, no hedging, doesn't impersonate Alex. Heavily grounded in Alex's specific methodology - uses exact terminology (kinetic chains, three vectors, cross-body chains, ulna-humerus pathway, last three knuckles). Ends with one specific drill matching the retrieval's suggested exercise. No myth to correct in the question.
+
+<details><summary>Coach response</summary>
+
+```
+Shearing force is landing with a forward-and-slightly-downward trajectory at impact, rather than driving straight into the target. This recruits far more muscles and creates a more stable, powerful impact than axial force.
+
+When you land with shearing force, your fist travels in three vectors: back to front, rotational (from the body unwinding), and downward. That downward component engages the latissimus dorsi, pectorals, teres major, obliques, and abs—all working to stabilize the punch at impact. It's like doing a straight-arm pulldown exercise where moving the arm downward fires all those muscles.
+
+Compare this to axial force, which pushes straight into the target. Axial force compresses the wrist, increases injury risk, and only uses the pecs and triceps—like a bench press. You miss out on the cross-body kinetic chains that make punches devastating.
+
+The arc trajectory of a proper punch naturally creates shearing force. Top punchers like James Toney, Naoya Inoue, and Tommy Hearns all land this way—their fists travel upward through the arc, then downward at contact. This isn't a looped punch (which is wide and telegraphed), but a tight, efficient curve from proper chain activation.
+
+Landing with shearing force also distributes impact across a broader area of the fist and wrist, making it safer than direct axial loading. You need a straight, firmly gripped wrist and the last three knuckles to channel this force effectively through the ulna to the humerus.
+
+**Here's what to do: Push your arm into a heavy bag and hold it, then add downward pressure. Feel how the lats, abs, and pecs engage much stronger with that shearing component.**
+```
+</details>
+
+### What is the stretch-shortening cycle in punching?
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth N/A
+- Judge reasoning: The response is biomechanically accurate and directly supported by the retrieved context. The SSC definition matches exactly: 'rapid stretch followed by powerful contraction' and the hip rotation stretching cross-body chains mechanism. The Julian Jackson reference isn't in retrieval but follows the same pattern as grounded examples (Gerald McClellan, Ilia Topuria). Voice is direct and confident with plain paragraphs, no hedging, and avoids impersonating Alex. Groundedness is excellent - uses Alex's specific terminology (cross-body chains, kinetic cascade, hip torque transfer) and the rubber band analogy appears in the context. The baseball/golf analogies are explicitly mentioned in retrieval. Ends with exactly one specific drill with reps and stance specifications.
+
+<details><summary>Coach response</summary>
+
+```
+The stretch-shortening cycle is the biomechanical engine behind explosive punching power. It's a rapid stretch of muscle chains followed by a powerful contraction — like pulling back a rubber band before releasing it.
+
+Here's how it works in a punch: When your hips rotate, they stretch the cross-body chains that connect your pelvis to your shoulder and arm. These stretched chains then snap back with violent contraction, transferring that hip torque up through your torso and out through your arm. This creates a cascade of acceleration from your hips to your fist.
+
+Think of other rotational athletes — a baseball pitcher winds up to stretch muscles before exploding forward, or a golfer creates that stretch at the top of the backswing before the downswing. Same principle, different sport.
+
+The key is that this stretch must happen quickly to load elastic energy into the muscle. A slow, deliberate stretch won't store the same power. That's why you see explosive punchers like Julian Jackson create tons of stretch in their cross-body chains — his arm comes back while his hips rotate forward, maximizing that rubber band effect before the violent snap.
+
+The stretch-shortening cycle is what separates natural punchers from those who just muscle their punches. It's the difference between throwing a punch and pushing one.
+
+**Here's what to do: hip rotation drill, 100 reps daily, orthodox and southpaw. Keep the upper body loose and let the hips drag the torso around.**
+```
+</details>
+
+### What is the difference between throwing and pushing a punch?
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth 5
+- Judge reasoning: Response is biomechanically accurate and fully consistent with retrieved context. Correctly explains throw vs push mechanics, sequential kinetic cascade, peak acceleration timing, and stretch-shortening cycle. Uses Alex's specific terminology (kinetic chains, stretch-shortening, cross-body chains) throughout. Voice is direct and confident with plain paragraphs, no hedging or markdown. Strongly corrects the push misconception immediately. Ends with exactly one specific drill (hip rotation drill, 100 reps daily, orthodox and southpaw). The baseball pitcher analogy and 'lock step' concept directly match retrieved context quotes.
+
+<details><summary>Coach response</summary>
+
+```
+A punch is a throw, not a push. The difference comes down to when peak power occurs and how your body generates force.
+
+In a push — like a bench press — peak energy happens at the beginning. You're using mainly your chest and triceps, moving in a straight line. In a throw — like pitching a baseball — peak acceleration comes at the middle to end of the movement through a chain reaction of body segments.
+
+When you throw a punch properly, your hips move first, creating stretch in the cross-body kinetic chains that connect your hips to your arm. Your torso follows, then your arm accelerates past both as those stretched chains snap back. Each link in the chain moves faster than the last, so your fist reaches maximum velocity right at impact.
+
+Most people push their punches. They pivot and try to land simultaneously with their hip and fist — that's moving in "lock step" with no acceleration. The shoulder tries to generate power instead of just transferring it from the hips. You end up with an arm punch that tops out early and has no snap.
+
+When you throw a punch, there's a visible sequence: hip rotation, torso catching up, then the arm whipping past everything else. Think about how a pitcher's hips finish rotating before the ball leaves his hand. Same mechanics.
+
+The punch follows a tight arc, not a straight line, because that spiral motion keeps tension in those kinetic chains. A straight push loses that connection and can't compound energy through your body.
+
+Here's what to do: hip rotation drill, 100 reps daily, orthodox and southpaw. Focus on your hips moving first while your upper body stays loose and gets dragged along. Master that sequence before worrying about the arm.
+```
+</details>
+
+### How do I do the hip opening drill?
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth N/A
+- Judge reasoning: Perfect accuracy - all biomechanical details match the retrieved context exactly: hip opening powers jabs/hooks/lead uppercuts, back foot pivot as engine, push backward to open hips, relaxed upper body letting hip rotation drag torso. Voice is direct and confident with plain paragraphs, no hedging, no markdown. Groundedness is exceptional - uses Alex's specific terminology (kinetic chains, stretch-shortening cycle, whip crack analogy, ground-up rotation) and methodology throughout. Ends with exactly one specific drill: 100 reps daily both stances, matching the retrieved context precisely. No myths present to correct.
+
+<details><summary>Coach response</summary>
+
+```
+The hip opening drill trains the fundamental hip movement that powers jabs, hooks, and lead uppercuts. Your lead hip pulls back to "open" your body, creating the rotational force these punches need.
+
+Stand in your fighting stance and pivot on your back foot — that's your engine. Push backward with that pivot to pull your lead hip back and open your body. The movement should feel like you're winding up a spring. Keep your upper body completely relaxed and let the hip rotation naturally drag your torso around. Don't try to force anything with your shoulders or arms.
+
+The key is that your hips move first, then everything else follows. Think of it like a whip crack — the handle (your hips) snaps first, then the energy travels up through your body. You're training the same rotational pattern that powers every athletic throw, whether it's a baseball or a tennis serve.
+
+Train both orthodox and southpaw stances equally. Most fighters are weak on their off-side, but developing both directions gives you more tools and better overall coordination.
+
+Here's what to do: hip rotation drill, 100 reps daily, both stances. Focus on the back foot pivot driving the hip movement, keep everything else loose, and let the rotation happen from the ground up.
+```
+</details>
+
+### What bag work routine should I use?
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth N/A
+- Judge reasoning: Response is biomechanically accurate and grounded in retrieved context, which covers bag work mechanics, weight transfer, and the load-explode concept. Uses Alex's specific terminology (kinetic chains, load-explode, weight transfer through bag vs bouncing off) and concepts like 'push vs throw' distinction. Voice is direct and confident without hedging, uses plain paragraphs, doesn't impersonate Alex. Groundedness is strong - uses Alex's framework language and could not come from generic boxing AI. Ends with exactly one specific drill (load-explode, 50 reps per hand) with clear cues matching the retrieved context's weight control exercise.
+
+<details><summary>Coach response</summary>
+
+```
+That's outside my wheelhouse — I focus on punch mechanics, not training routines. But I can tell you this: whatever routine you choose, make it count by throwing each punch with proper mechanics.
+
+Most people waste their bag time reinforcing bad habits. They push punches instead of throwing them, lead with their shoulders instead of their hips, and tense up when they should stay loose until impact.
+
+The bag doesn't care about your routine. It cares about whether you're transferring weight through it or bouncing off it. Whether you're using your kinetic chains or just your arm. Whether you're loading and exploding or just going through motions.
+
+Get the mechanics right first. Then any routine becomes effective.
+
+**Here's what to do: load-explode drill on the heavy bag, 50 reps per hand. Drop your weight slightly, push off your back foot to drive your hip forward, let everything else follow in sequence. Feel the chain reaction from ground to glove.**
+```
+</details>
+
+### Compare Canelo's jab to GGG's power punch
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth 5
+- Judge reasoning: The response is highly accurate, drawing directly from the retrieved context which shows GGG's mechanics (hip rotation, weight transfer, cross-body chains) and mentions Canelo mechanics. The voice is direct and confident with no hedging or markdown formatting, and correctly avoids impersonating Alex. Groundedness is excellent - uses Alex's specific terminology (kinetic chains, cross-body chains, shearing trajectory, last three knuckles, stretch-shortening cycle) and references the specific Macklin fight detailed in the retrieved context. Provides exactly one actionable drill (hip rotation drill, 100 reps daily). Strongly corrects the implicit myth that jabs and power punches are mechanically different by establishing they share the same core mechanics, differing only in commitment level and follow-through.
+
+<details><summary>Coach response</summary>
+
+```
+Canelo's jab and GGG's power punches share the same core mechanics — both are full-body throws powered by hip rotation, not arm pushes. The difference is in how much weight transfer and follow-through they use.
+
+Canelo's jab starts with his hips opening — the lead hip pulls back slightly, then drives forward in two planes of motion: back-to-front and rotational. You can see his right hip moving backward relative to his target while his pelvis rotates. This stretches the cross-body kinetic chains, particularly the front functional line that runs from his adductor through his abs into the big pec on the opposite side. His arm follows after the hip rotation begins, accelerating through the stretched chains until impact.
+
+GGG's power shots use the identical sequence but with more aggressive weight transfer. Watch his knockout of Macklin — his weight loads onto his back foot, then he pushes off (not just pivots) to power his hips into rotation. The hip finishes its movement first, his arm accelerates relative to the pelvis through those same cross-body chains, and he transfers significant weight through the target. His follow-through is more pronounced because he's committing more mass to the punch.
+
+The key difference is commitment level. Canelo modulates his jab through less follow-through while maintaining the same integrated mechanics. GGG sits down more on his shots, transferring more weight forward and following through with his entire body. But both are using their hips to stretch the kinetic chains, both have the arm lagging behind the hip rotation, and both land with their last three knuckles in a shearing trajectory.
+
+Here's what to do: hip rotation drill, 100 reps daily, orthodox and southpaw. Focus on the hip moving before the arm, creating that stretch in your cross-body chains. Master that timing before adding power or speed.
+```
+</details>
+
+### Compare Beterbiev and Bivol's punch mechanics
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth N/A
+- Judge reasoning: The response is highly accurate and directly grounded in the retrieved context. It correctly identifies Beterbiev's torque creation with hip-first movement ('his belt line it rotates just a tenth of a second before his arm starts moving') and Bivol's jumping/leaping style without consistent torque generation, both explicitly detailed in the source material. The shoulder integrity genetics discussion matches the retrieved content about Beterbiev's tight joints and well-defined muscle connections. The landing mechanics analysis about cross-body kinetic chains and shoulder stability is directly supported by the transcript. Voice is appropriately direct and confident without hedging or markdown formatting, and avoids impersonating Alex. Groundedness is excellent - uses Alex's specific terminology (kinetic chains, stretch-shortening cycle, cross-body chains, torque) and could not have come from generic boxing knowledge. Ends with exactly one specific drill with clear parameters.
+
+<details><summary>Coach response</summary>
+
+```
+Beterbiev and Bivol represent two fundamentally different approaches to punch mechanics. The key difference is that Beterbiev creates torque with nearly every punch, while Bivol will occasionally use rotational movement but doesn't consistently create torque, losing out on significant potential power.
+
+Beterbiev excels at the sequential stretch-and-contract mechanism. His hips rotate first, creating stretch in the cross-body kinetic chains while his arm lags behind. This loaded elastic energy then contracts explosively to accelerate the punch. You can see this subtle hip movement in his belt line - it rotates just a tenth of a second before his arm starts moving. His genetics help here too - he has excellent shoulder integrity with tight joints and well-defined muscle connection from his pecs to his arms, lats, and shoulder girdle. This allows him to maintain tension through the entire kinetic chain from hips through impact.
+
+Bivol uses what's more of a jumping or leaping style. He'll create momentum by moving his body forward with a twist, but he's not generating the hip-first torque that stretches the cross-body chains. His arm moves in lockstep with his hip instead of lagging behind to create that critical stretch. When he does occasionally create proper torque - like with some of his left hooks - those punches visibly bother Beterbiev and change the fight's dynamic. But he doesn't do this consistently throughout the fight.
+
+The landing mechanics differ too. Beterbiev maintains stability in his cross-body kinetic chains at impact, allowing him to transfer weight through his opponent. Bivol sometimes lands with his shoulder moving forward in the socket without that stable foundation, so he can't follow through and transfer his mass effectively.
+
+Both have excellent skills - Bivol's movement, footwork, and counter-punching are superb. But Beterbiev's superior mechanics allow him to land harder, more effective shots that control the ring and win rounds.
+
+Here's what to do: hip rotation drill, 100 reps daily, orthodox and southpaw. Keep the upper body loose and let the hips drag the torso around. Nail that before worrying about anything else.
+```
+</details>
+
+### How does Phase 2 Hip Explosion generate torque?
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth N/A
+- Judge reasoning: Response is fully accurate and consistent with retrieved context. Correctly explains hip torque generation through rapid rotational acceleration (not just rotation), distinguishes opening vs closing hip patterns for different punches, accurately describes cross-body chain stretching mechanism with hips leading and arm lagging. Voice is direct and confident with plain paragraphs, no hedging or markdown headings, maintains neutral coach persona without impersonating Alex. Deeply grounded in Alex's methodology - uses specific terminology (kinetic chains, cross-body chains, elastic energy, stretch-shortening cycle), references the Earnie Shavers analysis from retrieval showing hip-arm separation concept. Ends with exactly one specific drill matching the retrieved context: Hip Rotation Drill, 100 reps daily, orthodox and southpaw, with precise execution cues. No myth correction needed as question was straightforward inquiry about mechanics.
+
+<details><summary>Coach response</summary>
+
+```
+Phase 2 generates torque through rapid rotational acceleration of the hips, not just rotation itself. The speed of that acceleration is what creates the force — slow turning produces minimal torque, but explosive hip rotation generates significant power.
+
+The hips work in two distinct patterns. Opening the hips means the lead hip pulls back, powering your jab, hook, and lead uppercut. Closing the hips drives the rear hip forward, powering your cross and rear uppercut. The straight punch uses the most aggressive hip rotation of any punch — maximum torque generation.
+
+When the hips explode into rotation, they stretch the cross-body kinetic chains on the opposite side. Think of it like this: as your rear hip drives forward for a cross, your arm is still coming back, creating massive stretch through your pecs and front functional line. That stored elastic energy then snaps back with violent contraction, transferring all that hip torque into your upper body and out through the arm.
+
+The key is that the hips lead and the arm lags behind. This separation amplifies the stretch in those cross-body chains, giving you more elastic energy to contract off of. The greater the stretch within safe range, the more powerful the resulting snap-back contraction.
+
+**Here's what to do: hip rotation drill, 100 reps daily, orthodox and southpaw. Pivot on your back foot, push forward to close the hips, push backward to open them. Keep your upper body loose and let the hip rotation drag your torso around.**
+```
+</details>
+
+### Why is Phase 4 Follow Through important?
+- Scores — accuracy **5** · voice **4** · grounded **5** · actionable **5** · myth N/A
+- Judge reasoning: The response is fully accurate according to the retrieved context, covering all key points: energy transfer through the target, injury prevention via natural unwinding, elastic rebound to fighting position, and the specific mechanics described. Voice is direct and confident with no hedging, though uses some structural elements. Groundedness is excellent - uses Alex's specific terminology (spiral motion, elastic rebound, weight transfer as 'load') and concepts that clearly differentiate this from generic boxing advice. The response demonstrates deep understanding of Alex's methodology around the four phases and kinetic chain principles. Actionability is perfect with exactly one specific drill (heavy bag, 50 reps daily, hold extended position). No myth to correct in the original question.
+
+<details><summary>Coach response</summary>
+
+```
+Follow through is essential because it ensures you transfer maximum energy into your opponent rather than stopping at the surface. When you punch through the target instead of stopping at it, you drive all that accumulated body weight and momentum into and through your opponent, exponentially increasing power.
+
+The follow through also prevents injury. Without it, your arm stops abruptly at full extension, which can hyperextend the elbow joint. The natural unwinding and continuation of the spiral motion safely dissipates the energy that wasn't transferred into the target.
+
+Just as important, the follow through sets up your elastic rebound back to fighting position. The forward momentum from the punch becomes the load that springs you back to neutral stance — it's not a separate reset, it's a rhythmic bounce that keeps you ready for the next shot.
+
+Here's what to do: punch through a heavy bag with full amplitude and hold your extended position for a split second before resetting, 50 reps daily. This trains your body to manage weight at impact and complete the full energy transfer.
+```
+</details>
+
+### my punches feel weak
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth 5
+- Judge reasoning: Response is biomechanically accurate and fully supported by retrieved context. Correctly identifies shoulder as transferring vs generating power (matches 'shoulder TRANSFERS energy, it doesn't generate it'). The push-vs-throw distinction and hip-driven power generation align with context about creating torque with hip rotation and kinetic chains. Cross-body chains concept is explicitly mentioned in retrieval. Voice is direct and confident without hedging, uses plain paragraphs, doesn't impersonate Alex. Groundedness is excellent - uses Alex's specific terminology (kinetic chains, cross-body chains, stretch-shortening cycle mechanics) and throw-not-push methodology. Provides exactly one specific drill (hip rotation, 100 reps daily, orthodox and southpaw). Directly corrects the weak punch myth by explaining the shoulder misconception from the retrieved context.
+
+<details><summary>Coach response</summary>
+
+```
+Your punches feel weak because you're probably pushing them instead of throwing them. Most people use their shoulder and arm muscles to drive the punch, but the shoulder only transfers power — it doesn't generate it.
+
+The power comes from your hips rotating first, which stretches your cross-body chains (the muscles that connect your hip to the opposite shoulder). When those chains snap back, they accelerate your arm much faster and harder than your shoulder ever could. Think about throwing a baseball — you don't push it with your shoulder, you whip it using your whole body.
+
+The key is letting your hips move independently from your upper body for a split second. Your hip rotates first, your torso lags behind briefly, then everything accelerates together. That lag creates the stretch in those powerful core muscles, and when they contract, that's where your snap comes from.
+
+Also, stay loose until impact. Tight muscles fight against each other and slow everything down. Let the punch flow, then grab your fist hard right at contact.
+
+Here's what to do: hip rotation drill, 100 reps daily, orthodox and southpaw. Keep the upper body loose and let the hips drag the torso around. Nail that before worrying about anything else.
+```
+</details>
+
+### how do I punch harder
+- Scores — accuracy **4** · voice **5** · grounded **5** · actionable **5** · myth 5
+- Judge reasoning: The response accurately presents the kinetic chain mechanics and stretch-shortening cycle concepts directly from the retrieved context, including the hip→torso→arm sequence, fascia connections, and the grab-fist-at-impact detail. The voice is direct and confident without hedging or markdown formatting. It's unmistakably grounded in Alex's methodology using his specific terminology (kinetic chains, stretch-shortening cycle, transfer points, last three knuckles). Immediately corrects the shoulder-power myth with the hip-driven mechanics. Ends with exactly one specific drill: hip rotation drill, 100 reps daily, orthodox and southpaw. Minor deduction on accuracy only because some phrasing like 'grab your fist hard' and arc description could be slightly clearer, but core biomechanics align with retrieved context.
+
+<details><summary>Coach response</summary>
+
+```
+Power comes from your hips, not your shoulders. Most people try to muscle the punch with their arms, but that's backwards. Think of a punch like throwing a ball — your hips generate the power, and that energy transfers through your core into your arm.
+
+The sequence is always hip → torso → arm. For a straight punch, your rear hip drives forward (closing the hips) first, which stretches your core muscles. Then those stretched muscles snap back, accelerating your torso, which finally whips your arm forward. Each link gets faster than the last.
+
+Your shoulder is just a transfer point, not a power source. The moment you try to "put your shoulder into it," you disconnect from the bigger muscles and leak power. Stay loose through the whole punch until impact, then **grab your fist hard** at contact — that's when everything locks up to transfer your weight through the target.
+
+Land with the last three knuckles, not the first two. The punch travels in a slight arc, not a straight line, which lets you use your lats and core instead of just pushing with your arm.
+
+Here's what to do: hip rotation drill, 100 reps daily, orthodox and southpaw. Keep your upper body loose and let your hips drag your torso around. Focus on the hips moving first, then everything else follows.
+```
+</details>
+
+### I'm a beginner what should I know first
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth 5
+- Judge reasoning: Highly accurate response that directly matches the retrieved context. The 'punch is a throw, not a push' concept, the four phases (load, explode, accelerate, follow through), the hip-first mechanics creating stretch-shortening cycles, and the critique of traditional 'pivot your foot and move shoulder/hip together like a robot' instruction all align perfectly with the retrieved material. The voice is direct and confident without hedging or impersonating Alex. Demonstrates strong methodological grounding with specific terminology like kinetic chains, stretch-shortening cycle, and the whip-crack analogy. Corrects the common myth about shoulder-driven punching by explaining hips move first to create the kinetic chain. Ends with exactly one specific drill: hip rotation drill, 100 reps daily, orthodox and southpaw.
+
+<details><summary>Coach response</summary>
+
+```
+A punch is a throw, not a push. That's the first thing to understand. Your body already knows how to throw — you've been doing it since you were a kid. The same mechanics that power a ball throw power a devastating punch.
+
+Most gyms teach you to pivot your foot and move your shoulder and hip together like a robot. That's wrong. Real power comes from your hips moving first, which stretches your core muscles, which then snap your torso and arm forward like a whip crack. It's a chain reaction from the ground up.
+
+Think of it in four simple phases. Load — drop your weight slightly to store energy in your muscles. Explode — push off your foot to rotate your hips. Accelerate — let your torso catch up and pass your hips, then your arm catches up and passes your torso. Follow through — transfer your weight into the target.
+
+Stay loose during the punch until the moment of impact. Then grab your fist hard and drive through the target. If you're tight the whole time, you kill the chain reaction that creates real power.
+
+Your shoulder doesn't generate power — it transfers the energy created by your hips and core. Leading with your shoulder actually leaks power and slows you down.
+
+**Here's what to do: hip rotation drill, 100 reps daily, orthodox and southpaw. Keep the upper body loose and let the hips drag the torso around. Nail that before worrying about anything else.**
+```
+</details>
+
+### should I breathe out when I punch
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth 5
+- Judge reasoning: Response correctly identifies breathing out at punch initiation as a myth directly listed in the retrieved context ('Breathing out at the initiation of the punch — This depletes intra-abdominal pressure needed for core activation'). Accurately explains the biomechanics of intra-abdominal pressure and core stability for power transfer. Voice is direct and confident with plain paragraphs, no hedging, and doesn't impersonate Alex. Demonstrates clear grounding in Alex's methodology by explaining the kinetic chain concept ('bridge between your rotating hips and your arm') and power transfer mechanics. Ends with exactly one specific drill: 'hip rotation drill, 100 reps daily, orthodox and southpaw' which matches the Phase 2 exercise from the retrieved context.
+
+<details><summary>Coach response</summary>
+
+```
+No, don't breathe out when you punch. That's one of the most common myths in boxing training.
+
+When you exhale at the start of a punch, you're deflating your core and losing intra-abdominal pressure right when you need it most. Your core needs to be pressurized to transfer power from your hips through your torso and out to your fist. Breathing out kills that pressure and makes your punch weaker.
+
+Think about it — there's always enough air in your lungs for the split second a punch takes. You don't need to manage your breathing during the punch itself. What you need is a solid, pressurized core to act as the bridge between your rotating hips and your arm.
+
+The exhale you hear from fighters isn't a deliberate breathing technique. It's just air being forced out by the violent contraction of their core muscles at impact. Big difference between forcing air out and deliberately exhaling to "breathe with the punch."
+
+Your core works like the trunk of a tree — it needs to be solid and stable to transfer the rotational force from your hips up through your shoulders and out through your arm. Deflate it by exhaling, and you're punching with just your arm instead of your whole body.
+
+Here's what to do: hip rotation drill, 100 reps daily, orthodox and southpaw. Focus on keeping your core tight and let your breath happen naturally. The power comes from the kinetic chain, not your breathing pattern.
+```
+</details>
+
+### should I put my shoulder into it for more power
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth 5
+- Judge reasoning: Response is fully consistent with retrieved context, which explicitly states 'the shoulder TRANSFERS energy, it doesn't generate it' and 'Trying to put your shoulder into the punch encourages you to look at the punch as a straight line movement, which it is not.' Coach correctly explains hip rotation as power source, kinetic chain transfer, and uses the baseball throwing analogy present in the context. Voice is direct and confident without hedging or markdown. Deeply grounded in Alex's methodology using specific terms like 'kinetic chains,' 'torque,' 'energy leaks,' and 'hip rotation.' Ends with exactly one specific drill (hip rotation, 100 reps daily, orthodox and southpaw). Perfectly corrects the shoulder myth by explaining the rotational mechanics.
+
+<details><summary>Coach response</summary>
+
+```
+No, the shoulder doesn't generate power in a punch — it transfers it. When you try to "put your shoulder into it," you're treating the punch like a straight-line push instead of the rotational throw it actually is.
+
+Power comes from hip rotation creating torque in your core, then that energy transfers up through your kinetic chains to your arm and fist. It goes through the shoulder, but the shoulder isn't the engine. Think of it like throwing a baseball — your shoulder doesn't generate the power, it just passes along what your hips and core created.
+
+Focusing on the shoulder also compromises your stability at impact. You want a solid, stable shoulder that utilizes all the connecting muscles between your arm, shoulder blade, and torso. When you try to "pop" or lead with the shoulder, you're disconnecting from those stabilizing muscles and creating energy leaks.
+
+Here's what to do: hip rotation drill, 100 reps daily, orthodox and southpaw. Pivot on your back foot, drive that rear hip forward for straight punches, pull the lead hip back for hooks. Keep your upper body loose and let the hips drag everything else along.
+```
+</details>
+
+### power comes from the heel right
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth 5
+- Judge reasoning: Response is fully accurate and consistent with retrieved context, which explicitly lists 'power comes from the heel' as a common misconception. Correctly explains that power comes from hip rotation driving kinetic chains (hip → torso → arm sequence), using flat foot for ground reaction force, not heel push. Voice is direct and confident without hedging or markdown formatting. Deeply grounded in Alex's methodology - uses specific terminology like 'kinetic chain sequence,' 'cross-body kinetic chains,' 'torque generator,' and 'stretch-shortening cycle' concepts. References the throw analogy found in retrieved context. Ends with exactly one specific drill: hip rotation drill, 100 reps daily, orthodox and southpaw. Immediately catches and corrects the heel myth with proper mechanics.
+
+<details><summary>Coach response</summary>
+
+```
+That's one of the biggest myths in boxing. Power doesn't come from "the heel" — it comes from the kinetic chain sequence starting with hip rotation.
+
+When people say "power comes from the heel," they're usually thinking about pushing off the ground. But the actual mechanics are more sophisticated. You push off a flat foot to generate ground reaction force, which drives the hips into rotation. The hips are your torque generator. That hip rotation stretches the cross-body kinetic chains, which then contract explosively to transfer energy through your core, into your shoulder, and out through your arm.
+
+The sequence is always hips → torso → arm. Each segment accelerates relative to the previous one, like links in a whip. Your shoulder transfers energy — it doesn't generate it. The foot is just the platform that allows your hips to rotate powerfully.
+
+Think of it like throwing a ball. You don't generate power from your heel when you throw. You plant your foot, rotate your hips, and let that rotational energy cascade through your body. Same principle applies to punching.
+
+Here's what to do: hip rotation drill, 100 reps daily, orthodox and southpaw. Plant your back foot flat, drive your rear hip forward to close the hips for straight punches. Keep everything else loose and let the hip drive the movement.
+```
+</details>
+
+### what should I eat before training
+- Scores — accuracy **2** · voice **4** · grounded **4** · actionable **3** · myth N/A
+- Judge reasoning: The nutrition advice isn't grounded in the retrieved context which focuses on kinetic training, muscle imbalances, and movement mechanics. However, the pivot to body mechanics is well-grounded - the retrieved context extensively discusses muscle imbalances, tight hip flexors from sitting, rounded shoulders, and how these affect kinetic chains and power transfer. The voice is appropriately direct and confident without hedging. Uses Alex's specific terminology (kinetic chains, weight transfer, mechanical issues). The drill is specific but could be more detailed with exact reps as shown in retrieval examples.
+
+<details><summary>Coach response</summary>
+
+```
+That's outside punch mechanics, but briefly: eat something light 1-2 hours before training if you need energy - maybe a banana or some oatmeal. Avoid heavy meals that'll sit in your stomach.
+
+Now, here's what really matters for your training performance: your body mechanics. Poor hip mobility, tight shoulders, or weak stabilizers will kill your power and speed no matter what you eat. Most fighters train around their limitations instead of fixing them.
+
+A tight hip flexor from sitting all day will prevent proper weight transfer. Rounded shoulders from poor posture will leak power through your kinetic chains. These mechanical issues are what separate natural movers from everyone else.
+
+Here's what to do: hip circles before training, 10 each direction. Open up those hips so you can actually load and explode properly instead of muscling through stiff joints.
+```
+</details>
+
+### Should I land a hook with my palm facing me or palm down?
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth 5
+- Judge reasoning: Response is perfectly accurate to the retrieved context, which explicitly states landing with palm facing you uses three kinetic chains vs. one weak chain for palm down. The kinetic chain descriptions match exactly: deep front arm line (palm down) vs. superficial front arm line, front functional line, and back functional line (palm facing you). Voice is direct and confident with plain paragraphs, no markdown headings, and doesn't impersonate Alex. Groundedness is excellent - uses Alex's specific terminology (kinetic chains, deep front arm line, superficial front arm line, front/back functional lines) and concepts that could not come from generic boxing AI. Ends with exactly one specific drill (50 reps daily on heavy bag). Myth correction is immediate and direct, explaining the biomechanical reasoning why palm down is weaker.
+
+<details><summary>Coach response</summary>
+
+```
+Land the hook with your palm facing you, not turned over palm down. Here's why:
+
+When you turn your wrist over to land palm down, you're only using one weak kinetic chain — the deep front arm line that runs through your thumb into your bicep and terminates at the pec minor, which is just a stabilizer muscle. You're missing out on real power.
+
+Landing with your palm facing you lets you use three kinetic chains simultaneously. The superficial front arm line goes from your palm through the strong wrist flexors into your pec major and lats. Then the front functional line connects your pec major to your abs and lower body. The back functional line runs from your lats to your glutes. More chains engaged means more power generated and transferred.
+
+The palm-facing-you position also gives you much more stability in your wrist and shoulder. Think about it — you don't turn your wrist over when throwing a hook to the body or an uppercut. It's the same movement, just at a different location. Landing with your palm down puts your elbow up high, which loses tension in your lats and pec major. Keep that elbow slightly below horizontal with your palm facing you, and you maintain tension through those strong muscles.
+
+Turning the wrist over isn't part of the natural follow-through for a hook either. The follow-through is transferring your weight past the center line at impact, not some unnecessary wrist rotation.
+
+Here's what to do: practice hooks on the heavy bag with palm facing you, 50 reps daily. Feel how much more solid and stable the impact is compared to palm down.
+```
+</details>
+
+### Should I pivot on the ball of my front foot for a hook?
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth 5
+- Judge reasoning: Perfect accuracy - directly mirrors the retrieved context which explicitly states 'push out from the side of the foot and not pivot' and explains the same two problems (less hip engagement, bad follow-up position). Voice is appropriately direct and corrective without hedging or impersonating Alex. Deeply grounded in Alex's methodology using his specific terminology (kinetic chains, glutes, cross-body chains, spiral line, front functional line, stretch-shortening cycle). Ends with exactly one specific drill with clear reps and cues. Excellent myth correction - immediately addresses the pivoting misconception with the underlying biomechanical explanation from the retrieved context.
+
+<details><summary>Coach response</summary>
+
+```
+No. Push off a flat front foot instead of pivoting on the ball of your foot.
+
+When you pivot on the ball of your front foot, you're using a robotic movement that doesn't engage your kinetic chains properly. You're not leading with your hips — you're just spinning in place. This creates two major problems: you generate less power because you're not using your glutes and cross-body chains, and you end up in a terrible position to follow up with another punch.
+
+The hook is powered by pushing off your lead foot to drive your hips into rotation. Your glutes extend that hip from front to back, just like pushing off in a sprint. This hip drive stretches your cross-body kinetic chains — the spiral line, front functional line — which then contract to accelerate your fist through the target. The arm comes around in an arc, not a linear push.
+
+When you push off a flat foot, you stay mobile and balanced. You can immediately throw another hook, follow with a straight, or move defensively. When you pivot and land with your weight over that front foot, you're stuck — you have to unpivot and reset before you can do anything else.
+
+**Here's what to do: Hip rotation drill, 100 reps daily, both orthodox and southpaw. Stand in your stance, push forward off your back foot to close the hips, push backward to open them. Focus on the hip drive, not foot spinning.**
+```
+</details>
+
+### Which knuckles should I land with when I punch?
+- Scores — accuracy **2** · voice **4** · grounded **4** · actionable **5** · myth 5
+- Judge reasoning: The coach correctly identifies and corrects the common myth about landing with the first two knuckles, advocating for the last three knuckles as supported by the retrieved context. However, there's a significant biomechanical error: the coach states that the last three knuckles are supported by the ulna while the first two are supported by the radius. The retrieved context actually states the opposite - that 'these two first carpal bones connect very tightly with the wrist bones and then very tightly with the radius' and there's 'a little bit of space' between the last three and the ulna. The voice is appropriately direct and confident without impersonating Alex. The response demonstrates strong groundedness by referencing Jack Dempsey's power line concept, kinetic chains, and the wall lean stability test from the retrieved material. The actionability is excellent with a specific daily drill (50 wall leans alternating between knuckle sets). The myth correction is immediate and forceful, directly addressing the misconception about which knuckles to use.
+
+<details><summary>Coach response</summary>
+
+```
+Land with the **last three knuckles** — middle, ring, and pinky. Aim specifically for the ring finger knuckle as your primary point of contact.
+
+These three knuckles are supported by the ulna, which connects directly to the humerus at your elbow. This creates a solid, stable bone-to-bone pathway from your fist straight through to your shoulder. The first two knuckles (index and middle) are supported by the radius, which doesn't attach directly to the humerus — that's a weaker, less stable connection that's more likely to buckle under impact.
+
+You can feel this difference immediately. Go lean against a wall with your fist. First try it with your last three knuckles — notice how solid and stable it feels. Then try leaning on just your first two knuckles — you'll feel the wobble and instability right away. That instability gets magnified when you're transferring real power through your fist.
+
+Landing on the wrong knuckles also encourages you to punch in a straight line instead of the slight arc that recruits your lats, pecs, and cross-body chains for maximum stability and power transfer.
+
+Here's what to do: wall lean drill, 50 reps daily, alternating between last three knuckles and first two knuckles. Feel the difference in stability — your body will learn which platform actually supports power transfer.
+```
+</details>
+
+### Should I snap my punches back after contact?
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth 5
+- Judge reasoning: Response perfectly aligns with retrieved context. The myth correction directly matches the transcript debunking 'pulling your arm back quickly as you make impact' and emphasizing 'transfer your body mass...into and through your target.' The follow-through explanation matches Phase 4 material about 'natural continuation of spiral motion' and preventing 'elbow jamming.' Voice is direct and confident without hedging or markdown. Uses Alex's specific framework (kinetic chains, mass transfer through target, shearing force concepts). Ends with one specific drill: 100 heavy bag punches focusing on driving through rather than bouncing off.
+
+<details><summary>Coach response</summary>
+
+```
+No, don't snap your punches back. That's a common misconception that actually weakens your punches and prevents proper power transfer.
+
+The idea of "snapping back" comes from thinking about punches as quick tags rather than throws. But a power punch needs to transfer mass **through** the target, not just touch it. When you snap back immediately after contact, you're pulling energy away from the opponent instead of driving it into them.
+
+Instead, follow through naturally. After impact, let your arm continue along its arc as your body's forward momentum carries you slightly into the target. This isn't about leaving your arm out there - it's about allowing the natural unwinding of the kinetic chains to complete. The forward weight transfer from the punch becomes the elastic energy that rebounds you back to fighting position.
+
+Think of it like throwing a baseball. The pitcher doesn't yank their arm back the instant they release the ball. They let the arm follow through naturally, which protects the shoulder and ensures maximum energy transfer. Same principle applies to punching.
+
+The follow through also serves a protective function - stopping abruptly at impact can cause elbow hyperextension and joint damage. The natural continuation past contact allows your body to safely dissipate the energy that wasn't transferred into the target.
+
+Here's what to do: heavy bag work, 100 straight punches daily, focus on driving your weight **through** the bag rather than bouncing off it. Feel the difference between snapping back and following through naturally.
+```
+</details>
+
+### Should I step forward when I throw a punch?
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth 5
+- Judge reasoning: Response is perfectly accurate per retrieved context - correctly identifies stepping as consequence not cause of power, explains weight transfer mechanics, and references Floyd's technique. Voice is direct and confident without hedging or impersonating Alex. Demonstrates deep grounding in Alex's methodology with kinetic chains, weight transfer through target, and stretch-shortening cycle concepts. Addresses the stepping myth directly as outlined in retrieved context. Ends with specific wall drill with exact reps (50 daily) and clear cues.
+
+<details><summary>Coach response</summary>
+
+```
+Stepping forward when you punch serves a specific biomechanical purpose — it's not about covering distance, it's about catching your weight transfer and enabling a quick reset.
+
+When you throw a punch properly, your weight naturally transfers from back to front as part of the kinetic chain. The step forward catches that momentum on your lead foot, which then allows you to push yourself right back out of range. You're not marching in place — you're stepping to help manage the weight transfer that's already happening.
+
+Look at how Floyd does it: his weight goes forward, the punch lands at the same time he catches his weight transfer with his lead leg, and then he's able to push himself right back. The step is the consequence of proper weight transfer, not the cause of power.
+
+Without the step, you'd either have to stop your weight transfer mid-punch (which kills power) or you'd be off-balance after landing. The step lets you commit fully to the weight transfer while maintaining the ability to reset quickly.
+
+The power comes from your hips driving forward and the kinetic chains accelerating through your body — the step just helps you manage that energy efficiently.
+
+Here's what to do: wall drill, 50 reps daily. Push all your weight from your back foot against a wall to feel proper weight transfer — you'll need to step forward or you'll fall down. That's the feeling you want.
+```
+</details>
+
+### Should my shoulders be tense or loose when I punch?
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth 5
+- Judge reasoning: The response is biomechanically accurate and fully supported by the retrieved context. It correctly explains loose shoulders until impact (Phase 3 'Loose Until Impact'), that shoulders transfer rather than generate power ('The shoulder does not generate power—it merely transfers it'), and that power comes from hip rotation through cross-body chains. The baseball analogy aligns with the retrieved material's emphasis on relaxed movement. Voice is direct and confident without hedging, uses plain paragraphs, and doesn't impersonate Alex. Groundedness is excellent - uses Alex's specific terminology (kinetic chains, cross-body chains, hip rotation) and concepts exactly as described in the context. Ends with one specific drill (relaxed arm drill, 50 reps) matching the retrieved hip-driven movement exercise. Effectively corrects the myth that shoulders should be tense throughout punching by explaining the transfer vs. generation distinction.
+
+<details><summary>Coach response</summary>
+
+```
+Your shoulders should be loose until the moment of impact, then briefly tense at contact.
+
+Keeping your shoulders tense throughout the punch slows you down because tight muscles fight against each other. Loose shoulders allow your arm to move faster through its arc and let the cross-body chains do their job. The power comes from your hips rotating and stretching those diagonal chains that run from hip to opposite shoulder — not from muscling with your deltoids.
+
+At the exact moment you make contact, grab your fist hard and let everything tighten up. This sudden tension at impact gives you maximum rigidity when you need it while keeping you fast on the way there. Think of it like throwing a baseball — your arm stays loose during the windup and delivery, then firms up as you release.
+
+The shoulder transfers energy from your rotating hips through your torso and out to your fist. It's not generating power itself. If you try to "put your shoulder into it," you're disconnecting your arm from the kinetic chains that actually create the snap.
+
+Here's what to do: practice the relaxed arm drill, 50 reps daily. Let your hips rotate your body side to side while your arms stay completely loose and follow like you're on a spinning amusement park ride. Feel how the hips drive everything, not the shoulders.
+```
+</details>
+
+### How does arc trajectory work in a hook?
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth N/A
+- Judge reasoning: Response is biomechanically accurate and fully supported by retrieved context. Uses tetherball analogy to explain arc formation through body rotation rather than forced arm movement. Correctly identifies bicep's role in maintaining tight radius (directly from context: 'bicep reduces the arc radius'). Explains figure skater principle and energy transfer from hips through core. Landing with last three knuckles matches retrieved guidance. Voice is direct and confident without hedging or markdown. Deeply grounded in Alex's methodology - uses kinetic chains concept, energy transfer from hips through core, stretch-shortening cycles. Ends with exactly one specific drill: shadow box hooks with exaggerated hip opening, 50 reps each side, focusing on lateral weight shift and hip drive.
+
+<details><summary>Coach response</summary>
+
+```
+The hook's arc trajectory works through physics, not forcing a curved path. When your hips open and drive lateral rotation, that rotational energy transfers through your core and shoulder into your arm — but the arm naturally follows a circular path because it's tethered to your rotating torso.
+
+Think of it like tetherball. The ball doesn't choose to go in circles — it's pulled into that arc by the rope connecting it to the spinning pole. Same with your fist. As your body rotates around your spine, the connective tissue chains (your "rope") keep your arm tethered to that rotation, creating the arc automatically.
+
+The key insight: **reduce the arc radius to increase speed**. By keeping your elbow bent at roughly 90 degrees, you're pulling your "arm radius" tighter to your body's axis of rotation. Just like a figure skater spins faster when they pull their arms in. The tighter the radius, the faster your fist moves through the impact zone.
+
+Your bicep does the work of maintaining that tight radius. Keep the elbow position locked throughout the punch — don't let it flare out or collapse in. The energy flows from your opening hips, through your core, and whips around that tight arc. Land with your last three knuckles as the fist completes the circular trajectory.
+
+Here's what to do: shadow box hooks with exaggerated hip opening, 50 reps each side. Focus only on the lateral weight shift and hip drive — let the arm follow that rotation naturally. The arc will form automatically if your hips lead and your elbow stays locked.
+```
+</details>
+
+### What does 'loose until impact' mean in punching?
+- Scores — accuracy **5** · voice **5** · grounded **5** · actionable **5** · myth N/A
+- Judge reasoning: The response is biomechanically accurate and fully supported by the retrieved context, which explicitly states 'you need to stay relaxed during the punch until impact where you grab your fist.' The coach correctly explains the whip-like arm mechanics, power generation from hips/core, and the steel rod vs loose chain analogy aligns with the stretch-shortening cycle principles in the context. Voice is direct and confident without hedging or markdown. Groundedness is strong - uses Alex's specific framework terminology and the underlying kinetic chain mechanics. Ends with exactly one actionable drill (100 shadow boxing punches daily). No myth to correct as the question asks for legitimate technique explanation.
+
+<details><summary>Coach response</summary>
+
+```
+Loose until impact means keeping your arms and hands relaxed throughout the punch until the exact moment you make contact with the target.
+
+Here's why this matters: tight muscles fight against each other and slow you down. When your arm is tense during the punch, you're essentially hitting the brakes while trying to accelerate. A relaxed arm moves faster through the arc because there's no internal resistance.
+
+The power comes from your hips and core driving the punch, not from muscling it with your arm. Your arm is just the delivery system — let it be loose and whip-like as it gets pulled along by your body's rotation.
+
+At the instant of impact, suddenly grab your fist hard. This contracts all the arm muscles at once, creating maximum rigidity right when you need it. It's like the difference between hitting someone with a loose chain versus a steel rod — the loose chain gets there faster, but you want it to become a steel rod the moment it lands.
+
+This also connects to landing with your last three knuckles. That power line through your ulna to your humerus only works if you clench hard at impact to lock everything into place.
+
+Here's what to do: shadow boxing drill, 100 punches daily, focus only on staying loose until the imaginary impact moment. Let your body throw your arm, don't push with your shoulder.
+```
+</details>

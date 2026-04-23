@@ -241,26 +241,40 @@ export async function POST(request: NextRequest) {
     const readableStream = new ReadableStream({
       async start(controller) {
         const encoder = new TextEncoder();
+        // Prevent `ERR_INVALID_STATE: Controller is already closed` when the
+        // Anthropic stream emits a late event after done/error has fired.
+        let closed = false;
+        const safeEnqueue = (payload: string) => {
+          if (closed) return;
+          try {
+            controller.enqueue(encoder.encode(payload));
+          } catch {
+            closed = true;
+          }
+        };
+        const safeClose = () => {
+          if (closed) return;
+          closed = true;
+          try {
+            controller.close();
+          } catch {
+            // already closed
+          }
+        };
 
         stream.on("text", (text) => {
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ type: "text", content: text })}\n\n`)
-          );
+          safeEnqueue(`data: ${JSON.stringify({ type: "text", content: text })}\n\n`);
         });
 
         stream.on("end", () => {
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ type: "done", citations })}\n\n`)
-          );
-          controller.close();
+          safeEnqueue(`data: ${JSON.stringify({ type: "done", citations })}\n\n`);
+          safeClose();
         });
 
         stream.on("error", (err) => {
           console.error("Coach stream error:", err);
-          controller.enqueue(
-            encoder.encode(`data: ${JSON.stringify({ type: "error", message: "Stream error" })}\n\n`)
-          );
-          controller.close();
+          safeEnqueue(`data: ${JSON.stringify({ type: "error", message: "Stream error" })}\n\n`);
+          safeClose();
         });
       },
     });

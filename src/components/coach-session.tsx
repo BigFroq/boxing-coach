@@ -2,6 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Send, Loader2, CheckCircle, AlertTriangle, X, ChevronDown } from "lucide-react";
+import { renderInlineBold } from "@/lib/render-inline-bold";
+import { getThinkingSequence } from "@/lib/thinking-sequence";
 
 interface Message {
   role: "user" | "assistant";
@@ -22,8 +24,12 @@ export function CoachSession({ userId }: CoachSessionProps) {
   const [initialized, setInitialized] = useState(false);
   const [neglected, setNeglected] = useState<string[]>([]);
   const [bannerCollapsed, setBannerCollapsed] = useState<boolean>(false);
+  const [thinkingSequence, setThinkingSequence] = useState<string[]>([]);
+  const [thinkingStep, setThinkingStep] = useState(0);
+  const [slowWarning, setSlowWarning] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const slowTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -54,6 +60,12 @@ export function CoachSession({ userId }: CoachSessionProps) {
     async (allMessages: Message[]) => {
       setLoading(true);
       setStreaming(false);
+      const lastUser = [...allMessages].reverse().find((m) => m.role === "user")?.content ?? "";
+      setThinkingSequence(getThinkingSequence(lastUser, "coach"));
+      setThinkingStep(0);
+      setSlowWarning(false);
+      if (slowTimerRef.current) clearTimeout(slowTimerRef.current);
+      slowTimerRef.current = setTimeout(() => setSlowWarning(true), 10000);
 
       try {
         let styleProfile: unknown = null;
@@ -80,11 +92,19 @@ export function CoachSession({ userId }: CoachSessionProps) {
         });
 
         if (!response.ok || !response.body) {
+          if (response.status === 429) {
+            throw new Error("RATE_LIMIT");
+          }
           throw new Error("Failed to connect to coach");
         }
 
         setLoading(false);
         setStreaming(true);
+        if (slowTimerRef.current) {
+          clearTimeout(slowTimerRef.current);
+          slowTimerRef.current = null;
+        }
+        setSlowWarning(false);
 
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
@@ -120,17 +140,39 @@ export function CoachSession({ userId }: CoachSessionProps) {
         }
       } catch (err) {
         console.error("Coach error:", err);
+        const isRateLimit = err instanceof Error && err.message === "RATE_LIMIT";
+        const msg = isRateLimit
+          ? "You're sending messages fast — give it about a minute, then try again."
+          : "Something went wrong. Please try again.";
         setMessages((prev) => [
           ...prev,
-          { role: "assistant", content: "Something went wrong. Please try again." },
+          { role: "assistant", content: msg },
         ]);
       } finally {
         setLoading(false);
         setStreaming(false);
+        if (slowTimerRef.current) {
+          clearTimeout(slowTimerRef.current);
+          slowTimerRef.current = null;
+        }
       }
     },
     [userId]
   );
+
+  // Rotate the thinking-indicator line while waiting for the first token.
+  // Last line parks once reached; clamping happens at render time.
+  useEffect(() => {
+    if (!loading) return;
+    const id = setInterval(() => setThinkingStep((s) => s + 1), 1600);
+    return () => clearInterval(id);
+  }, [loading]);
+
+  useEffect(() => {
+    return () => {
+      if (slowTimerRef.current) clearTimeout(slowTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!initialized) {
@@ -273,10 +315,55 @@ export function CoachSession({ userId }: CoachSessionProps) {
                   : "bg-surface-hover text-foreground"
               }`}
             >
-              {msg.content || (loading && <Loader2 className="h-4 w-4 animate-spin text-muted" />)}
+              {msg.content
+                ? msg.role === "assistant"
+                  ? renderInlineBold(msg.content)
+                  : msg.content
+                : loading && <Loader2 className="h-4 w-4 animate-spin text-muted" />}
             </div>
           </div>
         ))}
+        {loading && (
+          <div className="flex justify-start">
+            <div className="max-w-[85%] rounded-xl bg-surface-hover px-4 py-3">
+              <div
+                className="flex items-center gap-2.5"
+                role="status"
+                aria-live="polite"
+              >
+                <div className="flex items-end gap-1 pb-0.5" aria-hidden="true">
+                  <span
+                    className="block size-1.5 rounded-full bg-accent/70 animate-thinking-dot"
+                    style={{ animationDelay: "0ms" }}
+                  />
+                  <span
+                    className="block size-1.5 rounded-full bg-accent/70 animate-thinking-dot"
+                    style={{ animationDelay: "180ms" }}
+                  />
+                  <span
+                    className="block size-1.5 rounded-full bg-accent/70 animate-thinking-dot"
+                    style={{ animationDelay: "360ms" }}
+                  />
+                </div>
+                {(() => {
+                  const seq = thinkingSequence.length > 0 ? thinkingSequence : ["Thinking…"];
+                  const idx = Math.min(thinkingStep, seq.length - 1);
+                  return (
+                    <span
+                      key={idx}
+                      className="text-xs text-muted animate-thinking-text"
+                    >
+                      {seq[idx]}
+                      {slowWarning && (
+                        <span className="text-muted/60"> · still working on it</span>
+                      )}
+                    </span>
+                  );
+                })()}
+              </div>
+            </div>
+          </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 

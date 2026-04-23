@@ -57,3 +57,14 @@ vault/
 
 # playwright mcp scratch
 .playwright-mcp/
+
+# playwright test artifacts (videos, traces)
+/test-results/
+/playwright-report/
+
+# editor / agent local configs
+/.claude/
+/.obsidian/
+
+# loose screenshots at repo root (scratch — keep curated ones under docs/)
+/*.png
