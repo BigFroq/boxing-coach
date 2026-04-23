@@ -54,6 +54,21 @@ export async function GET(request: NextRequest) {
         .maybeSingle(),
     ]);
 
+  const errors = [
+    userProfileRes,
+    styleProfileRes,
+    focusAreasRes,
+    focusAreasCountRes,
+    drillsRes,
+    sessionRes,
+  ]
+    .map((r) => r.error)
+    .filter(Boolean);
+  if (errors.length) {
+    console.error("Profile GET errors:", errors);
+    return NextResponse.json({ error: "Fetch failed" }, { status: 500 });
+  }
+
   const response = buildProfileResponse({
     userProfile: userProfileRes.data ?? null,
     currentStyleProfile: styleProfileRes.data ?? null,
