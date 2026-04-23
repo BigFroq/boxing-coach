@@ -22,9 +22,9 @@ export default function MePage() {
   // Must run post-hydration; readOrCreateUserId is client-only (reads localStorage).
   // Lazy-init in useState would render differently on server vs client and cause a
   // hydration mismatch on `{userId && <ProfileView ...>}`.
-  // Wrapped in callback to satisfy eslint's set-state-in-effect rule.
   useEffect(() => {
-    Promise.resolve().then(() => setUserId(readOrCreateUserId()));
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setUserId(readOrCreateUserId());
   }, []);
 
   return (
