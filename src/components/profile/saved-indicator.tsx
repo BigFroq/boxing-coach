@@ -12,6 +12,7 @@ export function SavedIndicator({ trigger }: { trigger: number | null }) {
 
   useEffect(() => {
     if (trigger === null) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setVisible(true);
     const id = setTimeout(() => setVisible(false), 1500);
     return () => clearTimeout(id);
