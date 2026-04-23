@@ -20,6 +20,7 @@ import { CoachTab } from "@/components/coach-tab";
 import { StyleFinderTab } from "@/components/style-finder-tab";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { track, identify } from "@/lib/analytics";
+import { initialsFrom } from "@/lib/profile-initials";
 
 const tabs = [
   { id: "technique", label: "Technique", shortLabel: "Technique", icon: MessageSquare, description: "Ask about punching mechanics" },
@@ -46,15 +47,24 @@ function AppContent() {
   const userId = getAnonymousUserId();
 
   useEffect(() => {
-    // Pre-seed from `?q=…` — used by /pd when Alex clicks a seed question. We
-    // read/remove the param synchronously so the rest of the app behaves as a
-    // fresh cold load, and strip it from the URL so a refresh doesn't re-fire.
+    // Pre-seed from `?q=…` (from /pd) and/or `?tab=…` (from /me deep-links).
+    // Both are consumed synchronously and stripped from the URL.
     if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
     const seed = params.get("q");
+    const tab = params.get("tab");
+    let changed = false;
     if (seed) {
       setCoachQuery(seed);
       params.delete("q");
+      changed = true;
+    }
+    if (tab && (tabs as readonly { id: string }[]).some((t) => t.id === tab)) {
+      setActiveTab(tab as TabId);
+      params.delete("tab");
+      changed = true;
+    }
+    if (changed) {
       const newUrl = window.location.pathname + (params.toString() ? `?${params}` : "");
       window.history.replaceState(null, "", newUrl);
     }
@@ -88,12 +98,15 @@ function AppContent() {
             <span className="text-xl" role="img" aria-label="Boxing glove">🥊</span>
             <h1 className="text-lg font-semibold leading-tight">Boxing Coach AI</h1>
           </div>
-          <Link
-            href="/about"
-            className="text-xs text-muted hover:text-foreground underline-offset-2 hover:underline"
-          >
-            About & limitations
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/about"
+              className="text-xs text-muted hover:text-foreground underline-offset-2 hover:underline"
+            >
+              About & limitations
+            </Link>
+            <ProfileAvatarLink />
+          </div>
         </div>
         <nav className="flex px-4 sm:px-6">
         {tabs.map((tab) => {
@@ -175,6 +188,27 @@ function AppContent() {
         )}
       </main>
     </div>
+  );
+}
+
+function ProfileAvatarLink() {
+  const [initials, setInitials] = useState<string>("");
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const name = window.localStorage.getItem("punch-doctor-display-name");
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setInitials(initialsFrom(name));
+  }, []);
+
+  return (
+    <Link
+      href="/me"
+      aria-label="Your profile"
+      className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 text-accent text-xs font-semibold hover:bg-accent/20"
+    >
+      {initials || <User size={14} aria-hidden />}
+    </Link>
   );
 }
 
