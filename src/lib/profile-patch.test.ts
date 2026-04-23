@@ -64,6 +64,12 @@ describe("normalizeProfilePatch", () => {
     expect(normalizeProfilePatch({ userId: "u1", started_boxing_at: "2023-13-01" }).ok).toBe(false);
   });
 
+  it("rejects rollover dates (Feb 31, Apr 31, etc.)", () => {
+    expect(normalizeProfilePatch({ userId: "u1", started_boxing_at: "2023-02-31" }).ok).toBe(false);
+    expect(normalizeProfilePatch({ userId: "u1", started_boxing_at: "2023-04-31" }).ok).toBe(false);
+    expect(normalizeProfilePatch({ userId: "u1", started_boxing_at: "2023-06-31" }).ok).toBe(false);
+  });
+
   it("enforces max length on display_name (80), gym/trainer (80), goals (500), notes (4000)", () => {
     expect(normalizeProfilePatch({ userId: "u1", display_name: "x".repeat(81) }).ok).toBe(false);
     expect(normalizeProfilePatch({ userId: "u1", gym: "x".repeat(81) }).ok).toBe(false);

@@ -41,9 +41,11 @@ const dateField = z
 
     const full = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/.exec(trimmed);
     if (full) {
-      // Parseability check (e.g. reject 2023-02-31).
+      // Reject rollover dates (e.g. 2023-02-31 → Date silently coerces to 2023-03-03).
       const d = new Date(trimmed + "T00:00:00Z");
-      if (!Number.isNaN(d.getTime())) return trimmed;
+      if (!Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === trimmed) {
+        return trimmed;
+      }
     }
 
     ctx.addIssue({
