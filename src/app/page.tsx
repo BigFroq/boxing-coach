@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   MessageSquare,
   ClipboardList,
@@ -17,6 +18,8 @@ import {
 import { ChatTab } from "@/components/chat-tab";
 import { CoachTab } from "@/components/coach-tab";
 import { StyleFinderTab } from "@/components/style-finder-tab";
+import { ErrorBoundary } from "@/components/error-boundary";
+import { track, identify } from "@/lib/analytics";
 
 const tabs = [
   { id: "technique", label: "Technique", shortLabel: "Technique", icon: MessageSquare, description: "Ask about punching mechanics" },
@@ -43,6 +46,26 @@ function AppContent() {
   const userId = getAnonymousUserId();
 
   useEffect(() => {
+    // Pre-seed from `?q=…` — used by /pd when Alex clicks a seed question. We
+    // read/remove the param synchronously so the rest of the app behaves as a
+    // fresh cold load, and strip it from the URL so a refresh doesn't re-fire.
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const seed = params.get("q");
+    if (seed) {
+      setCoachQuery(seed);
+      params.delete("q");
+      const newUrl = window.location.pathname + (params.toString() ? `?${params}` : "");
+      window.history.replaceState(null, "", newUrl);
+    }
+  }, []);
+
+  useEffect(() => {
+    // Identify the anon user in PostHog so we can track cohorts across sessions.
+    if (userId && userId !== "anon") identify(userId);
+  }, [userId]);
+
+  useEffect(() => {
     // Once the technique tab mounts ChatTab with the pending query, clear it
     // so navigating away and back does not re-fire the request.
     if (activeTab === "technique" && coachQuery) {
@@ -51,13 +74,26 @@ function AppContent() {
     }
   }, [activeTab, coachQuery]);
 
+  const handleTabClick = (id: TabId) => {
+    if (id !== activeTab) track("tab_switch", { from: activeTab, to: id });
+    setActiveTab(id);
+  };
+
   return (
     <div className="flex h-full flex-col">
       {/* Header + Tab Navigation */}
       <header className="border-b border-border">
-        <div className="flex items-center gap-3 px-4 sm:px-6 pt-4 pb-3">
-          <span className="text-xl" role="img" aria-label="Boxing glove">🥊</span>
-          <h1 className="text-lg font-semibold leading-tight">Boxing Coach AI</h1>
+        <div className="flex items-center justify-between gap-3 px-4 sm:px-6 pt-4 pb-3">
+          <div className="flex items-center gap-3">
+            <span className="text-xl" role="img" aria-label="Boxing glove">🥊</span>
+            <h1 className="text-lg font-semibold leading-tight">Boxing Coach AI</h1>
+          </div>
+          <Link
+            href="/about"
+            className="text-xs text-muted hover:text-foreground underline-offset-2 hover:underline"
+          >
+            About & limitations
+          </Link>
         </div>
         <nav className="flex px-4 sm:px-6">
         {tabs.map((tab) => {
@@ -66,7 +102,7 @@ function AppContent() {
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabClick(tab.id)}
               className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-3 min-h-[44px] text-xs sm:text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px ${
                 isActive
                   ? "border-accent text-accent"
@@ -85,47 +121,57 @@ function AppContent() {
       {/* Tab Content */}
       <main className="flex-1 overflow-hidden">
         {activeTab === "technique" && (
-          <ChatTab
-            systemContext="technique"
-            heroIcon={MessageSquare}
-            heroTitle="What technique are you curious about?"
-            heroSubtitle="Ask about punch mechanics, kinetic chains, or break down how a pro generates power."
-            placeholder="Ask about punch mechanics, kinetic chains, phases..."
-            suggestions={[
-              { text: "How does Canelo use kinetic chains in his jab?", Icon: Zap },
-              { text: "Break down Beterbiev's power — what makes him hit so hard?", Icon: Flame },
-              { text: "What's the difference between a push punch and a throw?", Icon: GitBranch },
-              { text: "How should I use hip rotation for a left hook?", Icon: RotateCw },
-            ]}
-            initialQuery={coachQuery}
-            userId={userId}
-          />
+          <ErrorBoundary label="Technique chat">
+            <ChatTab
+              systemContext="technique"
+              heroIcon={MessageSquare}
+              heroTitle="What technique are you curious about?"
+              heroSubtitle="Ask about punch mechanics, kinetic chains, or break down how a pro generates power."
+              placeholder="Ask about punch mechanics, kinetic chains, phases..."
+              suggestions={[
+                { text: "How does Canelo use kinetic chains in his jab?", Icon: Zap },
+                { text: "Break down Beterbiev's power — what makes him hit so hard?", Icon: Flame },
+                { text: "What's the difference between a push punch and a throw?", Icon: GitBranch },
+                { text: "How should I use hip rotation for a left hook?", Icon: RotateCw },
+              ]}
+              initialQuery={coachQuery}
+              userId={userId}
+            />
+          </ErrorBoundary>
         )}
         {activeTab === "drills" && (
-          <ChatTab
-            systemContext="drills"
-            heroIcon={Dumbbell}
-            heroTitle="Looking for a drill?"
-            heroSubtitle="Exercises, warm-ups, and bag work pulled straight from the Power Punching Blueprint."
-            placeholder="Ask about exercises, training routines, bag work..."
-            suggestions={[
-              { text: "What exercises build punching power using kinetic chains?", Icon: Zap },
-              { text: "Give me a rotator cuff warm-up routine for boxing", Icon: Shield },
-              { text: "How do I practice the 4 phases of torque?", Icon: Timer },
-              { text: "What's the right way to throw a medicine ball for punching power?", Icon: Target },
-            ]}
-            userId={userId}
-          />
+          <ErrorBoundary label="Drills chat">
+            <ChatTab
+              systemContext="drills"
+              heroIcon={Dumbbell}
+              heroTitle="Looking for a drill?"
+              heroSubtitle="Exercises, warm-ups, and bag work pulled straight from the Power Punching Blueprint."
+              placeholder="Ask about exercises, training routines, bag work..."
+              suggestions={[
+                { text: "What exercises build punching power using kinetic chains?", Icon: Zap },
+                { text: "Give me a rotator cuff warm-up routine for boxing", Icon: Shield },
+                { text: "How do I practice the 4 phases of torque?", Icon: Timer },
+                { text: "What's the right way to throw a medicine ball for punching power?", Icon: Target },
+              ]}
+              userId={userId}
+            />
+          </ErrorBoundary>
         )}
-        {activeTab === "coach" && <CoachTab userId={userId} />}
+        {activeTab === "coach" && (
+          <ErrorBoundary label="My Coach">
+            <CoachTab userId={userId} />
+          </ErrorBoundary>
+        )}
         {activeTab === "style" && (
-          <StyleFinderTab
-            userId={userId}
-            onSwitchToChat={(query) => {
-              setCoachQuery(query);
-              setActiveTab("technique");
-            }}
-          />
+          <ErrorBoundary label="Find Your Style">
+            <StyleFinderTab
+              userId={userId}
+              onSwitchToChat={(query) => {
+                setCoachQuery(query);
+                setActiveTab("technique");
+              }}
+            />
+          </ErrorBoundary>
         )}
       </main>
     </div>

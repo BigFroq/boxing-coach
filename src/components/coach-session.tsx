@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Send, Loader2, CheckCircle, AlertTriangle, X, ChevronDown } from "lucide-react";
+import { renderInlineBold } from "@/lib/render-inline-bold";
 
 interface Message {
   role: "user" | "assistant";
@@ -80,6 +81,9 @@ export function CoachSession({ userId }: CoachSessionProps) {
         });
 
         if (!response.ok || !response.body) {
+          if (response.status === 429) {
+            throw new Error("RATE_LIMIT");
+          }
           throw new Error("Failed to connect to coach");
         }
 
@@ -120,9 +124,13 @@ export function CoachSession({ userId }: CoachSessionProps) {
         }
       } catch (err) {
         console.error("Coach error:", err);
+        const isRateLimit = err instanceof Error && err.message === "RATE_LIMIT";
+        const msg = isRateLimit
+          ? "You're sending messages fast — give it about a minute, then try again."
+          : "Something went wrong. Please try again.";
         setMessages((prev) => [
           ...prev,
-          { role: "assistant", content: "Something went wrong. Please try again." },
+          { role: "assistant", content: msg },
         ]);
       } finally {
         setLoading(false);
@@ -273,7 +281,11 @@ export function CoachSession({ userId }: CoachSessionProps) {
                   : "bg-surface-hover text-foreground"
               }`}
             >
-              {msg.content || (loading && <Loader2 className="h-4 w-4 animate-spin text-muted" />)}
+              {msg.content
+                ? msg.role === "assistant"
+                  ? renderInlineBold(msg.content)
+                  : msg.content
+                : loading && <Loader2 className="h-4 w-4 animate-spin text-muted" />}
             </div>
           </div>
         ))}
