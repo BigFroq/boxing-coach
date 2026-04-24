@@ -98,18 +98,21 @@ export async function writeVaultFiles(
     const frontmatter = buildFrontmatter(node, edges);
     const connections = buildConnectionsSection(node, edges, nodesBySlug);
 
-    // Replace the empty Connections section in content with discovered connections
+    // Replace the Connections section in content with discovered connections.
+    // Always clear the pass2 "[Leave empty]" placeholder, even if connections is empty
+    // (a zero-edge node should render an empty Connections section, not a TODO).
     let content = node.content;
     const connectionsPattern = /## Connections\n[\s\S]*?(?=\n## |$)/;
-    if (connections && connectionsPattern.test(content)) {
-      content = content.replace(connectionsPattern, `## Connections\n${connections}`);
+    const newSection = connections ? `## Connections\n${connections}\n` : "## Connections\n";
+    if (connectionsPattern.test(content)) {
+      content = content.replace(connectionsPattern, newSection);
     } else if (connections) {
-      // Append before ## Sources if it exists, otherwise at end
+      // Node has no Connections heading at all — append one before ## Sources if present
       const sourcesIdx = content.indexOf("## Sources");
       if (sourcesIdx !== -1) {
-        content = content.slice(0, sourcesIdx) + `## Connections\n${connections}\n\n` + content.slice(sourcesIdx);
+        content = content.slice(0, sourcesIdx) + `${newSection}\n` + content.slice(sourcesIdx);
       } else {
-        content += `\n\n## Connections\n${connections}`;
+        content += `\n\n${newSection}`;
       }
     }
 
@@ -119,6 +122,23 @@ export async function writeVaultFiles(
   }
 
   console.log(`Wrote ${nodes.length} node files`);
+
+  // Remove orphaned .md files — nodes deleted from the DB (merge, stub cleanup, etc.)
+  // leave stale files on disk unless we prune them here.
+  const currentFiles = new Set(nodes.map(n => `${TYPE_FOLDERS[n.node_type] ?? "concepts"}/${n.slug}.md`));
+  let pruned = 0;
+  for (const folder of folders) {
+    const folderPath = path.join(VAULT_DIR, folder);
+    let entries: string[];
+    try { entries = await fs.readdir(folderPath); } catch { continue; }
+    for (const entry of entries) {
+      if (!entry.endsWith(".md")) continue;
+      if (currentFiles.has(`${folder}/${entry}`)) continue;
+      await fs.unlink(path.join(folderPath, entry));
+      pruned++;
+    }
+  }
+  if (pruned) console.log(`Pruned ${pruned} orphaned file(s)`);
 
   // Write _MOC.md
   const grouped: Record<string, SynthesizedNode[]> = {};
