@@ -1,6 +1,6 @@
 "use client";
 
-import { RotateCcw, Share2, MessageSquare, Sparkles, TrendingUp, Users, Target, Flame } from "lucide-react";
+import { Share2, MessageSquare, Sparkles, TrendingUp, Users, Target, Flame } from "lucide-react";
 import { RadarChart } from "./radar-chart";
 import { DimensionBars } from "./dimension-bars";
 import { FighterMatchCard } from "./fighter-match-card";
@@ -51,7 +51,7 @@ export interface StyleProfileResult {
   punch_doctor_insight: string;
 }
 
-interface ResultsProfileProps {
+interface DashboardViewProps {
   result: StyleProfileResult;
   physicalContext: { height: string; build: string; reach: string; stance: string };
   experienceLevel: string;
@@ -160,7 +160,7 @@ const PHYSICAL_LABELS: Record<string, Record<string, string>> = {
   stance: { orthodox: "Orthodox", southpaw: "Southpaw", switch: "Switch", unsure: "Not decided" },
 };
 
-export function ResultsProfile({
+export function DashboardView({
   result,
   physicalContext,
   experienceLevel,
@@ -168,7 +168,7 @@ export function ResultsProfile({
   onRetake,
   onAskCoach,
   profileId,
-}: ResultsProfileProps) {
+}: DashboardViewProps) {
   const isBeginner = experienceLevel === "beginner" || experienceLevel === "intermediate";
   const tendencyLabel = isBeginner ? "Natural Tendencies" : "Your Strengths";
   const growthLabel = isBeginner ? "Areas to Develop" : "Growth Areas";
@@ -198,7 +198,7 @@ export function ResultsProfile({
 
         {/* Style Header */}
         <div className="text-center">
-          <p className="text-xs uppercase tracking-wider text-accent mb-2">Your Fighter Profile</p>
+          <p className="text-xs uppercase tracking-wider text-accent mb-2">Your fighting style</p>
           <h2 className="text-3xl font-bold mb-3">{result.style_name}</h2>
           <p className="text-muted text-sm leading-relaxed max-w-lg mx-auto">
             {result.description}
@@ -343,8 +343,8 @@ export function ResultsProfile({
         />
 
         {/* Actions */}
-        <div className="flex items-center justify-center gap-4 pt-2">
-          {profileId && (
+        {profileId && (
+          <div className="flex items-center justify-center pt-2">
             <button
               onClick={handleShare}
               className="flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors"
@@ -352,15 +352,22 @@ export function ResultsProfile({
               <Share2 size={14} />
               Share
             </button>
-          )}
+          </div>
+        )}
+
+        <footer className="mt-8 pt-4 border-t border-border text-center">
           <button
-            onClick={onRetake}
-            className="flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors"
+            type="button"
+            onClick={() => {
+              if (window.confirm("Start over from a blank quiz? You'll lose your refinement progress on this profile.")) {
+                onRetake();
+              }
+            }}
+            className="text-xs text-muted hover:text-foreground underline-offset-2 hover:underline"
           >
-            <RotateCcw size={14} />
-            Retake quiz
+            Start over with a blank quiz
           </button>
-        </div>
+        </footer>
       </div>
     </div>
   );

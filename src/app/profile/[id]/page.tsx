@@ -1,6 +1,6 @@
 import { createServerClient } from "@/lib/supabase";
-import { ResultsProfile } from "@/components/style-finder/results-profile";
-import type { StyleProfileResult } from "@/components/style-finder/results-profile";
+import { DashboardView } from "@/components/style-finder/dashboard-view";
+import type { StyleProfileResult } from "@/components/style-finder/dashboard-view";
 import type { DimensionScores } from "@/data/fighter-profiles";
 import type { Metadata } from "next";
 
@@ -97,7 +97,7 @@ export default async function ProfilePage({ params }: PageProps) {
         </div>
       </header>
       <main>
-        <ResultsProfile
+        <DashboardView
           result={result}
           physicalContext={physicalContext}
           experienceLevel={

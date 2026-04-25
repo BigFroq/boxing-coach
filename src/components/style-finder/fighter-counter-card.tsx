@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertTriangle, Zap, Target } from "lucide-react";
-import type { CounterExplanation } from "./results-profile";
+import type { CounterExplanation } from "./dashboard-view";
 import { DIMENSION_LABELS, type DimensionScores } from "@/data/fighter-profiles";
 
 interface FighterCounterCardProps {

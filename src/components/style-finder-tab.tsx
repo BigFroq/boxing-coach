@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { Questionnaire } from "./style-finder/questionnaire";
-import { ResultsProfile } from "./style-finder/results-profile";
-import type { StyleProfileResult } from "./style-finder/results-profile";
+import { DashboardView } from "./style-finder/dashboard-view";
+import type { StyleProfileResult } from "./style-finder/dashboard-view";
 import type { DimensionScores } from "@/data/fighter-profiles";
 import { computeDimensionScores } from "@/lib/dimension-scoring";
 import { matchFighters } from "@/lib/fighter-matching";
@@ -230,7 +230,7 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
 
   if (view === "results" && result) {
     return (
-      <ResultsProfile
+      <DashboardView
         result={result}
         physicalContext={physicalContext}
         experienceLevel={experienceLevel}
