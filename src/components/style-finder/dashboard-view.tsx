@@ -1,7 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { Share2, MessageSquare, Sparkles, TrendingUp, Users, Target, Flame } from "lucide-react";
 import { RadarChart } from "./radar-chart";
+import { DimensionDrawer } from "./dimension-drawer";
+import type { DimensionKey } from "@/lib/dimensions";
 import { DimensionBars } from "./dimension-bars";
 import { FighterMatchCard } from "./fighter-match-card";
 import { FighterCounterCard } from "./fighter-counter-card";
@@ -169,6 +172,8 @@ export function DashboardView({
   onAskCoach,
   profileId,
 }: DashboardViewProps) {
+  const [drawerKey, setDrawerKey] = useState<DimensionKey | null>(null);
+
   const isBeginner = experienceLevel === "beginner" || experienceLevel === "intermediate";
   const tendencyLabel = isBeginner ? "Natural Tendencies" : "Your Strengths";
   const growthLabel = isBeginner ? "Areas to Develop" : "Growth Areas";
@@ -211,7 +216,10 @@ export function DashboardView({
             Dimensional Profile
           </h3>
           <div className="max-w-sm mx-auto">
-            <RadarChart scores={result.dimension_scores} />
+            <RadarChart
+              scores={result.dimension_scores}
+              onDimensionClick={(k) => setDrawerKey(k as DimensionKey)}
+            />
           </div>
         </div>
 
@@ -369,6 +377,13 @@ export function DashboardView({
           </button>
         </footer>
       </div>
+
+      <DimensionDrawer
+        dimensionKey={drawerKey}
+        score={drawerKey ? result.dimension_scores[drawerKey] : 0}
+        onClose={() => setDrawerKey(null)}
+        onAskCoach={onAskCoach}
+      />
     </div>
   );
 }
