@@ -66,6 +66,7 @@ interface DashboardViewProps {
   onRefineClick: () => void;
   narrativeStale: boolean;
   onRefreshNarrative: () => void;
+  error?: string | null;
 }
 
 function buildStyleSuggestions(result: StyleProfileResult): Suggestion[] {
@@ -179,6 +180,7 @@ export function DashboardView({
   onRefineClick,
   narrativeStale,
   onRefreshNarrative,
+  error,
 }: DashboardViewProps) {
   const [drawerKey, setDrawerKey] = useState<DimensionKey | null>(null);
 
@@ -236,6 +238,13 @@ export function DashboardView({
             >
               Refresh my analysis
             </button>
+          </div>
+        )}
+
+        {/* Regen error banner */}
+        {error && (
+          <div className="mb-4 rounded-lg border border-red-500/40 bg-red-500/5 px-3 py-2 text-sm text-red-400">
+            {error}
           </div>
         )}
 

@@ -87,7 +87,7 @@ test.describe("Style dashboard", () => {
     await page.goto("/");
     await page.evaluate((blob) => {
       localStorage.setItem("boxing-coach-style-profile", JSON.stringify(blob));
-    }, buildSeedBlob({ omitAnswerId: "reach" }));
+    }, buildSeedBlob({ omitAnswerId: "power_feel" }));
     await page.goto("/?tab=style");
 
     // Refinement banner shows "1 new question available"
@@ -102,15 +102,15 @@ test.describe("Style dashboard", () => {
     const modal = page.getByRole("dialog", { name: /refine your profile/i });
     await expect(modal).toBeVisible();
 
-    // Click the first option (it's a single-choice MC question)
-    // "reach" question options: short, average, long
-    await modal.getByRole("button", { name: /short reach/i }).click();
+    // Click the first option of "power_feel" (scoring question)
+    // "power_feel" options: whip, drive, timing, developing
+    await modal.getByRole("button", { name: /like a whip cracking/i }).click();
 
     // Since this is the only question, the Refine submit button should be enabled
     // after selecting an option — click it to submit
     await modal.getByRole("button", { name: /^refine$/i }).click();
 
-    // Modal closes and narrative-stale banner appears
+    // Modal closes and narrative-stale banner appears (scores changed because power_feel is a scoring question)
     await expect(
       page.getByText(/your analysis is out of date/i)
     ).toBeVisible({ timeout: 5_000 });

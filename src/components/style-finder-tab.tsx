@@ -225,6 +225,7 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
               answers,
               dimension_scores: dimensionScores,
               physical_context: physical,
+              experience_level: expLevel,
               ai_result: data,
               matched_fighters: matches.map((m) => ({
                 name: m.fighter.name,
@@ -232,6 +233,7 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
                 overlappingDimensions: m.overlappingDimensions,
               })),
               counter_fighters: Array.isArray(data.counter_fighters) ? data.counter_fighters : [],
+              narrative_stale: false,
             })
             .select("id")
             .single();
@@ -312,6 +314,7 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
 
       setResult(next);
       setNarrativeStale(false);
+      setError(null);
 
       // Persist — Supabase if authed, else localStorage. Use the same soft-error
       // pattern as handleRefinementSubmit: only short-circuit on confirmed success.
@@ -337,7 +340,10 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
           if (!insertError && newRow) {
             setProfileId(newRow.id);
           } else {
-            // Soft-error: also write localStorage so the regen isn't lost
+            // Authed Supabase INSERT failed — surface to user so they know the refresh wasn't persisted.
+            // Do NOT silently fall through; on next reload Supabase will overwrite localStorage anyway.
+            setError("Refresh saved locally but couldn't sync to your account. Try again on a stable connection.");
+            // still update localStorage as best-effort so a future re-attempt has something to compare to
             localStorage.setItem(
               "boxing-coach-style-profile",
               JSON.stringify({
@@ -396,6 +402,8 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
       overlappingDimensions: m.overlappingDimensions,
     }));
 
+    const scoresChanged = JSON.stringify(dimensionScores) !== JSON.stringify(result?.dimension_scores ?? {});
+
     // Update local state immediately
     setStoredAnswers(merged);
     setResult((prev) =>
@@ -407,7 +415,7 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
           }
         : prev
     );
-    setNarrativeStale(true);
+    setNarrativeStale(scoresChanged);
     setRefinementOpen(false);
 
     // Persist — Supabase if authed, else localStorage
@@ -437,7 +445,7 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
             },
             matched_fighters: matchedPayload,
             counter_fighters: result.counter_fighters,
-            narrative_stale: true,
+            narrative_stale: scoresChanged,
           })
           .select("id")
           .single();
@@ -465,7 +473,7 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
             physicalContext,
             experienceLevel,
             answers: merged,
-            narrativeStale: true,
+            narrativeStale: scoresChanged,
           })
         );
       }
@@ -502,6 +510,7 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
           onRefineClick={() => setRefinementOpen(true)}
           narrativeStale={narrativeStale}
           onRefreshNarrative={handleRefreshNarrative}
+          error={error}
         />
         {refinementOpen && (
           <RefinementModal
