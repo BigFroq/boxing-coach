@@ -10,7 +10,7 @@ import { computeDimensionScores } from "@/lib/dimension-scoring";
 import { matchFighters } from "@/lib/fighter-matching";
 import { createBrowserClient } from "@/lib/supabase-browser";
 import { allQuestions } from "@/data/questions";
-import { getMissingQuestionIds } from "@/lib/profile-freshness";
+import { compareTopFighters, getMissingQuestionIds } from "@/lib/profile-freshness";
 import { mergeAnswersForRefinement } from "@/lib/style-profile-storage";
 import { RefinementModal } from "./style-finder/refinement-modal";
 
@@ -88,6 +88,40 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
     }
     load();
   }, [userId]);
+
+  useEffect(() => {
+    if (!result) return;
+    const fresh = matchFighters(result.dimension_scores, 3);
+    const freshPayload = fresh.map((m) => ({
+      name: m.fighter.name,
+      slug: m.fighter.slug,
+      overlappingDimensions: m.overlappingDimensions,
+    }));
+    if (!compareTopFighters(result.matched_fighters, freshPayload).changed) return;
+
+    // Updated rankings — apply locally and persist silently.
+    setResult((prev) =>
+      prev ? { ...prev, matched_fighters: freshPayload } : prev
+    );
+
+    // Best-effort persist; failure is non-fatal.
+    (async () => {
+      try {
+        const supabase = createBrowserClient();
+        const { data: authData } = await supabase.auth.getUser();
+        if (authData.user && profileId) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase.from("style_profiles") as any)
+            .update({ matched_fighters: freshPayload })
+            .eq("id", profileId);
+        }
+      } catch {
+        // ignore
+      }
+    })();
+    // run only when the result first lands or its dimension_scores change
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [result?.dimension_scores]);
 
   async function handleQuizComplete(answers: Record<string, string | string[] | number>) {
     setView("loading");
