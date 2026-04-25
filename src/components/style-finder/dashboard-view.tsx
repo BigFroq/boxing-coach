@@ -178,6 +178,7 @@ export function DashboardView({
   missingQuestionCount,
   onRefineClick,
   narrativeStale,
+  onRefreshNarrative,
 }: DashboardViewProps) {
   const [drawerKey, setDrawerKey] = useState<DimensionKey | null>(null);
 
@@ -215,6 +216,25 @@ export function DashboardView({
               className="rounded-md bg-accent px-3 py-1.5 text-sm text-white"
             >
               Refine
+            </button>
+          </div>
+        )}
+
+        {/* Narrative-stale CTA */}
+        {narrativeStale && (
+          <div className="mb-4 flex items-center justify-between rounded-lg border border-amber-500/40 bg-amber-500/5 px-3 py-2">
+            <div>
+              <p className="text-sm font-medium">Your analysis is out of date</p>
+              <p className="text-xs text-muted">
+                Your scores have changed since this analysis was generated.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onRefreshNarrative}
+              className="rounded-md bg-amber-500 px-3 py-1.5 text-sm text-white"
+            >
+              Refresh my analysis
             </button>
           </div>
         )}

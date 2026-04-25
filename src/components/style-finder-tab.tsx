@@ -235,6 +235,123 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
     allQuestions.map((q) => q.id)
   );
 
+  async function handleRefreshNarrative() {
+    if (!result) return;
+    setView("loading");
+    setError(null);
+
+    // Hit the same endpoint the original quiz uses, with the merged answer set.
+    try {
+      const res = await fetch("/api/style-finder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          answers: storedAnswers,
+          dimension_scores: result.dimension_scores,
+          physical_context: physicalContext,
+          matched_fighters: result.matched_fighters.map((m) => ({
+            name: m.name,
+            slug: m.slug,
+            overlappingDimensions: m.overlappingDimensions,
+          })),
+          experience_level: experienceLevel,
+        }),
+      });
+
+      if (!res.ok) throw new Error("regen failed");
+      const data = await res.json();
+
+      const next: StyleProfileResult = {
+        style_name: data.style_name,
+        description: data.description,
+        dimension_scores: result.dimension_scores,
+        fighter_explanations: data.fighter_explanations,
+        matched_fighters: result.matched_fighters,
+        counter_fighters: Array.isArray(data.counter_fighters) ? data.counter_fighters : [],
+        strengths: data.strengths,
+        growth_areas: data.growth_areas,
+        punches_to_master: data.punches_to_master,
+        stance_recommendation: data.stance_recommendation,
+        training_priorities: data.training_priorities,
+        punch_doctor_insight: data.punch_doctor_insight,
+      };
+
+      setResult(next);
+      setNarrativeStale(false);
+
+      // Persist — Supabase if authed, else localStorage. Use the same soft-error
+      // pattern as handleRefinementSubmit: only short-circuit on confirmed success.
+      try {
+        const supabase = createBrowserClient();
+        const { data: authData } = await supabase.auth.getUser();
+        if (authData.user) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { data: newRow, error: insertError } = await (supabase.from("style_profiles") as any)
+            .insert({
+              user_id: authData.user.id,
+              answers: storedAnswers,
+              dimension_scores: result.dimension_scores,
+              physical_context: physicalContext,
+              experience_level: experienceLevel,
+              ai_result: data,
+              matched_fighters: result.matched_fighters,
+              counter_fighters: next.counter_fighters,
+              narrative_stale: false,
+            })
+            .select("id")
+            .single();
+          if (!insertError && newRow) {
+            setProfileId(newRow.id);
+          } else {
+            // Soft-error: also write localStorage so the regen isn't lost
+            localStorage.setItem(
+              "boxing-coach-style-profile",
+              JSON.stringify({
+                result: next,
+                physicalContext,
+                experienceLevel,
+                answers: storedAnswers,
+                narrativeStale: false,
+              })
+            );
+          }
+        } else {
+          localStorage.setItem(
+            "boxing-coach-style-profile",
+            JSON.stringify({
+              result: next,
+              physicalContext,
+              experienceLevel,
+              answers: storedAnswers,
+              narrativeStale: false,
+            })
+          );
+        }
+      } catch {
+        // fall through — UI state still has the regenerated result; localStorage write is best-effort
+        try {
+          localStorage.setItem(
+            "boxing-coach-style-profile",
+            JSON.stringify({
+              result: next,
+              physicalContext,
+              experienceLevel,
+              answers: storedAnswers,
+              narrativeStale: false,
+            })
+          );
+        } catch {
+          // truly best-effort
+        }
+      }
+
+      setView("dashboard");
+    } catch {
+      setError("Failed to refresh analysis. Please try again.");
+      setView("dashboard");
+    }
+  }
+
   async function handleRefinementSubmit(newAnswers: Record<string, string | string[] | number>) {
     const merged = mergeAnswersForRefinement(storedAnswers, newAnswers);
     const dimensionScores = computeDimensionScores(merged);
@@ -350,7 +467,7 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
           missingQuestionCount={missingQuestionIds.length}
           onRefineClick={() => setRefinementOpen(true)}
           narrativeStale={narrativeStale}
-          onRefreshNarrative={() => undefined /* wired in Task 9 */}
+          onRefreshNarrative={handleRefreshNarrative}
         />
         {refinementOpen && (
           <RefinementModal
