@@ -1,7 +1,7 @@
 // scripts/vault-generation/pass3-edges.ts
 // Pass 3: Discover edges between nodes + SOURCED_FROM edges to chunks
-import Anthropic from "@anthropic-ai/sdk";
 import type { SynthesizedNode } from "./pass2-synthesize";
+import { callLLM } from "./llm-provider";
 
 export interface DiscoveredEdge {
   source_slug: string;
@@ -10,12 +10,6 @@ export interface DiscoveredEdge {
   edge_type: "REQUIRES" | "DEMONSTRATES" | "TRAINS" | "SOURCED_FROM" | "CORRECTS" | "SEQUENCES" | "RELATED";
   weight: number;
   evidence: string;
-}
-
-let _anthropic: Anthropic | null = null;
-function getAnthropic() {
-  if (!_anthropic) _anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  return _anthropic;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -46,9 +40,7 @@ export async function discoverEdges(
       .map(n => `### ${n.title} (${n.slug}, type: ${n.node_type})\n${n.content.slice(0, 2000)}`)
       .join("\n\n===\n\n");
 
-    const response = await getAnthropic().messages.create({
-      model: process.env.SYNTHESIS_MODEL ?? "claude-opus-4-6",
-      max_tokens: 8192,
+    const text = await callLLM({
       system: `You are discovering connections between nodes in a boxing knowledge graph.
 
 Available edge types:
@@ -74,15 +66,11 @@ ${nodeIndexText}
 
 Return a flat JSON array of edge objects. No markdown fencing.
 Each object: {"source_slug": "...", "target_slug": "...", "edge_type": "...", "weight": 0.8, "evidence": "..."}`,
-      messages: [
-        {
-          role: "user",
-          content: `Discover edges for these nodes:\n\n${batchText}`,
-        },
-      ],
+      user: `Discover edges for these nodes:\n\n${batchText}`,
+      model: process.env.SYNTHESIS_MODEL ?? "claude-opus-4-6",
+      maxTokens: 8192,
     });
 
-    const text = response.content[0].type === "text" ? response.content[0].text : "[]";
     let jsonStr = text;
     const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (jsonMatch) jsonStr = jsonMatch[1].trim();

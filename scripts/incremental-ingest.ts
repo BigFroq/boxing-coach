@@ -316,10 +316,11 @@ async function createSourcedFromEdges(
   chunkIds: string[],
   chunks: RawChunk[],
   nodes: KnowledgeNode[]
-): Promise<{ created: number; flaggedConcepts: string[] }> {
+): Promise<{ created: number; flaggedConcepts: string[]; dirtySlugs: string[] }> {
   const nodeBySlug = new Map(nodes.map((n) => [n.slug, n]));
   let created = 0;
   const flaggedConcepts: string[] = [];
+  const dirtySet = new Set<string>();
 
   for (let i = 0; i < chunks.length; i++) {
     const chunkId = chunkIds[i];
@@ -362,6 +363,10 @@ async function createSourcedFromEdges(
         console.error(`  Failed to create edges for chunk ${i}: ${error.message}`);
       } else {
         created += edges.length;
+        for (const e of edges) {
+          const slug = nodes.find((n) => n.id === e.source_node)?.slug;
+          if (slug) dirtySet.add(slug);
+        }
       }
     }
 
@@ -371,7 +376,11 @@ async function createSourcedFromEdges(
     }
   }
 
-  return { created, flaggedConcepts: [...new Set(flaggedConcepts)] };
+  return {
+    created,
+    flaggedConcepts: [...new Set(flaggedConcepts)],
+    dirtySlugs: [...dirtySet],
+  };
 }
 
 // --- Main ---
@@ -433,15 +442,17 @@ async function main() {
   const existingNodes = await fetchExistingNodes();
   console.log(`   Found ${existingNodes.length} existing knowledge nodes`);
 
+  let dirtySlugsThisRun: string[] = [];
   if (existingNodes.length === 0) {
     console.log("   No knowledge nodes in graph — skipping edge creation.\n");
   } else {
-    const { created, flaggedConcepts } = await createSourcedFromEdges(
+    const { created, flaggedConcepts, dirtySlugs } = await createSourcedFromEdges(
       chunkIds,
       allChunks,
       existingNodes
     );
     console.log(`   Created ${created} SOURCED_FROM edges`);
+    dirtySlugsThisRun = dirtySlugs;
 
     if (flaggedConcepts.length > 0) {
       console.log(`\n   Concepts flagged for manual review (not in graph):`);
@@ -450,6 +461,28 @@ async function main() {
       }
     }
     console.log();
+  }
+
+  // Write dirty-slugs.json so a subsequent generate-vault run knows
+  // which nodes need re-synthesis. Merges with any pre-existing pending list.
+  if (dirtySlugsThisRun.length > 0) {
+    const dirtyPath = path.join(
+      process.cwd(),
+      "scripts",
+      "vault-generation",
+      ".cache",
+      "dirty-slugs.json"
+    );
+    let existing: string[] = [];
+    try {
+      existing = JSON.parse(await fs.readFile(dirtyPath, "utf-8"));
+    } catch {
+      // file missing or invalid — start fresh
+    }
+    const merged = [...new Set([...existing, ...dirtySlugsThisRun])];
+    await fs.mkdir(path.dirname(dirtyPath), { recursive: true });
+    await fs.writeFile(dirtyPath, JSON.stringify(merged, null, 2));
+    console.log(`   Marked ${dirtySlugsThisRun.length} slug(s) dirty for next vault rebuild (${merged.length} total pending).\n`);
   }
 
   // 7. Recompute centrality
