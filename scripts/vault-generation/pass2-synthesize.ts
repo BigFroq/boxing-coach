@@ -102,7 +102,7 @@ export async function synthesizeNodes(
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         response = await getAnthropic().messages.create({
-          model: "claude-opus-4-6",
+          model: process.env.SYNTHESIS_MODEL ?? "claude-opus-4-6",
           max_tokens: 4096,
           system: `You are synthesizing a knowledge node for Dr. Alex Wiant's boxing methodology knowledge graph.
 
