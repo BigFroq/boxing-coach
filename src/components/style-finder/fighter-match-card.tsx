@@ -5,11 +5,18 @@ import { DIMENSION_LABELS, type DimensionScores } from "@/data/fighter-profiles"
 interface FighterMatchCardProps {
   rank: number;
   fighter: { name: string; slug: string };
-  explanation: string;
+  explanation: string | null;
   overlappingDimensions: string[];
+  onGenerateAnalysis?: () => void;
 }
 
-export function FighterMatchCard({ rank, fighter, explanation, overlappingDimensions }: FighterMatchCardProps) {
+export function FighterMatchCard({
+  rank,
+  fighter,
+  explanation,
+  overlappingDimensions,
+  onGenerateAnalysis,
+}: FighterMatchCardProps) {
   return (
     <div className="bg-surface border border-border rounded-xl p-5">
       <div className="flex items-start gap-4">
@@ -22,8 +29,25 @@ export function FighterMatchCard({ rank, fighter, explanation, overlappingDimens
           {/* Fighter name */}
           <h3 className="text-base font-bold text-foreground">{fighter.name}</h3>
 
-          {/* AI explanation */}
-          <p className="mt-1 text-sm text-muted leading-relaxed">{explanation}</p>
+          {/* AI explanation OR placeholder */}
+          {explanation ? (
+            <p className="mt-1 text-sm text-muted leading-relaxed">{explanation}</p>
+          ) : (
+            <>
+              <p className="mt-1 text-sm italic text-muted leading-relaxed">
+                Analysis not yet generated for this fighter.
+              </p>
+              {onGenerateAnalysis && (
+                <button
+                  type="button"
+                  onClick={onGenerateAnalysis}
+                  className="mt-2 rounded-md border border-border px-2 py-1 text-xs hover:bg-surface"
+                >
+                  Generate analysis →
+                </button>
+              )}
+            </>
+          )}
 
           {/* Matching dimension tags */}
           {overlappingDimensions.length > 0 && (

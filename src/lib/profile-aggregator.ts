@@ -34,6 +34,7 @@ export type StyleProfileRow = {
     name?: string;
     match_pct?: number;
   }> | null;
+  narrative_stale?: boolean | null;
 };
 
 export type FocusAreaRow = {
@@ -91,6 +92,7 @@ function buildStyleSnapshot(row: StyleProfileRow | null): ProfileStyleSnapshot |
     reach: phys.reach ?? "",
     build: phys.build ?? "",
     top_fighters: fighters,
+    narrative_stale: Boolean(row.narrative_stale),
   };
 }
 
