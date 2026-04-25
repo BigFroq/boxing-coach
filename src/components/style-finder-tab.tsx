@@ -9,8 +9,12 @@ import type { DimensionScores } from "@/data/fighter-profiles";
 import { computeDimensionScores } from "@/lib/dimension-scoring";
 import { matchFighters } from "@/lib/fighter-matching";
 import { createBrowserClient } from "@/lib/supabase-browser";
+import { allQuestions } from "@/data/questions";
+import { getMissingQuestionIds } from "@/lib/profile-freshness";
+import { mergeAnswersForRefinement } from "@/lib/style-profile-storage";
+import { RefinementModal } from "./style-finder/refinement-modal";
 
-type ViewState = "quiz" | "loading" | "results";
+type ViewState = "quiz" | "loading" | "dashboard";
 
 interface StyleFinderTabProps {
   userId: string;
@@ -25,6 +29,9 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
   const [experienceLevel, setExperienceLevel] = useState("beginner");
   const [previousScores, setPreviousScores] = useState<DimensionScores | undefined>();
   const [profileId, setProfileId] = useState<string | undefined>();
+  const [storedAnswers, setStoredAnswers] = useState<Record<string, string | string[] | number>>({});
+  const [narrativeStale, setNarrativeStale] = useState(false);
+  const [refinementOpen, setRefinementOpen] = useState(false);
 
   // Check for existing saved profile on mount
   // Load saved profile on mount (try Supabase if authed, then localStorage)
@@ -50,7 +57,9 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
             setPhysicalContext(data.physical_context as typeof physicalContext);
             setExperienceLevel((data.experience_level as string) ?? "beginner");
             setProfileId(data.id as string);
-            setView("results");
+            setStoredAnswers((data.answers as Record<string, string | string[] | number>) ?? {});
+            setNarrativeStale(Boolean(data.narrative_stale));
+            setView("dashboard");
             return;
           }
         }
@@ -69,7 +78,9 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
           });
           setPhysicalContext(parsed.physicalContext);
           setExperienceLevel(parsed.experienceLevel);
-          setView("results");
+          setStoredAnswers(parsed.answers ?? {});
+          setNarrativeStale(Boolean(parsed.narrativeStale));
+          setView("dashboard");
         }
       } catch {
         // ignore
@@ -138,6 +149,8 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
       };
 
       setResult(profileResult);
+      setStoredAnswers(answers);
+      setNarrativeStale(false);
 
       // Save to localStorage always
       try {
@@ -145,6 +158,8 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
           result: profileResult,
           physicalContext: physical,
           experienceLevel: expLevel,
+          answers,
+          narrativeStale: false,
         }));
         localStorage.removeItem("boxing-coach-quiz-progress");
       } catch {
@@ -201,7 +216,7 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
         // Supabase save failed, localStorage already saved
       }
 
-      setView("results");
+      setView("dashboard");
     } catch {
       setError("Failed to generate style recommendation. Please try again.");
       setView("quiz");
@@ -213,6 +228,96 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
     setPreviousScores(result?.dimension_scores);
     setProfileId(undefined);
     setView("quiz");
+  }
+
+  const missingQuestionIds = getMissingQuestionIds(
+    storedAnswers,
+    allQuestions.map((q) => q.id)
+  );
+
+  async function handleRefinementSubmit(newAnswers: Record<string, string | string[] | number>) {
+    const merged = mergeAnswersForRefinement(storedAnswers, newAnswers);
+    const dimensionScores = computeDimensionScores(merged);
+    const matches = matchFighters(dimensionScores, 3);
+    const matchedPayload = matches.map((m) => ({
+      name: m.fighter.name,
+      slug: m.fighter.slug,
+      overlappingDimensions: m.overlappingDimensions,
+    }));
+
+    // Update local state immediately
+    setStoredAnswers(merged);
+    setResult((prev) =>
+      prev
+        ? {
+            ...prev,
+            dimension_scores: dimensionScores,
+            matched_fighters: matchedPayload,
+          }
+        : prev
+    );
+    setNarrativeStale(true);
+    setRefinementOpen(false);
+
+    // Persist — Supabase if authed, else localStorage
+    try {
+      const supabase = createBrowserClient();
+      const { data: authData } = await supabase.auth.getUser();
+      if (authData.user && result) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: newRow } = await (supabase.from("style_profiles") as any)
+          .insert({
+            user_id: authData.user.id,
+            answers: merged,
+            dimension_scores: dimensionScores,
+            physical_context: physicalContext,
+            experience_level: experienceLevel,
+            // Carry forward the AI fields verbatim. Supabase JSON column accepts the existing object.
+            ai_result: {
+              style_name: result.style_name,
+              description: result.description,
+              fighter_explanations: result.fighter_explanations,
+              strengths: result.strengths,
+              growth_areas: result.growth_areas,
+              punches_to_master: result.punches_to_master,
+              stance_recommendation: result.stance_recommendation,
+              training_priorities: result.training_priorities,
+              punch_doctor_insight: result.punch_doctor_insight,
+            },
+            matched_fighters: matchedPayload,
+            counter_fighters: result.counter_fighters,
+            narrative_stale: true,
+          })
+          .select("id")
+          .single();
+        if (newRow) setProfileId(newRow.id);
+        return;
+      }
+    } catch {
+      // fall through to localStorage
+    }
+
+    // localStorage path — overwrite the saved blob with new merged answers + narrativeStale
+    try {
+      if (result) {
+        localStorage.setItem(
+          "boxing-coach-style-profile",
+          JSON.stringify({
+            result: {
+              ...result,
+              dimension_scores: dimensionScores,
+              matched_fighters: matchedPayload,
+            },
+            physicalContext,
+            experienceLevel,
+            answers: merged,
+            narrativeStale: true,
+          })
+        );
+      }
+    } catch {
+      // ignore
+    }
   }
 
   if (view === "loading") {
@@ -228,17 +333,30 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
     );
   }
 
-  if (view === "results" && result) {
+  if (view === "dashboard" && result) {
     return (
-      <DashboardView
-        result={result}
-        physicalContext={physicalContext}
-        experienceLevel={experienceLevel}
-        previousScores={previousScores}
-        onRetake={handleRetake}
-        onAskCoach={onSwitchToChat}
-        profileId={profileId}
-      />
+      <>
+        <DashboardView
+          result={result}
+          physicalContext={physicalContext}
+          experienceLevel={experienceLevel}
+          previousScores={previousScores}
+          onRetake={handleRetake}
+          onAskCoach={onSwitchToChat}
+          profileId={profileId}
+          missingQuestionCount={missingQuestionIds.length}
+          onRefineClick={() => setRefinementOpen(true)}
+          narrativeStale={narrativeStale}
+          onRefreshNarrative={() => undefined /* wired in Task 9 */}
+        />
+        {refinementOpen && (
+          <RefinementModal
+            questionIds={missingQuestionIds}
+            onSubmit={handleRefinementSubmit}
+            onClose={() => setRefinementOpen(false)}
+          />
+        )}
+      </>
     );
   }
 

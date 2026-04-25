@@ -108,6 +108,10 @@ export default async function ProfilePage({ params }: PageProps) {
           }
           onRetake={() => {}}
           profileId={id}
+          missingQuestionCount={0}
+          onRefineClick={() => undefined}
+          narrativeStale={false}
+          onRefreshNarrative={() => undefined}
         />
       </main>
     </div>

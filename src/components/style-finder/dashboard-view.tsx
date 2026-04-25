@@ -62,6 +62,10 @@ interface DashboardViewProps {
   onRetake: () => void;
   onAskCoach?: (query: string) => void;
   profileId?: string;
+  missingQuestionCount: number;
+  onRefineClick: () => void;
+  narrativeStale: boolean;
+  onRefreshNarrative: () => void;
 }
 
 function buildStyleSuggestions(result: StyleProfileResult): Suggestion[] {
@@ -171,6 +175,9 @@ export function DashboardView({
   onRetake,
   onAskCoach,
   profileId,
+  missingQuestionCount,
+  onRefineClick,
+  narrativeStale,
 }: DashboardViewProps) {
   const [drawerKey, setDrawerKey] = useState<DimensionKey | null>(null);
 
@@ -189,6 +196,29 @@ export function DashboardView({
   return (
     <div className="flex h-full flex-col overflow-y-auto">
       <div className="max-w-2xl mx-auto w-full px-6 py-8 space-y-6">
+        {/* Refinement banner */}
+        {missingQuestionCount > 0 && !narrativeStale && (
+          <div className="mb-4 flex items-center justify-between rounded-lg border border-accent/40 bg-accent/5 px-3 py-2">
+            <div>
+              <p className="text-sm font-medium">
+                {missingQuestionCount === 1
+                  ? "1 new question available"
+                  : `${missingQuestionCount} new questions available`}
+              </p>
+              <p className="text-xs text-muted">
+                Refine your profile (~{Math.max(1, Math.round(missingQuestionCount * 0.3))} min)
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onRefineClick}
+              className="rounded-md bg-accent px-3 py-1.5 text-sm text-white"
+            >
+              Refine
+            </button>
+          </div>
+        )}
+
         {/* Physical Profile Card */}
         <div className="flex flex-wrap gap-3 justify-center">
           {Object.entries(physicalContext).map(([key, value]) => (
