@@ -265,7 +265,7 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
       const { data: authData } = await supabase.auth.getUser();
       if (authData.user && result) {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: newRow } = await (supabase.from("style_profiles") as any)
+        const { data: newRow, error: insertError } = await (supabase.from("style_profiles") as any)
           .insert({
             user_id: authData.user.id,
             answers: merged,
@@ -290,8 +290,11 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
           })
           .select("id")
           .single();
-        if (newRow) setProfileId(newRow.id);
-        return;
+        if (!insertError && newRow) {
+          setProfileId(newRow.id);
+          return;
+        }
+        // fall through to localStorage on soft Supabase error
       }
     } catch {
       // fall through to localStorage
