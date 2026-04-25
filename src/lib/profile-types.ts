@@ -29,6 +29,7 @@ export type ProfileStyleSnapshot = {
   top_fighters: Array<{ slug: string; name: string; match_pct: number }>;
   /** ID of the style_profiles row — lets the client deep-link to /profile/[id]. */
   profile_id: string;
+  narrative_stale: boolean;
 };
 
 export type ProfileCoachSnapshot = {
