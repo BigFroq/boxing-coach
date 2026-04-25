@@ -288,19 +288,21 @@ export function DashboardView({
         <div className="bg-surface border border-border rounded-xl p-5">
           <h3 className="text-sm font-semibold text-accent mb-3">Fighters Who Match Your Profile</h3>
           <div className="space-y-4">
-            {result.fighter_explanations.map((fe, i) => {
-              const match = result.matched_fighters[i];
+            {result.matched_fighters.map((mf, i) => {
+              const explanation =
+                result.fighter_explanations.find((fe) => fe.name === mf.name)?.explanation ?? null;
               return (
                 <FighterMatchCard
-                  key={fe.name}
+                  key={mf.slug}
                   rank={i + 1}
-                  fighter={{ name: fe.name, slug: match?.slug ?? "" }}
-                  explanation={fe.explanation}
+                  fighter={{ name: mf.name, slug: mf.slug }}
+                  explanation={explanation}
                   overlappingDimensions={
-                    (match?.overlappingDimensions ?? []).map(
+                    (mf.overlappingDimensions ?? []).map(
                       (d) => DIMENSION_LABELS[d as keyof DimensionScores] ?? d
                     )
                   }
+                  onGenerateAnalysis={onRefreshNarrative}
                 />
               );
             })}
