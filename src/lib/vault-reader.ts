@@ -44,7 +44,8 @@ export async function readDrillVaultEntry(slug: string): Promise<string | null> 
 }
 
 /**
- * List all drill slugs available in the vault (sorted, lowercase).
+ * List all valid drill slugs available in the vault (sorted).
+ * Files whose stems do not match SAFE_SLUG_RE are skipped.
  */
 export async function listDrillSlugs(): Promise<string[]> {
   try {
@@ -52,6 +53,7 @@ export async function listDrillSlugs(): Promise<string[]> {
     return entries
       .filter((f) => f.endsWith(".md"))
       .map((f) => f.slice(0, -3))
+      .filter((stem) => SAFE_SLUG_RE.test(stem))
       .sort();
   } catch {
     return [];
