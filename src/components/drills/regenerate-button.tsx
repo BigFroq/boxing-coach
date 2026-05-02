@@ -32,7 +32,6 @@ export function RegenerateButton({ userId, onRegenerated }: Props) {
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to regenerate";
       setError(msg);
-      alert(msg);
     } finally {
       setLoading(false);
     }

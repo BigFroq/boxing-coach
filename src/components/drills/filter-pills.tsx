@@ -32,6 +32,7 @@ export function FilterPills({ intensity, context, timeMin, onChange }: Props) {
             <button
               key={v}
               onClick={() => onChange({ intensity: v, context, timeMin })}
+              aria-pressed={v === intensity}
               className={`${pillBase} ${intensity === v ? pillActive : pillInactive} capitalize`}
             >
               {v}
@@ -48,6 +49,7 @@ export function FilterPills({ intensity, context, timeMin, onChange }: Props) {
             <button
               key={v}
               onClick={() => onChange({ intensity, context: v, timeMin })}
+              aria-pressed={v === context}
               className={`${pillBase} ${context === v ? pillActive : pillInactive} capitalize`}
             >
               {v}
@@ -64,6 +66,7 @@ export function FilterPills({ intensity, context, timeMin, onChange }: Props) {
             <button
               key={v}
               onClick={() => onChange({ intensity, context, timeMin: v })}
+              aria-pressed={v === timeMin}
               className={`${pillBase} ${timeMin === v ? pillActive : pillInactive}`}
             >
               {v}m

@@ -38,16 +38,7 @@ describe("DrillCard data contracts", () => {
     expect(drill.rounds_or_dose).toBe("4x 2-min rounds, 30s rest");
   });
 
-  it("index prefix: index=0 → '1.'", () => {
-    // Verifies the display convention: index + 1 shown as prefix.
-    const index = 0;
-    expect(`${index + 1}.`).toBe("1.");
-  });
-
-  it("index prefix: index=4 → '5.'", () => {
-    const index = 4;
-    expect(`${index + 1}.`).toBe("5.");
-  });
+  // Render-time index prefix is exercised in the smoke test (Task 6); cannot be unit-tested without a DOM env.
 
   it("vault_ref present → href is /vault/drills/<slug>", () => {
     expect(`/vault/drills/${drill.vault_ref}`).toBe("/vault/drills/jab-extension");

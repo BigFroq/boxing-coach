@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Loader2 } from "lucide-react";
 import type { DrillProgram, Intensity, Context, TimeMin } from "@/lib/drill-program-types";
 import { DEFAULT_INTENSITY, DEFAULT_CONTEXT, DEFAULT_TIME_MIN } from "@/lib/drill-program-types";
@@ -24,7 +24,7 @@ export function DrillProgramView({ userId }: Props) {
   const [timeMin, setTimeMin] = useState<TimeMin>(DEFAULT_TIME_MIN);
   const [mode, setMode] = useState<Mode>("session");
 
-  async function fetchProgram(force = false) {
+  const fetchProgram = useCallback(async (force = false) => {
     setLoading(true);
     setError(null);
     setIsEmpty(false);
@@ -49,9 +49,9 @@ export function DrillProgramView({ userId }: Props) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [userId]);
 
-  useEffect(() => { fetchProgram(); }, [userId]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { fetchProgram(); }, [fetchProgram]);
 
   if (loading) {
     return (
