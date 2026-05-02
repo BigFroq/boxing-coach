@@ -26,6 +26,8 @@ describe("buildDrillProgramPrompt", () => {
       experienceLevel: "intermediate",
       vaultDrills: FIXTURE_VAULT,
     });
+    expect(prompt).toContain("The user is EXPERIENCED");
+    expect(prompt).not.toContain("The user is a BEGINNER");
     expect(prompt).toMatchSnapshot();
   });
 
@@ -46,6 +48,8 @@ describe("buildDrillProgramPrompt", () => {
       experienceLevel: "beginner",
       vaultDrills: FIXTURE_VAULT,
     });
+    expect(prompt).toContain("The user is a BEGINNER");
+    expect(prompt).not.toContain("The user is EXPERIENCED");
     expect(prompt).toMatchSnapshot();
   });
 });

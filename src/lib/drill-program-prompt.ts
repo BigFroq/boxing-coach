@@ -110,9 +110,9 @@ Produce a DrillProgram JSON for this fighter's profile. Return a JSON object wit
 {
   "generated_at": "ISO timestamp",
   "axis_values": {
-    "intensity": ["light", "medium", "heavy"],
-    "context": ["bag", "shadow", "gym", "mitts"],
-    "time_min": [10, 20, 30, 45]
+    "intensity": ${JSON.stringify([...INTENSITY_VALUES])},
+    "context": ${JSON.stringify([...CONTEXT_VALUES])},
+    "time_min": ${JSON.stringify([...TIME_MIN_VALUES])}
   },
   "drills": [
     {
