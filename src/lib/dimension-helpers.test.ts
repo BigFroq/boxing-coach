@@ -69,7 +69,7 @@ describe("getBottomDimensions", () => {
     // Bottom two are unambiguous
     expect(result[0].key).toBe("deceptionSetup"); // 75
     expect(result[1].key).toBe("ringIQ");         // 80
-    // Third slot is one of the tied 82/85/85/85 group — check score
+    // Third slot: rangeControl (82) — unambiguous, no tie
     expect(result[2].score).toBe(82);
   });
 
