@@ -21,6 +21,7 @@ import { StyleFinderTab } from "@/components/style-finder-tab";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { track, identify } from "@/lib/analytics";
 import { initialsFrom } from "@/lib/profile-initials";
+import { DrillProgramView } from "@/components/drills/program-view";
 
 const tabs = [
   { id: "technique", label: "Technique", shortLabel: "Technique", icon: MessageSquare, description: "Ask about punching mechanics" },
@@ -154,22 +155,28 @@ function AppContent() {
           </ErrorBoundary>
         )}
         {activeTab === "drills" && (
-          <ErrorBoundary label="Drills chat">
-            <ChatTab
-              systemContext="drills"
-              heroIcon={Dumbbell}
-              heroTitle="Looking for a drill?"
-              heroSubtitle="Exercises, warm-ups, and bag work pulled straight from the Power Punching Blueprint."
-              placeholder="Ask about exercises, training routines, bag work..."
-              suggestions={[
-                { text: "What exercises build punching power using kinetic chains?", Icon: Zap },
-                { text: "Give me a rotator cuff warm-up routine for boxing", Icon: Shield },
-                { text: "How do I practice the 4 phases of torque?", Icon: Timer },
-                { text: "What's the right way to throw a medicine ball for punching power?", Icon: Target },
-              ]}
-              userId={userId}
-            />
-          </ErrorBoundary>
+          <div className="flex flex-col h-full overflow-y-auto">
+            <ErrorBoundary label="Drill program">
+              <DrillProgramView userId={userId} />
+            </ErrorBoundary>
+            <div className="border-t border-border my-4" />
+            <ErrorBoundary label="Drills chat">
+              <ChatTab
+                systemContext="drills"
+                heroIcon={Dumbbell}
+                heroTitle="Or ask about a specific drill"
+                heroSubtitle="Free-form questions about exercises, warm-ups, and bag work."
+                placeholder="Ask about exercises, training routines, bag work..."
+                suggestions={[
+                  { text: "What exercises build punching power using kinetic chains?", Icon: Zap },
+                  { text: "Give me a rotator cuff warm-up routine for boxing", Icon: Shield },
+                  { text: "How do I practice the 4 phases of torque?", Icon: Timer },
+                  { text: "What's the right way to throw a medicine ball for punching power?", Icon: Target },
+                ]}
+                userId={userId}
+              />
+            </ErrorBoundary>
+          </div>
         )}
         {activeTab === "coach" && (
           <ErrorBoundary label="My Coach">
