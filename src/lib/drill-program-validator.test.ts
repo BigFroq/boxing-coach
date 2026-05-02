@@ -63,7 +63,8 @@ describe("validateDrillProgram", () => {
     expect(program.drills).toHaveLength(1);
     expect(program.drills[0].vault_ref).toBe("barbell-punch");
     expect(program.sessions).toHaveLength(48);
-    expect(program.generated_at).toBe("2026-05-01T00:00:00.000Z");
+    // generated_at is set by the route; validator always returns the epoch sentinel
+    expect(program.generated_at).toBe(new Date(0).toISOString());
   });
 
   it("vault_ref not in allowedSlugs → set to null, drill kept", () => {
@@ -158,6 +159,18 @@ describe("validateDrillProgram", () => {
     expect(program.sessions).toHaveLength(0);
     // 48 missing cells warning expected
     expect(warnings.some((w) => w.includes("missing"))).toBe(true);
+  });
+
+  it("filters out invalid intensity/context values from drill arrays", () => {
+    const raw = {
+      drills: [
+        makeDrill({ intensity: ["medium", "extreme"], context: ["bag", "moon"] }),
+      ],
+      sessions: [],
+    };
+    const { program } = validateDrillProgram(raw, ALLOWED);
+    expect(program.drills[0].intensity).toEqual(["medium"]);
+    expect(program.drills[0].context).toEqual(["bag"]);
   });
 
   it("raw is not an object → returns empty program with a warning", () => {

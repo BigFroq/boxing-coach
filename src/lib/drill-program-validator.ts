@@ -51,8 +51,14 @@ export function validateDrillProgram(raw: unknown, allowedSlugs: Set<string>): V
       name: typeof d.name === "string" ? d.name : "",
       vault_ref: vaultRef,
       duration_min: typeof d.duration_min === "number" ? d.duration_min : 0,
-      intensity: Array.isArray(d.intensity) ? (d.intensity as Intensity[]) : [],
-      context: Array.isArray(d.context) ? (d.context as Context[]) : [],
+      intensity: Array.isArray(d.intensity)
+        ? (d.intensity as unknown[]).filter((v): v is Intensity =>
+            typeof v === "string" && ALLOWED_INTENSITIES.has(v))
+        : [],
+      context: Array.isArray(d.context)
+        ? (d.context as unknown[]).filter((v): v is Context =>
+            typeof v === "string" && ALLOWED_CONTEXTS.has(v))
+        : [],
       why_fits_you: typeof d.why_fits_you === "string" ? d.why_fits_you : "",
       cues: Array.isArray(d.cues) ? (d.cues as string[]) : [],
       rounds_or_dose: typeof d.rounds_or_dose === "string" ? d.rounds_or_dose : "",
@@ -96,7 +102,10 @@ export function validateDrillProgram(raw: unknown, allowedSlugs: Set<string>): V
   }
 
   const program: DrillProgram = {
-    generated_at: typeof obj.generated_at === "string" ? obj.generated_at : new Date().toISOString(),
+    // generated_at is set by the route after validation. The validator returns
+    // the epoch as a sentinel; tests that exercise the validator in isolation
+    // should not rely on this field.
+    generated_at: new Date(0).toISOString(),
     axis_values: {
       intensity: [...INTENSITY_VALUES],
       context: [...CONTEXT_VALUES],
@@ -111,7 +120,7 @@ export function validateDrillProgram(raw: unknown, allowedSlugs: Set<string>): V
 
 function emptyProgram(): DrillProgram {
   return {
-    generated_at: new Date().toISOString(),
+    generated_at: new Date(0).toISOString(),
     axis_values: {
       intensity: [...INTENSITY_VALUES],
       context: [...CONTEXT_VALUES],

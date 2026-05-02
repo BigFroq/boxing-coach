@@ -6,6 +6,7 @@ import { readAllDrillVaultEntries } from "@/lib/vault-reader";
 import { buildDrillProgramPrompt } from "@/lib/drill-program-prompt";
 import { validateDrillProgram } from "@/lib/drill-program-validator";
 import { INTENSITY_VALUES, CONTEXT_VALUES, TIME_MIN_VALUES } from "@/lib/drill-program-types";
+import type { DrillProgram } from "@/lib/drill-program-types";
 import type { DimensionScores } from "@/data/fighter-profiles";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -44,7 +45,18 @@ export async function POST(request: NextRequest) {
 
     // Cache hit — skip LLM unless force=true
     if (profile.drill_program && !force) {
-      return NextResponse.json({ drill_program: profile.drill_program, cached: true });
+      const cached = profile.drill_program as DrillProgram;
+      return NextResponse.json({
+        drill_program: {
+          ...cached,
+          axis_values: {
+            intensity: [...INTENSITY_VALUES],
+            context: [...CONTEXT_VALUES],
+            time_min: [...TIME_MIN_VALUES],
+          },
+        },
+        cached: true,
+      });
     }
 
     // Derive experience_level: physical_context.experience_level → profile.experience_level → default
