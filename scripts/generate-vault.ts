@@ -40,6 +40,19 @@ async function main() {
   console.log("=== Punch Doctor AI — Vault Generation Pipeline ===\n");
   await ensureCacheDir();
 
+  // If dirty-slugs.json is present (set by incremental-ingest), bust pass2/3
+  // final caches so the partial-rerun in pass2 actually executes.
+  const dirtyExists = await fs
+    .stat(path.join(CACHE_DIR, "dirty-slugs.json"))
+    .then(() => true)
+    .catch(() => false);
+  if (dirtyExists) {
+    console.log("Dirty-slugs file present — busting pass2-nodes.json and pass3-edges.json caches.\n");
+    for (const f of ["pass2-nodes.json", "pass3-edges.json"]) {
+      await fs.rm(path.join(CACHE_DIR, f), { force: true });
+    }
+  }
+
   // Pass 1: Entity Extraction
   let candidates = await loadCache<NodeCandidate[]>("pass1-candidates.json");
   if (candidates) {
@@ -74,6 +87,12 @@ async function main() {
 
   // Write vault files
   await writeVaultFiles(finalNodes, finalEdges);
+
+  // Clear dirty-slugs marker after a successful end-to-end run
+  if (dirtyExists) {
+    await fs.rm(path.join(CACHE_DIR, "dirty-slugs.json"), { force: true });
+    console.log("Cleared dirty-slugs.json (incremental work absorbed).");
+  }
 
   console.log("\n=== Vault generation complete! ===");
   console.log(`Nodes: ${finalNodes.length}`);

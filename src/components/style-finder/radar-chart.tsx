@@ -4,6 +4,7 @@ import { type DimensionScores } from "@/data/fighter-profiles";
 
 interface RadarChartProps {
   scores: DimensionScores;
+  onDimensionClick?: (key: keyof DimensionScores) => void;
 }
 
 // Short labels that fit in the chart
@@ -31,7 +32,7 @@ function polarToCartesian(angle: number, value: number, maxRadius: number) {
   return { x, y };
 }
 
-export function RadarChart({ scores }: RadarChartProps) {
+export function RadarChart({ scores, onDimensionClick }: RadarChartProps) {
   const angleStep = (2 * Math.PI) / DIMENSIONS.length;
   const startAngle = -Math.PI / 2;
 
@@ -88,7 +89,7 @@ export function RadarChart({ scores }: RadarChartProps) {
           <circle key={i} cx={p.x} cy={p.y} r={3} fill="#3b82f6" />
         ))}
 
-        {/* Axis labels */}
+        {/* Axis labels — now clickable when onDimensionClick is provided */}
         {DIMENSIONS.map((dim, i) => {
           const angle = startAngle + i * angleStep;
           const pos = polarToCartesian(angle, 100, LABEL_RADIUS);
@@ -101,20 +102,41 @@ export function RadarChart({ scores }: RadarChartProps) {
           if (pos.y < CENTER - 30) dy = "0em";
           if (pos.y > CENTER + 30) dy = "0.8em";
 
-          return (
+          const labelEl = (
             <text
-              key={dim}
               x={pos.x}
               y={pos.y}
               textAnchor={anchor}
               dy={dy}
               fill="currentColor"
-              className="text-foreground"
+              className={onDimensionClick ? "text-foreground cursor-pointer underline-offset-2 hover:underline" : "text-foreground"}
               fontSize={10}
               fontWeight={500}
             >
               {CHART_LABELS[dim]}
             </text>
+          );
+
+          if (!onDimensionClick) {
+            return <g key={dim}>{labelEl}</g>;
+          }
+
+          return (
+            <g
+              key={dim}
+              role="button"
+              tabIndex={0}
+              onClick={() => onDimensionClick(dim)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onDimensionClick(dim);
+                }
+              }}
+              style={{ cursor: "pointer" }}
+            >
+              {labelEl}
+            </g>
           );
         })}
       </svg>

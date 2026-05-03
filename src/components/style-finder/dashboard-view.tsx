@@ -1,7 +1,10 @@
 "use client";
 
-import { RotateCcw, Share2, MessageSquare, Sparkles, TrendingUp, Users, Target, Flame } from "lucide-react";
+import { useState } from "react";
+import { Share2, MessageSquare, Sparkles, TrendingUp, Users, Target, Flame } from "lucide-react";
 import { RadarChart } from "./radar-chart";
+import { DimensionDrawer } from "./dimension-drawer";
+import type { DimensionKey } from "@/lib/dimensions";
 import { DimensionBars } from "./dimension-bars";
 import { FighterMatchCard } from "./fighter-match-card";
 import { FighterCounterCard } from "./fighter-counter-card";
@@ -51,7 +54,7 @@ export interface StyleProfileResult {
   punch_doctor_insight: string;
 }
 
-interface ResultsProfileProps {
+interface DashboardViewProps {
   result: StyleProfileResult;
   physicalContext: { height: string; build: string; reach: string; stance: string };
   experienceLevel: string;
@@ -59,6 +62,11 @@ interface ResultsProfileProps {
   onRetake: () => void;
   onAskCoach?: (query: string) => void;
   profileId?: string;
+  missingQuestionCount: number;
+  onRefineClick: () => void;
+  narrativeStale: boolean;
+  onRefreshNarrative: () => void;
+  error?: string | null;
 }
 
 function buildStyleSuggestions(result: StyleProfileResult): Suggestion[] {
@@ -160,7 +168,7 @@ const PHYSICAL_LABELS: Record<string, Record<string, string>> = {
   stance: { orthodox: "Orthodox", southpaw: "Southpaw", switch: "Switch", unsure: "Not decided" },
 };
 
-export function ResultsProfile({
+export function DashboardView({
   result,
   physicalContext,
   experienceLevel,
@@ -168,7 +176,14 @@ export function ResultsProfile({
   onRetake,
   onAskCoach,
   profileId,
-}: ResultsProfileProps) {
+  missingQuestionCount,
+  onRefineClick,
+  narrativeStale,
+  onRefreshNarrative,
+  error,
+}: DashboardViewProps) {
+  const [drawerKey, setDrawerKey] = useState<DimensionKey | null>(null);
+
   const isBeginner = experienceLevel === "beginner" || experienceLevel === "intermediate";
   const tendencyLabel = isBeginner ? "Natural Tendencies" : "Your Strengths";
   const growthLabel = isBeginner ? "Areas to Develop" : "Growth Areas";
@@ -184,6 +199,55 @@ export function ResultsProfile({
   return (
     <div className="flex h-full flex-col overflow-y-auto">
       <div className="max-w-2xl mx-auto w-full px-6 py-8 space-y-6">
+        {/* Refinement banner */}
+        {missingQuestionCount > 0 && !narrativeStale && (
+          <div className="mb-4 flex items-center justify-between rounded-lg border border-accent/40 bg-accent/5 px-3 py-2">
+            <div>
+              <p className="text-sm font-medium">
+                {missingQuestionCount === 1
+                  ? "1 new question available"
+                  : `${missingQuestionCount} new questions available`}
+              </p>
+              <p className="text-xs text-muted">
+                Refine your profile (~{Math.max(1, Math.round(missingQuestionCount * 0.3))} min)
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onRefineClick}
+              className="rounded-md bg-accent px-3 py-1.5 text-sm text-white"
+            >
+              Refine
+            </button>
+          </div>
+        )}
+
+        {/* Narrative-stale CTA */}
+        {narrativeStale && (
+          <div className="mb-4 flex items-center justify-between rounded-lg border border-amber-500/40 bg-amber-500/5 px-3 py-2">
+            <div>
+              <p className="text-sm font-medium">Your analysis is out of date</p>
+              <p className="text-xs text-muted">
+                Your scores have changed since this analysis was generated.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={onRefreshNarrative}
+              className="rounded-md bg-amber-500 px-3 py-1.5 text-sm text-white"
+            >
+              Refresh my analysis
+            </button>
+          </div>
+        )}
+
+        {/* Regen error banner */}
+        {error && (
+          <div className="mb-4 rounded-lg border border-red-500/40 bg-red-500/5 px-3 py-2 text-sm text-red-400">
+            {error}
+          </div>
+        )}
+
         {/* Physical Profile Card */}
         <div className="flex flex-wrap gap-3 justify-center">
           {Object.entries(physicalContext).map(([key, value]) => (
@@ -198,7 +262,7 @@ export function ResultsProfile({
 
         {/* Style Header */}
         <div className="text-center">
-          <p className="text-xs uppercase tracking-wider text-accent mb-2">Your Fighter Profile</p>
+          <p className="text-xs uppercase tracking-wider text-accent mb-2">Your fighting style</p>
           <h2 className="text-3xl font-bold mb-3">{result.style_name}</h2>
           <p className="text-muted text-sm leading-relaxed max-w-lg mx-auto">
             {result.description}
@@ -211,7 +275,10 @@ export function ResultsProfile({
             Dimensional Profile
           </h3>
           <div className="max-w-sm mx-auto">
-            <RadarChart scores={result.dimension_scores} />
+            <RadarChart
+              scores={result.dimension_scores}
+              onDimensionClick={(k) => setDrawerKey(k as DimensionKey)}
+            />
           </div>
         </div>
 
@@ -230,19 +297,21 @@ export function ResultsProfile({
         <div className="bg-surface border border-border rounded-xl p-5">
           <h3 className="text-sm font-semibold text-accent mb-3">Fighters Who Match Your Profile</h3>
           <div className="space-y-4">
-            {result.fighter_explanations.map((fe, i) => {
-              const match = result.matched_fighters[i];
+            {result.matched_fighters.map((mf, i) => {
+              const explanation =
+                result.fighter_explanations.find((fe) => fe.name === mf.name)?.explanation ?? null;
               return (
                 <FighterMatchCard
-                  key={fe.name}
+                  key={mf.slug}
                   rank={i + 1}
-                  fighter={{ name: fe.name, slug: match?.slug ?? "" }}
-                  explanation={fe.explanation}
+                  fighter={{ name: mf.name, slug: mf.slug }}
+                  explanation={explanation}
                   overlappingDimensions={
-                    (match?.overlappingDimensions ?? []).map(
+                    (mf.overlappingDimensions ?? []).map(
                       (d) => DIMENSION_LABELS[d as keyof DimensionScores] ?? d
                     )
                   }
+                  onGenerateAnalysis={onRefreshNarrative}
                 />
               );
             })}
@@ -343,8 +412,8 @@ export function ResultsProfile({
         />
 
         {/* Actions */}
-        <div className="flex items-center justify-center gap-4 pt-2">
-          {profileId && (
+        {profileId && (
+          <div className="flex items-center justify-center pt-2">
             <button
               onClick={handleShare}
               className="flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors"
@@ -352,16 +421,30 @@ export function ResultsProfile({
               <Share2 size={14} />
               Share
             </button>
-          )}
+          </div>
+        )}
+
+        <footer className="mt-8 pt-4 border-t border-border text-center">
           <button
-            onClick={onRetake}
-            className="flex items-center gap-2 text-sm text-muted hover:text-foreground transition-colors"
+            type="button"
+            onClick={() => {
+              if (window.confirm("Start over from a blank quiz? You'll lose your refinement progress on this profile.")) {
+                onRetake();
+              }
+            }}
+            className="text-xs text-muted hover:text-foreground underline-offset-2 hover:underline"
           >
-            <RotateCcw size={14} />
-            Retake quiz
+            Start over with a blank quiz
           </button>
-        </div>
+        </footer>
       </div>
+
+      <DimensionDrawer
+        dimensionKey={drawerKey}
+        score={drawerKey ? result.dimension_scores[drawerKey] : 0}
+        onClose={() => setDrawerKey(null)}
+        onAskCoach={onAskCoach}
+      />
     </div>
   );
 }

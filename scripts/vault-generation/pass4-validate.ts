@@ -71,7 +71,7 @@ export async function validateAndInsert(
 
   console.log("Running validation with Claude...");
   const validationResponse = await getAnthropic().messages.create({
-    model: "claude-opus-4-6",
+    model: process.env.SYNTHESIS_MODEL ?? "claude-opus-4-6",
     max_tokens: 4096,
     system: `You are validating a boxing knowledge graph for completeness and accuracy.
 

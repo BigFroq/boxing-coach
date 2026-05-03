@@ -37,7 +37,14 @@ export function StyleSnapshot({ snapshot }: { snapshot: ProfileStyleSnapshot | n
 
   return (
     <section className="rounded-xl border border-border bg-surface p-5">
-      <h2 className="text-sm font-semibold mb-1">Your style</h2>
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="text-sm font-semibold">Your style</h2>
+        {snapshot.narrative_stale && (
+          <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-600">
+            Refresh available
+          </span>
+        )}
+      </div>
       <p className="text-lg font-medium">{snapshot.style_name}</p>
       {snapshot.description && (
         <p className="text-sm text-muted mt-1">{snapshot.description}</p>
