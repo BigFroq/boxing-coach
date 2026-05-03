@@ -380,6 +380,7 @@ export function CoachSession({ userId }: CoachSessionProps) {
         <div className="flex gap-2 items-end">
           <textarea
             ref={inputRef}
+            aria-label="Message to your coach"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
