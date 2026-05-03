@@ -11,9 +11,9 @@ import { RegenerateButton } from "./regenerate-button";
 import { ProgramEmptyState } from "./program-empty-state";
 
 type Mode = "session" | "browse";
-type Props = { userId: string };
+type Props = { userId: string; onSwitchTab?: (tabId: "style") => void };
 
-export function DrillProgramView({ userId }: Props) {
+export function DrillProgramView({ userId, onSwitchTab }: Props) {
   const [program, setProgram] = useState<DrillProgram | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +61,7 @@ export function DrillProgramView({ userId }: Props) {
     );
   }
 
-  if (isEmpty) return <ProgramEmptyState />;
+  if (isEmpty) return <ProgramEmptyState onSwitchTab={onSwitchTab} />;
 
   if (error) {
     return (
@@ -77,7 +77,7 @@ export function DrillProgramView({ userId }: Props) {
     );
   }
 
-  if (!program) return <ProgramEmptyState />;
+  if (!program) return <ProgramEmptyState onSwitchTab={onSwitchTab} />;
 
   function handleFilterChange(next: { intensity: Intensity; context: Context; timeMin: TimeMin }) {
     setIntensity(next.intensity);

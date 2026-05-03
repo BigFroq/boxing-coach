@@ -23,12 +23,11 @@ export function RegenerateButton({ userId, onRegenerated }: Props) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, force: true }),
       });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
         throw new Error((data as { error?: string }).error ?? "Failed to regenerate");
       }
-      const data = await res.json();
-      onRegenerated(data.drill_program);
+      onRegenerated((data as { drill_program: DrillProgram }).drill_program);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Failed to regenerate";
       setError(msg);

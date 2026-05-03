@@ -116,6 +116,14 @@ export async function POST(request: NextRequest) {
       console.warn("[drill-program] validation warnings:", warnings);
     }
 
+    if (validated.drills.length === 0 || validated.sessions.length === 0) {
+      console.warn("Drill program generation produced empty drills/sessions; refusing to cache");
+      return NextResponse.json(
+        { error: "Generated program is empty. Please try again." },
+        { status: 422 }
+      );
+    }
+
     const drillProgram = {
       generated_at: new Date().toISOString(),
       axis_values: {

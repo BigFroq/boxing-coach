@@ -157,7 +157,10 @@ function AppContent() {
         {activeTab === "drills" && (
           <div className="flex flex-col h-full overflow-y-auto">
             <ErrorBoundary label="Drill program">
-              <DrillProgramView userId={userId} />
+              <DrillProgramView
+                userId={userId}
+                onSwitchTab={(tabId) => setActiveTab(tabId as TabId)}
+              />
             </ErrorBoundary>
             <div className="border-t border-border my-4" />
             <ErrorBoundary label="Drills chat">
