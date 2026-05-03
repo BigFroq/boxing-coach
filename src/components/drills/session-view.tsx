@@ -29,11 +29,19 @@ export function SessionView({ program, intensity, context, timeMin }: Props) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-muted italic">{session.intro}</p>
-      <div className="space-y-3">
-        {drills.map((drill, i) => (
-          <DrillCard key={drill.id} drill={drill} index={i} />
-        ))}
-      </div>
+      {drills.length === 0 ? (
+        <div className="rounded-xl border border-border bg-surface-hover/30 px-4 py-6 text-center">
+          <p className="text-sm text-muted">
+            No drills match this combo yet. Try a different intensity or context, or open Browse mode.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {drills.map((drill, i) => (
+            <DrillCard key={drill.id} drill={drill} index={i} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
