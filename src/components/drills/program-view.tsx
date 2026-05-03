@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import type { DrillProgram, Intensity, Context, TimeMin } from "@/lib/drill-program-types";
 import { DEFAULT_INTENSITY, DEFAULT_CONTEXT, DEFAULT_TIME_MIN } from "@/lib/drill-program-types";
@@ -24,7 +24,14 @@ export function DrillProgramView({ userId, onSwitchTab }: Props) {
   const [timeMin, setTimeMin] = useState<TimeMin>(DEFAULT_TIME_MIN);
   const [mode, setMode] = useState<Mode>("session");
 
+  // Single-fire guard: React StrictMode mounts effects twice in dev. Without
+  // this ref, /api/drill-program POSTs twice on every page load (one of which
+  // can trigger a duplicate Sonnet call when the cache is empty).
+  const hasFetchedRef = useRef(false);
+
   const fetchProgram = useCallback(async (force = false) => {
+    if (hasFetchedRef.current && !force) return;
+    hasFetchedRef.current = true;
     setLoading(true);
     setError(null);
     setIsEmpty(false);
@@ -68,7 +75,7 @@ export function DrillProgramView({ userId, onSwitchTab }: Props) {
       <div className="flex flex-col items-center justify-center h-full px-6 py-12 text-center gap-4">
         <p className="text-sm text-muted">{error}</p>
         <button
-          onClick={() => fetchProgram()}
+          onClick={() => fetchProgram(true)}
           className="rounded-lg border border-border px-4 py-2 text-xs text-muted hover:text-foreground transition-colors"
         >
           Try again
