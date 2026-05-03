@@ -250,6 +250,15 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Chat API error:", error);
+    const msg = error instanceof Error ? error.message.toLowerCase() : "";
+    // Detect Anthropic billing/quota exhaustion specifically — distinct from
+    // a transient 5xx, the user can't retry their way out of it.
+    if (/credit balance|quota|insufficient_quota|billing/i.test(msg)) {
+      return NextResponse.json(
+        { error: "The chat service is temporarily unavailable. Please try again later." },
+        { status: 503 }
+      );
+    }
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
