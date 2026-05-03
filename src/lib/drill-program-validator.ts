@@ -66,6 +66,7 @@ export function validateDrillProgram(raw: unknown, allowedSlugs: Set<string>): V
   }
 
   const validDrillIds = new Set(validDrills.map((d) => d.id));
+  const drillById = new Map(validDrills.map((d) => [d.id, d]));
 
   // --- Sessions ---
   const rawSessions = Array.isArray(obj.sessions) ? (obj.sessions as unknown[]) : [];
@@ -80,19 +81,44 @@ export function validateDrillProgram(raw: unknown, allowedSlugs: Set<string>): V
     if (!ALLOWED_CONTEXTS.has(s.context as string)) continue;
     if (!ALLOWED_TIME_MINS.has(s.time_min as number)) continue;
 
+    const sessionIntensity = s.intensity as Intensity;
+    const sessionContext = s.context as Context;
+
+    // Tag-consistency filter: drop any drill_id whose drill.intensity[]/context[]
+    // doesn't include the session's own intensity/context. Prevents the LLM from
+    // stuffing light/shadow drills into heavy/bag sessions, which makes Session
+    // and Browse modes return divergent results for the same filter.
     const filteredIds = Array.isArray(s.drill_ids)
-      ? (s.drill_ids as unknown[]).filter((id): id is string => typeof id === "string" && validDrillIds.has(id))
+      ? (s.drill_ids as unknown[]).filter((id): id is string => {
+          if (typeof id !== "string" || !validDrillIds.has(id)) return false;
+          const drill = drillById.get(id);
+          if (!drill) return false;
+          return drill.intensity.includes(sessionIntensity)
+              && drill.context.includes(sessionContext);
+        })
       : [];
 
     coveredTuples.add(`${s.intensity}|${s.context}|${s.time_min}`);
 
     validSessions.push({
-      intensity: s.intensity as Intensity,
-      context: s.context as Context,
+      intensity: sessionIntensity,
+      context: sessionContext,
       time_min: s.time_min as TimeMin,
       intro: typeof s.intro === "string" ? s.intro : "",
       drill_ids: filteredIds,
     });
+  }
+
+  // --- Orphan-drill warning ---
+  const referencedDrillIds = new Set<string>();
+  for (const session of validSessions) {
+    for (const id of session.drill_ids) referencedDrillIds.add(id);
+  }
+  const orphans = validDrills.filter((d) => !referencedDrillIds.has(d.id));
+  if (orphans.length > 0) {
+    warnings.push(
+      `Drill pool has ${orphans.length} orphan drill(s) never referenced by any session: ${orphans.map((d) => d.id).join(", ")}`
+    );
   }
 
   if (coveredTuples.size < EXPECTED_CELLS) {
