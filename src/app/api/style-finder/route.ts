@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 import { retrieveContext, formatChunksForPrompt } from "@/lib/graph-rag";
 import { CORE_PRINCIPLES } from "@/lib/framework";
-import { type DimensionScores, DIMENSION_LABELS } from "@/data/fighter-profiles";
+import { type DimensionScores, DIMENSION_LABELS, fighterProfiles } from "@/data/fighter-profiles";
 import { matchCounters, ATTACK_VECTORS, type CounterMatch, type AttackVectorId } from "@/lib/fighter-counter-matching";
 import { readFighterVaultEntry } from "@/lib/vault-reader";
 import { VAULT_SLUGS } from "@/lib/dimensions";
@@ -85,7 +85,7 @@ function buildPrompt(
   dimensionScores: DimensionScores,
   topDimensions: { key: keyof DimensionScores; label: string; score: number }[],
   bottomDimensions: { key: keyof DimensionScores; label: string; score: number }[],
-  matchedFighters: { name: string; slug: string; overlappingDimensions: string[] }[],
+  matchedFighters: { name: string; slug: string; overlappingDimensions: string[]; source?: "alex" | "public" }[],
   counterContexts: CounterContext[],
   physical: { height: string; build: string; reach: string; stance: string },
   experienceLevel: string,
@@ -104,7 +104,12 @@ function buildPrompt(
   const bottomFormatted = bottomDimensions.map((d) => `  ${d.label}: ${d.score}/100`).join("\n");
 
   const fighterList = matchedFighters
-    .map((f) => `  - ${f.name} (overlapping dimensions: ${f.overlappingDimensions.join(", ")})`)
+    .map((f) => {
+      const sourceTag = f.source === "public"
+        ? " [public-knowledge — no Alex-specific teachings; describe archetype generally without 'Alex said' attribution]"
+        : "";
+      return `  - ${f.name} (overlapping dimensions: ${f.overlappingDimensions.join(", ")})${sourceTag}`;
+    })
     .join("\n");
 
   // ---- Counter analysis block (only when counters exist) ----
@@ -203,7 +208,8 @@ Return a JSON object with this exact shape:
 }
 
 Rules:
-- fighter_explanations: one entry per matched fighter (${matchedFighters.length} total). Reference specific things Alex said.
+- fighter_explanations: one entry per matched fighter (${matchedFighters.length} total). Reference specific things Alex said when the fighter is Alex-sourced.
+- If a fighter is tagged \`[public-knowledge — no Alex-specific teachings...]\` in the matched-fighter list above, OR their vault entry declares \`source: public-analysis\` in its frontmatter (kickboxers, Muay Thai fighters, Skillr-Boxing-sourced entries, historic boxers Alex hasn't specifically covered), treat that fighter as a public-knowledge summary — describe the archetype in general terms, do NOT attribute quotes or specific teachings to Alex Wiant for that fighter, and do NOT fabricate an "Alex said..." framing. Ground the recommendation in Alex's broader principles instead. If the vault entry cites Skillr Boxing's breakdown, you may reference that framing explicitly (e.g. "Skillr Boxing characterizes this style as...") but do NOT attribute it to Alex.
 - strengths: exactly 4, based on top dimensions.
 - growth_areas: exactly 3, based on bottom dimensions. Each must have actionable advice.
 - training_priorities: exactly 4 items.
@@ -250,6 +256,13 @@ export async function POST(request: NextRequest) {
     const matchedSlugs = (matched_fighters as Array<{ slug: string }>).map((m) => m.slug);
     const counters: CounterMatch[] = matchCounters(scores, matchedSlugs, 3);
 
+    // Enrich matched fighters with source flag (alex|public) so the prompt can
+    // tell the LLM not to fabricate Alex quotes for public-knowledge entries.
+    const enrichedMatchedFighters = (matched_fighters as Array<{ name: string; slug: string; overlappingDimensions: string[] }>).map((m) => {
+      const profile = fighterProfiles.find((f) => f.slug === m.slug);
+      return { ...m, source: profile?.source };
+    });
+
     // Build RAG search query from top dimensions + physical context
     const searchQuery = buildSearchQuery(topDimensions, physical_context);
 
@@ -290,7 +303,7 @@ export async function POST(request: NextRequest) {
       scores,
       topDimensions,
       bottomDimensions,
-      matched_fighters,
+      enrichedMatchedFighters,
       counterContexts,
       physical_context,
       experience_level,
