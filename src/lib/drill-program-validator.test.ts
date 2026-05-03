@@ -223,6 +223,22 @@ describe("validateDrillProgram", () => {
     expect(warnings.some((w) => w.toLowerCase().includes("orphan"))).toBe(true);
   });
 
+  it("drops drill_ids whose drill.duration_min exceeds session.time_min + 5", () => {
+    const raw = {
+      drills: [
+        makeDrill({ id: "fits", duration_min: 8, intensity: ["medium"], context: ["bag"] }),
+        makeDrill({ id: "borderline", duration_min: 14, intensity: ["medium"], context: ["bag"] }),
+        makeDrill({ id: "way-too-long", duration_min: 17, intensity: ["medium"], context: ["bag"] }),
+      ],
+      sessions: [
+        makeSession({ intensity: "medium", context: "bag", time_min: 10, drill_ids: ["fits", "borderline", "way-too-long"] }),
+      ],
+    };
+    const { program } = validateDrillProgram(raw, ALLOWED);
+    // borderline (14) ≤ 10+5; way-too-long (17) > 10+5 → dropped
+    expect(program.sessions[0].drill_ids).toEqual(["fits", "borderline"]);
+  });
+
   it("does not warn about orphan drills when every drill is referenced", () => {
     const raw = {
       drills: [

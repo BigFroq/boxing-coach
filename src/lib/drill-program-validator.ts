@@ -84,17 +84,23 @@ export function validateDrillProgram(raw: unknown, allowedSlugs: Set<string>): V
     const sessionIntensity = s.intensity as Intensity;
     const sessionContext = s.context as Context;
 
-    // Tag-consistency filter: drop any drill_id whose drill.intensity[]/context[]
-    // doesn't include the session's own intensity/context. Prevents the LLM from
-    // stuffing light/shadow drills into heavy/bag sessions, which makes Session
-    // and Browse modes return divergent results for the same filter.
+    const sessionTimeMin = s.time_min as number;
+
+    // Drop any drill_id where:
+    //   (a) the drill doesn't exist or has wrong tags for this session
+    //       (intensity/context mismatch — same filter Browse uses), or
+    //   (b) the drill's own duration_min exceeds session.time_min + 5 minutes
+    //       — a 17-min drill in a "10 min session" cell makes no sense.
+    // The +5 tolerance matches BrowseView's filter logic.
     const filteredIds = Array.isArray(s.drill_ids)
       ? (s.drill_ids as unknown[]).filter((id): id is string => {
           if (typeof id !== "string" || !validDrillIds.has(id)) return false;
           const drill = drillById.get(id);
           if (!drill) return false;
-          return drill.intensity.includes(sessionIntensity)
-              && drill.context.includes(sessionContext);
+          if (!drill.intensity.includes(sessionIntensity)) return false;
+          if (!drill.context.includes(sessionContext)) return false;
+          if (drill.duration_min > sessionTimeMin + 5) return false;
+          return true;
         })
       : [];
 
