@@ -90,7 +90,7 @@ export function DrillProgramView({ userId }: Props) {
   const modeInactive = "text-muted hover:text-foreground";
 
   return (
-    <div className="h-full overflow-y-auto px-4 sm:px-6 py-4 space-y-4">
+    <div className="px-4 sm:px-6 py-4 space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-base font-semibold">Your drill program</h2>

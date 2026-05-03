@@ -161,20 +161,22 @@ function AppContent() {
             </ErrorBoundary>
             <div className="border-t border-border my-4" />
             <ErrorBoundary label="Drills chat">
-              <ChatTab
-                systemContext="drills"
-                heroIcon={Dumbbell}
-                heroTitle="Or ask about a specific drill"
-                heroSubtitle="Free-form questions about exercises, warm-ups, and bag work."
-                placeholder="Ask about exercises, training routines, bag work..."
-                suggestions={[
-                  { text: "What exercises build punching power using kinetic chains?", Icon: Zap },
-                  { text: "Give me a rotator cuff warm-up routine for boxing", Icon: Shield },
-                  { text: "How do I practice the 4 phases of torque?", Icon: Timer },
-                  { text: "What's the right way to throw a medicine ball for punching power?", Icon: Target },
-                ]}
-                userId={userId}
-              />
+              <div className="min-h-[70vh] flex flex-col">
+                <ChatTab
+                  systemContext="drills"
+                  heroIcon={Dumbbell}
+                  heroTitle="Or ask about a specific drill"
+                  heroSubtitle="Free-form questions about exercises, warm-ups, and bag work."
+                  placeholder="Ask about exercises, training routines, bag work..."
+                  suggestions={[
+                    { text: "What exercises build punching power using kinetic chains?", Icon: Zap },
+                    { text: "Give me a rotator cuff warm-up routine for boxing", Icon: Shield },
+                    { text: "How do I practice the 4 phases of torque?", Icon: Timer },
+                    { text: "What's the right way to throw a medicine ball for punching power?", Icon: Target },
+                  ]}
+                  userId={userId}
+                />
+              </div>
             </ErrorBoundary>
           </div>
         )}
