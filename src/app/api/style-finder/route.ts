@@ -6,52 +6,16 @@ import { type DimensionScores, DIMENSION_LABELS, fighterProfiles } from "@/data/
 import { matchCounters, ATTACK_VECTORS, type CounterMatch, type AttackVectorId } from "@/lib/fighter-counter-matching";
 import { readFighterVaultEntry } from "@/lib/vault-reader";
 import { VAULT_SLUGS } from "@/lib/dimensions";
+import { withRetry } from "@/lib/retry";
+import { getTopDimensions, getBottomDimensions } from "@/lib/dimension-helpers";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
 
 // ---------------------------------------------------------------------------
-// Retry helper with exponential backoff (per CLAUDE.md rules)
-// ---------------------------------------------------------------------------
-
-async function withRetry<T>(
-  fn: () => Promise<T>,
-  { maxRetries = 3, baseDelayMs = 1000 }: { maxRetries?: number; baseDelayMs?: number } = {}
-): Promise<T> {
-  let lastError: unknown;
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (err) {
-      lastError = err;
-      if (attempt < maxRetries) {
-        const delay = baseDelayMs * Math.pow(2, attempt) + Math.random() * 500;
-        console.warn(`Retry ${attempt + 1}/${maxRetries} after ${Math.round(delay)}ms`, err);
-        await new Promise((r) => setTimeout(r, delay));
-      }
-    }
-  }
-  throw lastError;
-}
-
-// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function getTopDimensions(scores: DimensionScores, n: number): { key: keyof DimensionScores; label: string; score: number }[] {
-  return (Object.entries(scores) as [keyof DimensionScores, number][])
-    .sort(([, a], [, b]) => b - a)
-    .slice(0, n)
-    .map(([key, score]) => ({ key, label: DIMENSION_LABELS[key], score }));
-}
-
-function getBottomDimensions(scores: DimensionScores, n: number): { key: keyof DimensionScores; label: string; score: number }[] {
-  return (Object.entries(scores) as [keyof DimensionScores, number][])
-    .sort(([, a], [, b]) => a - b)
-    .slice(0, n)
-    .map(([key, score]) => ({ key, label: DIMENSION_LABELS[key], score }));
-}
 
 function buildSearchQuery(
   topDimensions: { label: string }[],
