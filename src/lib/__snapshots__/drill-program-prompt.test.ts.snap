@@ -113,6 +113,10 @@ Rules:
 - Each drill needs why_fits_you grounded in the user's actual top dimensions / matched fighters — not generic.
 - cues: 2-4 short, actionable cue lines per drill.
 - drill_ids in each session must reference drills[].id exactly.
+- INTERNAL CONSISTENCY (critical):
+  - duration_min MUST equal the total wall-clock minutes implied by rounds_or_dose (work + rest combined). Example: "3x 3-min rounds, 1 min rest" = 3*3 + 2*1 = 11, so duration_min = 11. Don't pick round-number durations that contradict the dose.
+  - intensity[] tags MUST match what the cues and dose actually prescribe. If cues describe ~60% load / rhythm work / light intent, do NOT tag the drill "heavy". If a session's bucket is "heavy" and a drill's cues are light-rhythm, that drill does NOT belong in the heavy session.
+  - context[] tags MUST match what the cues actually require. Don't tag a drill "bag" if the cues describe shadow-only movement.
 - If experienceLevel is "beginner" or "none", frame all why_fits_you and intros in beginner language (natural tendencies, instincts, your body wants to…).
 - Return ONLY valid JSON. No markdown fences, no preamble."
 `;
@@ -230,6 +234,10 @@ Rules:
 - Each drill needs why_fits_you grounded in the user's actual top dimensions / matched fighters — not generic.
 - cues: 2-4 short, actionable cue lines per drill.
 - drill_ids in each session must reference drills[].id exactly.
+- INTERNAL CONSISTENCY (critical):
+  - duration_min MUST equal the total wall-clock minutes implied by rounds_or_dose (work + rest combined). Example: "3x 3-min rounds, 1 min rest" = 3*3 + 2*1 = 11, so duration_min = 11. Don't pick round-number durations that contradict the dose.
+  - intensity[] tags MUST match what the cues and dose actually prescribe. If cues describe ~60% load / rhythm work / light intent, do NOT tag the drill "heavy". If a session's bucket is "heavy" and a drill's cues are light-rhythm, that drill does NOT belong in the heavy session.
+  - context[] tags MUST match what the cues actually require. Don't tag a drill "bag" if the cues describe shadow-only movement.
 - If experienceLevel is "beginner" or "none", frame all why_fits_you and intros in beginner language (natural tendencies, instincts, your body wants to…).
 - Return ONLY valid JSON. No markdown fences, no preamble."
 `;

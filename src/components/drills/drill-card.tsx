@@ -19,9 +19,6 @@ export function DrillCard({ drill, index }: Props) {
           <span className="text-sm font-semibold leading-snug">{drill.name}</span>
         </div>
         <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
-          <span className="rounded-full bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
-            {drill.duration_min}m
-          </span>
           {drill.intensity.map((i) => (
             <span key={i} className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-muted capitalize">
               {i}

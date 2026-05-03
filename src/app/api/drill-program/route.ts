@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     const { data: profile, error: profileError } = await supabase
       .from("style_profiles")
-      .select("id, dimension_scores, matched_fighters, physical_context, experience_level, drill_program")
+      .select("id, dimension_scores, matched_fighters, physical_context, drill_program")
       .eq("user_id", userId)
       .eq("is_current", true)
       .maybeSingle();
@@ -59,14 +59,14 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Derive experience_level: physical_context.experience_level → profile.experience_level → default
+    // Derive experience_level from physical_context (real column lives on
+    // quiz_progress, not style_profiles — querying it is a deferred follow-up,
+    // matching the same defer in /api/profile per PR #5).
     const physCtx = profile.physical_context ?? {};
     const experienceLevel: string =
-      (typeof physCtx.experience_level === "string" && physCtx.experience_level)
+      typeof physCtx.experience_level === "string" && physCtx.experience_level
         ? physCtx.experience_level
-        : (typeof profile.experience_level === "string" && profile.experience_level)
-          ? profile.experience_level
-          : "intermediate";
+        : "intermediate";
 
     const vaultDrills = await readAllDrillVaultEntries();
 
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     const response = await withRetry(() =>
       anthropic.messages.create({
         model: "claude-sonnet-4-6",
-        max_tokens: 8192,
+        max_tokens: 32768,
         system: systemPrompt,
         messages: [
           {
@@ -94,10 +94,10 @@ export async function POST(request: NextRequest) {
 
     const text = response.content[0].type === "text" ? response.content[0].text : "";
 
-    // Strip markdown fences if present
-    let jsonStr = text;
-    const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-    if (jsonMatch) jsonStr = jsonMatch[1].trim();
+    // Strip markdown fences if present (lead and trail are independent so we
+    // tolerate truncated output that lost its closing fence to max_tokens).
+    let jsonStr = text.replace(/^\s*```(?:json)?\s*/, "");
+    jsonStr = jsonStr.replace(/\s*```\s*$/, "").trim();
 
     let rawParsed: unknown;
     try {
