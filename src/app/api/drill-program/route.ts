@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     const response = await withRetry(() =>
       anthropic.messages.create({
         model: "claude-sonnet-4-6",
-        max_tokens: 32768,
+        max_tokens: 65536,
         system: systemPrompt,
         messages: [
           {
