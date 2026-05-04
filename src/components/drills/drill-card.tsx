@@ -20,13 +20,13 @@ export function DrillCard({ drill, index }: Props) {
         </div>
         <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
           {drill.intensity.map((i) => (
-            <span key={i} className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-muted capitalize">
-              {i}
+            <span key={i} className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-muted">
+              {i.charAt(0).toUpperCase() + i.slice(1)}
             </span>
           ))}
           {drill.context.map((c) => (
-            <span key={c} className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-muted capitalize">
-              {c}
+            <span key={c} className="rounded-full bg-white/10 px-2 py-0.5 text-xs text-muted">
+              {c.charAt(0).toUpperCase() + c.slice(1)}
             </span>
           ))}
         </div>
