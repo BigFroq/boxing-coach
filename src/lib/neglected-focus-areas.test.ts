@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { focusAreaKey, computeNeglected } from "./neglected-focus-areas";
+import { focusAreaKey, computeNeglected, type RecentSessionRow } from "./neglected-focus-areas";
 
 describe("focusAreaKey", () => {
   it("returns null when dimension is null", () => {
@@ -72,10 +72,10 @@ describe("computeNeglected", () => {
     const focusAreas = [
       { name: "Power", dimension: "powerMechanics", knowledge_node_slug: null, status: "active" },
     ];
-    const recentSessions = [
-      { summary: { breakthroughs: ["something"] } }, // no focus_areas_worked_keys
-      { summary: undefined },
-      {},
+    const recentSessions: RecentSessionRow[] = [
+      { summary: { breakthroughs: ["something"] } as never }, // no focus_areas_worked_keys
+      { summary: undefined as never },
+      {} as RecentSessionRow,
     ];
     expect(computeNeglected(focusAreas, recentSessions)).toEqual(["Power"]);
   });

@@ -485,6 +485,42 @@ async function main() {
     console.log("7. No nodes need re-embedding.\n");
   }
 
+  // 7.5. Backfill SOURCED_FROM chunk edges for newly-inserted nodes.
+  // Keyword match against content_chunks: title + each alias as ILIKE patterns.
+  // This is a cheap stand-in for the LLM-based matcher in incremental-ingest;
+  // it gives newly-inserted nodes basic graph reachability so RAG retrieval
+  // can surface them. Better matching can layer on later.
+  if (newNodes.length > 0) {
+    console.log(`7.5. Backfilling chunk edges for ${newNodes.length} new node(s)...`);
+    let backfilled = 0;
+    for (const node of newNodes) {
+      const newNodeId = nodeIdBySlug.get(node.slug);
+      if (!newNodeId) continue;
+      const patterns = [node.title, ...node.aliases].map((s) => `%${s.toLowerCase()}%`);
+      const { data: matches, error: mErr } = await supabase
+        .from("content_chunks")
+        .select("id")
+        .or(patterns.map((p) => `content.ilike.${p}`).join(","))
+        .limit(20);
+      if (mErr || !matches || matches.length === 0) continue;
+      const newEdges = (matches as Array<{ id: string }>).map((c) => ({
+        source_node: newNodeId,
+        target_chunk: c.id,
+        edge_type: "SOURCED_FROM",
+        weight: 0.7,
+        evidence: "vault-to-db keyword backfill",
+      }));
+      const { error: insErr } = await supabase.from("knowledge_edges").insert(newEdges);
+      if (insErr) {
+        console.warn(`   ${node.slug}: edge insert failed — ${insErr.message}`);
+      } else {
+        console.log(`   ${node.slug}: linked to ${newEdges.length} chunk(s)`);
+        backfilled += newEdges.length;
+      }
+    }
+    console.log(`   Backfilled ${backfilled} SOURCED_FROM edge(s)\n`);
+  }
+
   // 8. Recompute centrality
   console.log("8. Recomputing centrality...");
   const { error: centralityErr } = await supabase.rpc("recompute_centrality");
