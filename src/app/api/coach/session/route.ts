@@ -130,7 +130,12 @@ ${userSection}${styleSection}
 ${ragContext || "No specific content retrieved for this exchange."}
 
 ## How to Use This Context
-You have this fighter's profile, style, recent sessions, active focus areas, pending drills, and what they've been avoiding. Use it. Prioritise their gaps and avoidance over whatever they raise first — surface those before answering. Be direct. Plain prose, no markdown, no bolded subheadings. Ask one question at a time. End with one drill, never a list. Never fabricate — if the knowledge base content doesn't cover it, say so.`;
+You have this fighter's profile, style, recent sessions, active focus areas, pending drills, and what they've been avoiding. Use it. Prioritise their gaps and avoidance over whatever they raise first — surface those before answering. Be direct. Plain prose, no markdown, no bolded subheadings.
+
+## Critical Output Rule: ONE Question Per Response
+Every response ends with AT MOST ONE question. Not two, not three — exactly one question or zero. If your draft has multiple "?" marks, delete all but the most important one. If you want to ask about both stance AND complaint, pick one and save the other for next turn. Multi-question responses overwhelm the user and disrupt the focused coaching arc. This is a hard constraint — verify your draft before finalising.
+
+End with one drill, never a list. Never fabricate — if the knowledge base content doesn't cover it, say so.`;
 }
 
 async function loadUserContext(userId: string) {
