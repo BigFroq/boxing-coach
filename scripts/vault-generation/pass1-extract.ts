@@ -110,6 +110,16 @@ Return ONLY a JSON array of objects. No markdown fencing.`,
     console.log(`  Batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(chunks.length / batchSize)}: ${allCandidates.length} unique candidates so far`);
   }
 
+  // Skip dedup if requested. The dedup LLM call sometimes returns output that
+  // can't be JSON-parsed (we suspect Opus emits prose preamble + JSON despite
+  // the "no markdown fencing" instruction). When that happens the script
+  // already falls back to raw candidates — SKIP_DEDUP=1 just makes that the
+  // default to save a wasted LLM call on bulk runs.
+  if (process.env.SKIP_DEDUP === "1") {
+    console.log(`\nSKIP_DEDUP=1: returning ${allCandidates.length} raw candidates (no dedup pass)\n`);
+    return allCandidates;
+  }
+
   // Deduplication pass — ask Claude to merge overlapping candidates
   if (allCandidates.length > 0) {
     console.log(`\nDeduplication pass on ${allCandidates.length} candidates...`);
