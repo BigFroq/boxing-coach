@@ -66,6 +66,7 @@ export function validateDrillProgram(raw: unknown, allowedSlugs: Set<string>): V
   }
 
   const validDrillIds = new Set(validDrills.map((d) => d.id));
+  const drillById = new Map(validDrills.map((d) => [d.id, d]));
 
   // --- Sessions ---
   const rawSessions = Array.isArray(obj.sessions) ? (obj.sessions as unknown[]) : [];
@@ -80,19 +81,50 @@ export function validateDrillProgram(raw: unknown, allowedSlugs: Set<string>): V
     if (!ALLOWED_CONTEXTS.has(s.context as string)) continue;
     if (!ALLOWED_TIME_MINS.has(s.time_min as number)) continue;
 
+    const sessionIntensity = s.intensity as Intensity;
+    const sessionContext = s.context as Context;
+
+    const sessionTimeMin = s.time_min as number;
+
+    // Drop any drill_id where:
+    //   (a) the drill doesn't exist or has wrong tags for this session
+    //       (intensity/context mismatch — same filter Browse uses), or
+    //   (b) the drill's own duration_min exceeds session.time_min + 5 minutes
+    //       — a 17-min drill in a "10 min session" cell makes no sense.
+    // The +5 tolerance matches BrowseView's filter logic.
     const filteredIds = Array.isArray(s.drill_ids)
-      ? (s.drill_ids as unknown[]).filter((id): id is string => typeof id === "string" && validDrillIds.has(id))
+      ? (s.drill_ids as unknown[]).filter((id): id is string => {
+          if (typeof id !== "string" || !validDrillIds.has(id)) return false;
+          const drill = drillById.get(id);
+          if (!drill) return false;
+          if (!drill.intensity.includes(sessionIntensity)) return false;
+          if (!drill.context.includes(sessionContext)) return false;
+          if (drill.duration_min > sessionTimeMin + 5) return false;
+          return true;
+        })
       : [];
 
     coveredTuples.add(`${s.intensity}|${s.context}|${s.time_min}`);
 
     validSessions.push({
-      intensity: s.intensity as Intensity,
-      context: s.context as Context,
+      intensity: sessionIntensity,
+      context: sessionContext,
       time_min: s.time_min as TimeMin,
       intro: typeof s.intro === "string" ? s.intro : "",
       drill_ids: filteredIds,
     });
+  }
+
+  // --- Orphan-drill warning ---
+  const referencedDrillIds = new Set<string>();
+  for (const session of validSessions) {
+    for (const id of session.drill_ids) referencedDrillIds.add(id);
+  }
+  const orphans = validDrills.filter((d) => !referencedDrillIds.has(d.id));
+  if (orphans.length > 0) {
+    warnings.push(
+      `Drill pool has ${orphans.length} orphan drill(s) never referenced by any session: ${orphans.map((d) => d.id).join(", ")}`
+    );
   }
 
   if (coveredTuples.size < EXPECTED_CELLS) {

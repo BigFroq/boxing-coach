@@ -118,15 +118,17 @@ function AppContent() {
             <button
               key={tab.id}
               onClick={() => handleTabClick(tab.id)}
+              aria-label={tab.label}
+              aria-current={isActive ? "page" : undefined}
               className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-3 min-h-[44px] text-xs sm:text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px ${
                 isActive
                   ? "border-accent text-accent"
                   : "border-transparent text-muted hover:text-foreground"
               }`}
             >
-              <Icon size={16} />
-              <span className="sm:hidden">{tab.shortLabel}</span>
-              <span className="hidden sm:inline">{tab.label}</span>
+              <Icon size={16} aria-hidden="true" />
+              <span className="sm:hidden" aria-hidden="true">{tab.shortLabel}</span>
+              <span className="hidden sm:inline" aria-hidden="true">{tab.label}</span>
             </button>
           );
         })}

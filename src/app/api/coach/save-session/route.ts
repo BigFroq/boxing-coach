@@ -281,6 +281,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, sessionId: session.id });
   } catch (error) {
     console.error("Save session error:", error);
+    const msg = error instanceof Error ? error.message.toLowerCase() : "";
+    if (/credit balance|quota|insufficient_quota|billing/i.test(msg)) {
+      return NextResponse.json(
+        { error: "Save is temporarily unavailable. Please try again later." },
+        { status: 503 }
+      );
+    }
     return NextResponse.json({ error: "Failed to save session" }, { status: 500 });
   }
 }

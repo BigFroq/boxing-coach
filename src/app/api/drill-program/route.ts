@@ -78,18 +78,24 @@ export async function POST(request: NextRequest) {
       vaultDrills,
     });
 
+    // Streaming is required by the SDK for max_tokens this large (Sonnet 4.6
+    // with 65536 tokens projects past the 10-minute non-streaming guard).
+    // .finalMessage() awaits full completion, so the route stays synchronous
+    // from the client's perspective — only the Anthropic API leg streams.
     const response = await withRetry(() =>
-      anthropic.messages.create({
-        model: "claude-sonnet-4-6",
-        max_tokens: 32768,
-        system: systemPrompt,
-        messages: [
-          {
-            role: "user",
-            content: "Generate the DrillProgram JSON based on the user profile and vault drills above.",
-          },
-        ],
-      })
+      anthropic.messages
+        .stream({
+          model: "claude-sonnet-4-6",
+          max_tokens: 65536,
+          system: systemPrompt,
+          messages: [
+            {
+              role: "user",
+              content: "Generate the DrillProgram JSON based on the user profile and vault drills above.",
+            },
+          ],
+        })
+        .finalMessage()
     );
 
     const text = response.content[0].type === "text" ? response.content[0].text : "";

@@ -117,6 +117,12 @@ Rules:
   - duration_min MUST equal the total wall-clock minutes implied by rounds_or_dose (work + rest combined). Example: "3x 3-min rounds, 1 min rest" = 3*3 + 2*1 = 11, so duration_min = 11. Don't pick round-number durations that contradict the dose.
   - intensity[] tags MUST match what the cues and dose actually prescribe. If cues describe ~60% load / rhythm work / light intent, do NOT tag the drill "heavy". If a session's bucket is "heavy" and a drill's cues are light-rhythm, that drill does NOT belong in the heavy session.
   - context[] tags MUST match what the cues actually require. Don't tag a drill "bag" if the cues describe shadow-only movement.
+- SESSION-DRILL TAG MATCH: every drill_id in a session MUST point to a drill whose intensity[] includes the session's intensity AND whose context[] includes the session's context. The validator drops mismatches; emitting them wastes tokens and risks empty sessions.
+- VERBOSITY CAPS (must obey to fit max_tokens budget):
+  - why_fits_you: ONE sentence, ≤140 chars. Cite a specific dimension or fighter; no preamble like "This drill is great because…".
+  - cues: ≤3 cues per drill, each ≤80 chars. Imperative voice.
+  - intro (per session): ONE sentence, ≤120 chars.
+- ORPHAN PREVENTION: every drill in drills[] MUST appear in at least one sessions[].drill_ids. If you can't fit a drill into any session, don't include it in the pool.
 - If experienceLevel is "beginner" or "none", frame all why_fits_you and intros in beginner language (natural tendencies, instincts, your body wants to…).
 - Return ONLY valid JSON. No markdown fences, no preamble."
 `;
@@ -238,6 +244,12 @@ Rules:
   - duration_min MUST equal the total wall-clock minutes implied by rounds_or_dose (work + rest combined). Example: "3x 3-min rounds, 1 min rest" = 3*3 + 2*1 = 11, so duration_min = 11. Don't pick round-number durations that contradict the dose.
   - intensity[] tags MUST match what the cues and dose actually prescribe. If cues describe ~60% load / rhythm work / light intent, do NOT tag the drill "heavy". If a session's bucket is "heavy" and a drill's cues are light-rhythm, that drill does NOT belong in the heavy session.
   - context[] tags MUST match what the cues actually require. Don't tag a drill "bag" if the cues describe shadow-only movement.
+- SESSION-DRILL TAG MATCH: every drill_id in a session MUST point to a drill whose intensity[] includes the session's intensity AND whose context[] includes the session's context. The validator drops mismatches; emitting them wastes tokens and risks empty sessions.
+- VERBOSITY CAPS (must obey to fit max_tokens budget):
+  - why_fits_you: ONE sentence, ≤140 chars. Cite a specific dimension or fighter; no preamble like "This drill is great because…".
+  - cues: ≤3 cues per drill, each ≤80 chars. Imperative voice.
+  - intro (per session): ONE sentence, ≤120 chars.
+- ORPHAN PREVENTION: every drill in drills[] MUST appear in at least one sessions[].drill_ids. If you can't fit a drill into any session, don't include it in the pool.
 - If experienceLevel is "beginner" or "none", frame all why_fits_you and intros in beginner language (natural tendencies, instincts, your body wants to…).
 - Return ONLY valid JSON. No markdown fences, no preamble."
 `;

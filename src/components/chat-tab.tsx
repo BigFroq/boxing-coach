@@ -722,6 +722,7 @@ export function ChatTab({
         <div className="max-w-3xl mx-auto flex gap-2">
           <textarea
             ref={inputRef}
+            aria-label={placeholder}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}

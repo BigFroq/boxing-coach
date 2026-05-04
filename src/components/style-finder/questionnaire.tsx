@@ -253,6 +253,7 @@ export function Questionnaire({ userId, onComplete }: QuestionnaireProps) {
                 <button
                   key={opt.value}
                   onClick={() => selectAnswer(currentQuestion.id, opt.value)}
+                  aria-pressed={isSelected}
                   className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${
                     isSelected
                       ? "border-accent bg-accent/10 text-foreground"
@@ -278,6 +279,15 @@ export function Questionnaire({ userId, onComplete }: QuestionnaireProps) {
               max={100}
               value={(answers[currentQuestion.id] as number) ?? 50}
               onChange={(e) => setSliderValue(currentQuestion.id, Number(e.target.value))}
+              aria-label={questionText}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={(answers[currentQuestion.id] as number) ?? 50}
+              aria-valuetext={
+                currentQuestion.sliderLabels
+                  ? `${(answers[currentQuestion.id] as number) ?? 50} (${currentQuestion.sliderLabels.min} → ${currentQuestion.sliderLabels.max})`
+                  : `${(answers[currentQuestion.id] as number) ?? 50}`
+              }
               className="w-full accent-accent"
             />
             <div className="flex justify-between text-xs text-muted">
@@ -315,6 +325,7 @@ export function Questionnaire({ userId, onComplete }: QuestionnaireProps) {
                       )
                     }
                     disabled={!selected && atMax}
+                    aria-pressed={selected}
                     className={`px-4 py-2.5 rounded-xl border text-sm transition-all ${
                       selected
                         ? "border-accent bg-accent/10 text-foreground"

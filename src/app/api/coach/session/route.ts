@@ -141,7 +141,7 @@ async function loadUserContext(userId: string) {
       .from("user_profiles")
       .select("tendencies, skill_levels, preferences, onboarding_complete")
       .eq("id", userId)
-      .single(),
+      .maybeSingle(),
     supabase
       .from("focus_areas")
       .select("name, status, description, dimension, knowledge_node_slug")
@@ -288,6 +288,13 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Coach session error:", error);
+    const msg = error instanceof Error ? error.message.toLowerCase() : "";
+    if (/credit balance|quota|insufficient_quota|billing/i.test(msg)) {
+      return new Response(
+        JSON.stringify({ error: "The coach is temporarily unavailable. Please try again later." }),
+        { status: 503 }
+      );
+    }
     return new Response(JSON.stringify({ error: "Failed to process session" }), { status: 500 });
   }
 }
