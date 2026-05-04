@@ -118,7 +118,7 @@ Return ONLY a JSON array of objects. No markdown fencing.`,
       () =>
         callLLM({
           model: "claude-opus-4-7",
-          maxTokens: 8192,
+          maxTokens: 16384,
           system: `You are deduplicating a list of knowledge graph node candidates from a boxing coaching corpus.
 
 Rules:
