@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import { Questionnaire } from "./style-finder/questionnaire";
 import { DashboardView } from "./style-finder/dashboard-view";
@@ -32,39 +32,42 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
   const [storedAnswers, setStoredAnswers] = useState<Record<string, string | string[] | number>>({});
   const [narrativeStale, setNarrativeStale] = useState(false);
   const [refinementOpen, setRefinementOpen] = useState(false);
+  const backfillFiredRef = useRef(false);
 
   // Check for existing saved profile on mount
-  // Load saved profile on mount (try Supabase if authed, then localStorage)
+  // Load saved profile on mount: query Supabase by anon userId, fall back to
+  // localStorage. If only localStorage has data, best-effort backfill to DB so
+  // /api/profile (server-side, service role) can read the same profile.
   useEffect(() => {
     async function load() {
+      const supabase = createBrowserClient();
+
       try {
-        const supabase = createBrowserClient();
-        const { data: authData } = await supabase.auth.getUser();
-        if (authData.user) {
-          const { data } = await supabase
-            .from("style_profiles")
-            .select("*")
-            .eq("user_id", authData.user.id)
-            .eq("is_current", true)
-            .single() as { data: Record<string, unknown> | null };
-          if (data) {
-            setResult({
-              ...(data.ai_result as Omit<StyleProfileResult, "dimension_scores" | "matched_fighters" | "counter_fighters">),
-              dimension_scores: data.dimension_scores as DimensionScores,
-              matched_fighters: data.matched_fighters as StyleProfileResult["matched_fighters"],
-              counter_fighters: (data.counter_fighters as StyleProfileResult["counter_fighters"]) ?? [],
-            });
-            setPhysicalContext(data.physical_context as typeof physicalContext);
-            setExperienceLevel((data.experience_level as string) ?? "beginner");
-            setProfileId(data.id as string);
-            setStoredAnswers((data.answers as Record<string, string | string[] | number>) ?? {});
-            setNarrativeStale(Boolean(data.narrative_stale));
-            setView("dashboard");
-            return;
-          }
+        const { data } = await supabase
+          .from("style_profiles")
+          .select("*")
+          .eq("user_id", userId)
+          .eq("is_current", true)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle() as { data: Record<string, unknown> | null };
+        if (data) {
+          setResult({
+            ...(data.ai_result as Omit<StyleProfileResult, "dimension_scores" | "matched_fighters" | "counter_fighters">),
+            dimension_scores: data.dimension_scores as DimensionScores,
+            matched_fighters: data.matched_fighters as StyleProfileResult["matched_fighters"],
+            counter_fighters: (data.counter_fighters as StyleProfileResult["counter_fighters"]) ?? [],
+          });
+          setPhysicalContext(data.physical_context as typeof physicalContext);
+          setExperienceLevel((data.experience_level as string) ?? "beginner");
+          setProfileId(data.id as string);
+          setStoredAnswers((data.answers as Record<string, string | string[] | number>) ?? {});
+          setNarrativeStale(Boolean(data.narrative_stale));
+          setView("dashboard");
+          return;
         }
       } catch {
-        // not authed or Supabase unavailable
+        // Supabase unavailable — fall through to localStorage.
       }
 
       // Fallback: check localStorage
@@ -81,6 +84,34 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
           setStoredAnswers(parsed.answers ?? {});
           setNarrativeStale(Boolean(parsed.narrativeStale));
           setView("dashboard");
+
+          // Backfill: legacy localStorage-only profile → DB so /me can see it.
+          // Ref-guard prevents StrictMode double-fire from inserting twice before
+          // the first INSERT lands and the SELECT could short-circuit on row 2.
+          if (backfillFiredRef.current) return;
+          backfillFiredRef.current = true;
+          (async () => {
+            try {
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const { data: newRow } = await (supabase.from("style_profiles") as any)
+                .insert({
+                  user_id: userId,
+                  answers: parsed.answers ?? {},
+                  dimension_scores: parsed.result.dimension_scores,
+                  physical_context: parsed.physicalContext,
+                  experience_level: parsed.experienceLevel ?? "beginner",
+                  ai_result: parsed.result,
+                  matched_fighters: parsed.result.matched_fighters ?? [],
+                  counter_fighters: parsed.result.counter_fighters ?? [],
+                  narrative_stale: Boolean(parsed.narrativeStale),
+                })
+                .select("id")
+                .single();
+              if (newRow) setProfileId(newRow.id as string);
+            } catch {
+              // best-effort
+            }
+          })();
         }
       } catch {
         // ignore
@@ -107,14 +138,12 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
     // Best-effort persist; failure is non-fatal.
     (async () => {
       try {
+        if (!profileId) return;
         const supabase = createBrowserClient();
-        const { data: authData } = await supabase.auth.getUser();
-        if (authData.user && profileId) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (supabase.from("style_profiles") as any)
-            .update({ matched_fighters: freshPayload })
-            .eq("id", profileId);
-        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase.from("style_profiles") as any)
+          .update({ matched_fighters: freshPayload })
+          .eq("id", profileId);
       } catch {
         // ignore
       }
@@ -200,54 +229,54 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
         // ignore
       }
 
-      // Try to save to Supabase if authed
+      // Try to save to Supabase (best-effort; localStorage already written above)
       try {
         const supabase = createBrowserClient();
-        const { data: authData } = await supabase.auth.getUser();
-        if (authData.user) {
-          // Fetch previous profile for comparison
-          const { data: prevProfile } = await supabase
-            .from("style_profiles")
-            .select("dimension_scores")
-            .eq("user_id", authData.user.id)
-            .eq("is_current", true)
-            .single() as { data: { dimension_scores: DimensionScores } | null };
 
-          if (prevProfile) {
-            setPreviousScores(prevProfile.dimension_scores);
-          }
+        // Fetch previous profile for comparison
+        const { data: prevProfile } = await supabase
+          .from("style_profiles")
+          .select("dimension_scores")
+          .eq("user_id", userId)
+          .eq("is_current", true)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle() as { data: { dimension_scores: DimensionScores } | null };
 
-          // Insert new profile (trigger will mark old ones as not current)
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const { data: newProfile } = await (supabase.from("style_profiles") as any)
-            .insert({
-              user_id: authData.user.id,
-              answers,
-              dimension_scores: dimensionScores,
-              physical_context: physical,
-              experience_level: expLevel,
-              ai_result: data,
-              matched_fighters: matches.map((m) => ({
-                name: m.fighter.name,
-                slug: m.fighter.slug,
-                overlappingDimensions: m.overlappingDimensions,
-              })),
-              counter_fighters: Array.isArray(data.counter_fighters) ? data.counter_fighters : [],
-              narrative_stale: false,
-            })
-            .select("id")
-            .single();
-
-          if (newProfile) {
-            setProfileId(newProfile.id);
-          }
-
-          // Clear quiz progress
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await (supabase.from("quiz_progress") as any)
-            .delete()
-            .eq("user_id", authData.user.id);
+        if (prevProfile) {
+          setPreviousScores(prevProfile.dimension_scores);
         }
+
+        // Insert new profile (trigger will mark old ones as not current)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: newProfile } = await (supabase.from("style_profiles") as any)
+          .insert({
+            user_id: userId,
+            answers,
+            dimension_scores: dimensionScores,
+            physical_context: physical,
+            experience_level: expLevel,
+            ai_result: data,
+            matched_fighters: matches.map((m) => ({
+              name: m.fighter.name,
+              slug: m.fighter.slug,
+              overlappingDimensions: m.overlappingDimensions,
+            })),
+            counter_fighters: Array.isArray(data.counter_fighters) ? data.counter_fighters : [],
+            narrative_stale: false,
+          })
+          .select("id")
+          .single();
+
+        if (newProfile) {
+          setProfileId(newProfile.id);
+        }
+
+        // Clear quiz progress
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        await (supabase.from("quiz_progress") as any)
+          .delete()
+          .eq("user_id", userId);
       } catch {
         // Supabase save failed, localStorage already saved
       }
@@ -316,46 +345,31 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
       setNarrativeStale(false);
       setError(null);
 
-      // Persist — Supabase if authed, else localStorage. Use the same soft-error
-      // pattern as handleRefinementSubmit: only short-circuit on confirmed success.
+      // Persist — DB insert; localStorage as fallback if INSERT fails.
       try {
         const supabase = createBrowserClient();
-        const { data: authData } = await supabase.auth.getUser();
-        if (authData.user) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const { data: newRow, error: insertError } = await (supabase.from("style_profiles") as any)
-            .insert({
-              user_id: authData.user.id,
-              answers: storedAnswers,
-              dimension_scores: result.dimension_scores,
-              physical_context: physicalContext,
-              experience_level: experienceLevel,
-              ai_result: data,
-              matched_fighters: result.matched_fighters,
-              counter_fighters: next.counter_fighters,
-              narrative_stale: false,
-            })
-            .select("id")
-            .single();
-          if (!insertError && newRow) {
-            setProfileId(newRow.id);
-          } else {
-            // Authed Supabase INSERT failed — surface to user so they know the refresh wasn't persisted.
-            // Do NOT silently fall through; on next reload Supabase will overwrite localStorage anyway.
-            setError("Refresh saved locally but couldn't sync to your account. Try again on a stable connection.");
-            // still update localStorage as best-effort so a future re-attempt has something to compare to
-            localStorage.setItem(
-              "boxing-coach-style-profile",
-              JSON.stringify({
-                result: next,
-                physicalContext,
-                experienceLevel,
-                answers: storedAnswers,
-                narrativeStale: false,
-              })
-            );
-          }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: newRow, error: insertError } = await (supabase.from("style_profiles") as any)
+          .insert({
+            user_id: userId,
+            answers: storedAnswers,
+            dimension_scores: result.dimension_scores,
+            physical_context: physicalContext,
+            experience_level: experienceLevel,
+            ai_result: data,
+            matched_fighters: result.matched_fighters,
+            counter_fighters: next.counter_fighters,
+            narrative_stale: false,
+          })
+          .select("id")
+          .single();
+        if (!insertError && newRow) {
+          setProfileId(newRow.id);
         } else {
+          // Supabase INSERT failed — surface to user so they know the refresh wasn't persisted.
+          // Do NOT silently fall through; on next reload Supabase will overwrite localStorage anyway.
+          setError("Refresh saved locally but couldn't sync to your account. Try again on a stable connection.");
+          // still update localStorage as best-effort so a future re-attempt has something to compare to
           localStorage.setItem(
             "boxing-coach-style-profile",
             JSON.stringify({
@@ -418,15 +432,14 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
     setNarrativeStale(scoresChanged);
     setRefinementOpen(false);
 
-    // Persist — Supabase if authed, else localStorage
+    // Persist — DB insert; fall through to localStorage if it fails.
     try {
-      const supabase = createBrowserClient();
-      const { data: authData } = await supabase.auth.getUser();
-      if (authData.user && result) {
+      if (result) {
+        const supabase = createBrowserClient();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: newRow, error: insertError } = await (supabase.from("style_profiles") as any)
           .insert({
-            user_id: authData.user.id,
+            user_id: userId,
             answers: merged,
             dimension_scores: dimensionScores,
             physical_context: physicalContext,
