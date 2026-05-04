@@ -174,13 +174,17 @@ export function CoachSession({ userId }: CoachSessionProps) {
     };
   }, []);
 
+  // Ref guard prevents StrictMode double-fire from sending two init POSTs.
+  // (initialized state alone isn't enough — both effect invocations read
+  // !initialized before either setInitialized commits.)
+  const initFiredRef = useRef(false);
   useEffect(() => {
-    if (!initialized) {
-      setInitialized(true);
-      const initMsg: Message = { role: "user", content: "I'm here to log my training session." };
-      setMessages([initMsg]);
-      sendToCoach([initMsg]);
-    }
+    if (initFiredRef.current || initialized) return;
+    initFiredRef.current = true;
+    setInitialized(true);
+    const initMsg: Message = { role: "user", content: "I'm here to log my training session." };
+    setMessages([initMsg]);
+    sendToCoach([initMsg]);
   }, [initialized, sendToCoach]);
 
   const handleSend = useCallback(async () => {
@@ -255,6 +259,7 @@ export function CoachSession({ userId }: CoachSessionProps) {
             setMessages([]);
             setSaved(false);
             setInitialized(false);
+            initFiredRef.current = false;
           }}
           className="mt-2 rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white hover:bg-accent/90"
         >
@@ -380,6 +385,7 @@ export function CoachSession({ userId }: CoachSessionProps) {
         <div className="flex gap-2 items-end">
           <textarea
             ref={inputRef}
+            aria-label="Message to your coach"
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}

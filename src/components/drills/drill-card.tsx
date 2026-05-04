@@ -16,7 +16,7 @@ export function DrillCard({ drill, index }: Props) {
           {index !== undefined && (
             <span className="text-sm font-bold text-muted shrink-0">{index + 1}.</span>
           )}
-          <span className="text-sm font-semibold leading-snug">{drill.name}</span>
+          <span className="text-sm font-semibold leading-snug">{drill.name.split(" — ")[0]}</span>
         </div>
         <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
           {drill.intensity.map((i) => (
@@ -29,14 +29,6 @@ export function DrillCard({ drill, index }: Props) {
               {c}
             </span>
           ))}
-          {drill.vault_ref && (
-            <a
-              href={`/vault/drills/${drill.vault_ref}`}
-              className="rounded-full bg-accent/20 px-2 py-0.5 text-xs font-medium text-accent hover:bg-accent/30 transition-colors"
-            >
-              Vault
-            </a>
-          )}
         </div>
       </div>
 
