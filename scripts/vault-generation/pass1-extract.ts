@@ -1,6 +1,7 @@
 // scripts/vault-generation/pass1-extract.ts
 // Pass 1: Entity Extraction — identify all concept nodes from source chunks
-import Anthropic from "@anthropic-ai/sdk";
+import { callLLM } from "./llm-provider";
+import { withRetry } from "../../src/lib/retry";
 
 export interface NodeCandidate {
   title: string;
@@ -10,10 +11,19 @@ export interface NodeCandidate {
   description: string; // 1-sentence reason this deserves a node
 }
 
-let _anthropic: Anthropic | null = null;
-function getAnthropic() {
-  if (!_anthropic) _anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-  return _anthropic;
+// withRetry's defaultShouldRetry only matches HTTP-shaped errors (429/5xx/timeout/overloaded).
+// CLI mode (claude -p subprocess via callLLM) throws "claude CLI exit N: ...",
+// "claude CLI api error: ...", or "claude CLI output not JSON: ..." — none of which
+// match the default. Without this, withRetry would fail-fast on every CLI failure.
+function shouldRetryLLM(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (err instanceof TypeError) return true;
+  if (/429|rate[\s_-]?limit/i.test(msg)) return true;
+  if (/\b5\d\d\b/.test(msg)) return true;
+  if (/timeout|timed?\s*out|ETIMEDOUT|ECONNRESET|ECONNREFUSED|EAI_AGAIN|ENOTFOUND/i.test(msg)) return true;
+  if (/overloaded/i.test(msg)) return true;
+  if (/claude CLI (exit|api error|output not JSON)/i.test(msg)) return true;
+  return false;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -49,10 +59,12 @@ export async function extractEntities(
       })
       .join("\n\n---\n\n");
 
-    const response = await getAnthropic().messages.create({
-      model: "claude-opus-4-6",
-      max_tokens: 8192,
-      system: `You are analyzing boxing coaching content from Dr. Alex Wiant's "Punch Doctor" channel and "Power Punching Blueprint" course.
+    const text = await withRetry(
+      () =>
+        callLLM({
+          model: "claude-opus-4-7",
+          maxTokens: 8192,
+          system: `You are analyzing boxing coaching content from Dr. Alex Wiant's "Punch Doctor" channel and "Power Punching Blueprint" course.
 
 Your job: identify every distinct concept, fighter, technique, drill, phase, and injury prevention topic mentioned in these chunks.
 
@@ -75,10 +87,10 @@ Guidelines:
 - Merge duplicates (e.g., "hook" and "left hook" should be one node if Alex treats them as the same topic)
 
 Return ONLY a JSON array of objects. No markdown fencing.`,
-      messages: [{ role: "user", content: batchText }],
-    });
-
-    const text = response.content[0].type === "text" ? response.content[0].text : "[]";
+          user: batchText,
+        }),
+      { label: `pass1-extract-batch-${i}`, maxAttempts: 4, shouldRetry: shouldRetryLLM }
+    );
     let jsonStr = text;
     const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (jsonMatch) jsonStr = jsonMatch[1].trim();
@@ -102,10 +114,12 @@ Return ONLY a JSON array of objects. No markdown fencing.`,
   if (allCandidates.length > 0) {
     console.log(`\nDeduplication pass on ${allCandidates.length} candidates...`);
 
-    const dedupeResponse = await getAnthropic().messages.create({
-      model: "claude-opus-4-6",
-      max_tokens: 8192,
-      system: `You are deduplicating a list of knowledge graph node candidates from a boxing coaching corpus.
+    const dedupeText = await withRetry(
+      () =>
+        callLLM({
+          model: "claude-opus-4-7",
+          maxTokens: 8192,
+          system: `You are deduplicating a list of knowledge graph node candidates from a boxing coaching corpus.
 
 Rules:
 - Merge nodes that cover the same topic (e.g., "Left Hook" and "Hook Mechanics" should be one node)
@@ -116,15 +130,10 @@ Rules:
 - Preserve node_type accuracy
 
 Return the deduplicated JSON array. No markdown fencing.`,
-      messages: [
-        {
-          role: "user",
-          content: JSON.stringify(allCandidates, null, 2),
-        },
-      ],
-    });
-
-    const dedupeText = dedupeResponse.content[0].type === "text" ? dedupeResponse.content[0].text : "[]";
+          user: JSON.stringify(allCandidates, null, 2),
+        }),
+      { label: `pass1-dedupe`, maxAttempts: 4, shouldRetry: shouldRetryLLM }
+    );
     let dedupeJson = dedupeText;
     const dedupeMatch = dedupeText.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (dedupeMatch) dedupeJson = dedupeMatch[1].trim();
