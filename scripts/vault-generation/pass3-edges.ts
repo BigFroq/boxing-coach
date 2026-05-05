@@ -1,8 +1,16 @@
 // scripts/vault-generation/pass3-edges.ts
 // Pass 3: Discover edges between nodes + SOURCED_FROM edges to chunks
+import { promises as fs } from "fs";
+import path from "path";
 import type { SynthesizedNode } from "./pass2-synthesize";
 import { callLLM } from "./llm-provider";
 import { withRetry } from "../../src/lib/retry";
+
+// Partial-progress cache: pass3 saves accumulated edges after each batch
+// so a mid-loop crash (rate limit, CLI failure) doesn't lose all work.
+// The orchestrator's pass3-edges.json is only written when pass3 returns
+// successfully — this partial file is internal to pass3.
+const PARTIAL_CACHE = path.join(__dirname, ".cache", "pass3-edges-partial.json");
 
 // withRetry's defaultShouldRetry only matches HTTP-shaped errors.
 // CLI mode (claude -p subprocess) throws "claude CLI exit N: ...", which
@@ -35,8 +43,22 @@ export async function discoverEdges(
 ): Promise<DiscoveredEdge[]> {
   console.log("=== Pass 3: Edge Discovery ===\n");
 
-  const allEdges: DiscoveredEdge[] = [];
+  // Load any partial progress from a prior aborted run.
+  const priorEdges: DiscoveredEdge[] = await fs
+    .readFile(PARTIAL_CACHE, "utf-8")
+    .then((s) => JSON.parse(s) as DiscoveredEdge[])
+    .catch(() => []);
+  const allEdges: DiscoveredEdge[] = [...priorEdges];
   const slugSet = new Set(nodes.map(n => n.slug));
+
+  // Slugs that already have edges in the partial cache are considered processed.
+  // Pass3 always emits at least a SOURCED_FROM edge per node, so a node with
+  // zero edges in the cache truly was never processed.
+  const processedSlugs = new Set(priorEdges.map(e => e.source_slug));
+  const remainingNodes = nodes.filter(n => !processedSlugs.has(n.slug));
+  if (priorEdges.length > 0) {
+    console.log(`  Resuming: ${processedSlugs.size} slugs already processed (${priorEdges.length} edges loaded), ${remainingNodes.length} nodes remaining\n`);
+  }
 
   // Build a compact summary of all nodes for Claude's reference
   const nodeIndex = nodes.map(n => ({
@@ -50,8 +72,8 @@ export async function discoverEdges(
   // Process nodes in batches of 5 for edge discovery
   const batchSize = 5;
 
-  for (let i = 0; i < nodes.length; i += batchSize) {
-    const batch = nodes.slice(i, i + batchSize);
+  for (let i = 0; i < remainingNodes.length; i += batchSize) {
+    const batch = remainingNodes.slice(i, i + batchSize);
     const batchText = batch
       .map(n => `### ${n.title} (${n.slug}, type: ${n.node_type})\n${n.content.slice(0, 2000)}`)
       .join("\n\n===\n\n");
@@ -107,9 +129,12 @@ Each object: {"source_slug": "...", "target_slug": "...", "edge_type": "...", "w
       console.warn(`  Failed to parse edges for batch ${i}: ${e}`);
     }
 
-    console.log(`  Batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(nodes.length / batchSize)}: ${allEdges.length} edges so far`);
+    console.log(`  Batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(remainingNodes.length / batchSize)}: ${allEdges.length} edges so far`);
 
-    if (i + batchSize < nodes.length) {
+    // Save partial progress so a mid-loop crash doesn't lose this batch's work.
+    await fs.writeFile(PARTIAL_CACHE, JSON.stringify(allEdges, null, 2));
+
+    if (i + batchSize < remainingNodes.length) {
       await new Promise(r => setTimeout(r, 1000));
     }
   }
@@ -140,5 +165,10 @@ Each object: {"source_slug": "...", "target_slug": "...", "edge_type": "...", "w
   }
 
   console.log(`\nDiscovered ${deduped.length} edges (${deduped.filter(e => e.edge_type !== "SOURCED_FROM").length} node-to-node, ${deduped.filter(e => e.edge_type === "SOURCED_FROM").length} SOURCED_FROM)\n`);
+
+  // Pass3 completed end-to-end. Drop the partial cache so a future clean run
+  // doesn't load stale resume data.
+  await fs.rm(PARTIAL_CACHE, { force: true });
+
   return deduped;
 }
