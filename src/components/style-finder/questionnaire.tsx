@@ -30,19 +30,16 @@ export function Questionnaire({ userId, onComplete }: QuestionnaireProps) {
     async function load() {
       try {
         const supabase = createBrowserClient();
-        const { data: authData } = await supabase.auth.getUser();
-        if (authData.user) {
-          const { data } = await supabase
-            .from("quiz_progress")
-            .select("answers, current_question")
-            .eq("user_id", authData.user.id)
-            .single() as { data: { answers: Record<string, string | string[] | number>; current_question: number } | null };
-          if (data) {
-            setAnswers(data.answers);
-            setCurrentIndex(data.current_question);
-            setLoaded(true);
-            return;
-          }
+        const { data } = await supabase
+          .from("quiz_progress")
+          .select("answers, current_question")
+          .eq("user_id", userId)
+          .maybeSingle() as { data: { answers: Record<string, string | string[] | number>; current_question: number } | null };
+        if (data) {
+          setAnswers(data.answers);
+          setCurrentIndex(data.current_question);
+          setLoaded(true);
+          return;
         }
       } catch {
         // Supabase not available, fall through to localStorage
@@ -74,23 +71,20 @@ export function Questionnaire({ userId, onComplete }: QuestionnaireProps) {
         // ignore
       }
 
-      // Debounced save to Supabase if authed
+      // Debounced save to Supabase
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
       saveTimerRef.current = setTimeout(async () => {
         try {
           const supabase = createBrowserClient();
-          const { data: authData } = await supabase.auth.getUser();
-          if (authData.user) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await (supabase.from("quiz_progress") as any)
-              .upsert({
-                user_id: authData.user.id,
-                answers: newAnswers,
-                current_question: newIndex,
-                experience_level: (newAnswers.experience as string) ?? null,
-                updated_at: new Date().toISOString(),
-              }, { onConflict: "user_id" });
-          }
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await (supabase.from("quiz_progress") as any)
+            .upsert({
+              user_id: userId,
+              answers: newAnswers,
+              current_question: newIndex,
+              experience_level: (newAnswers.experience as string) ?? null,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: "user_id" });
         } catch {
           // Supabase save failed, localStorage already saved above
         }
