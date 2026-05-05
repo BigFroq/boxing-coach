@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { fetchProfile, saveProfilePatch } from "@/lib/profile-client";
+import { ensureStyleProfileInDb } from "@/lib/style-profile-sync";
 import { track } from "@/lib/analytics";
 import type {
   EditableProfileField,
@@ -29,7 +30,13 @@ export function ProfileView({ userId }: { userId: string }) {
 
   useEffect(() => {
     let cancelled = false;
-    fetchProfile(userId)
+    // Backfill localStorage→DB before fetching so users with a legacy
+    // localStorage-only style profile still see their style snapshot here.
+    // Errors are non-fatal — the helper logs/telemeters and we still attempt
+    // the fetch (the user_profile table is independent of style_profiles).
+    ensureStyleProfileInDb(userId)
+      .catch(() => {})
+      .then(() => fetchProfile(userId))
       .then((res) => {
         if (cancelled) return;
         setProfile(res);

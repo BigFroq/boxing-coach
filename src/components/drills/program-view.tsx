@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Loader2 } from "lucide-react";
 import type { DrillProgram, Intensity, Context, TimeMin } from "@/lib/drill-program-types";
 import { DEFAULT_INTENSITY, DEFAULT_CONTEXT, DEFAULT_TIME_MIN } from "@/lib/drill-program-types";
+import { ensureStyleProfileInDb } from "@/lib/style-profile-sync";
 import { FilterPills } from "./filter-pills";
 import { SessionView } from "./session-view";
 import { BrowseView } from "./browse-view";
@@ -36,6 +37,17 @@ export function DrillProgramView({ userId, onSwitchTab }: Props) {
     setError(null);
     setIsEmpty(false);
     try {
+      // Make sure the user's style profile is in the DB before asking the
+      // server route for a drill program. Legacy users may have profiles only
+      // in localStorage; without this, /api/drill-program 404s and we render
+      // the "Find your style first" empty state for someone who clearly has
+      // a style on /style.
+      const sync = await ensureStyleProfileInDb(userId);
+      if (sync.status === "no-profile") {
+        setIsEmpty(true);
+        return;
+      }
+
       const res = await fetch("/api/drill-program", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
