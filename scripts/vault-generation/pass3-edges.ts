@@ -2,6 +2,22 @@
 // Pass 3: Discover edges between nodes + SOURCED_FROM edges to chunks
 import type { SynthesizedNode } from "./pass2-synthesize";
 import { callLLM } from "./llm-provider";
+import { withRetry } from "../../src/lib/retry";
+
+// withRetry's defaultShouldRetry only matches HTTP-shaped errors.
+// CLI mode (claude -p subprocess) throws "claude CLI exit N: ...", which
+// doesn't match the default. Without this, a single transient CLI failure
+// crashes the entire pipeline (which is what happened on the prior run).
+function shouldRetryLLM(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (err instanceof TypeError) return true;
+  if (/429|rate[\s_-]?limit/i.test(msg)) return true;
+  if (/\b5\d\d\b/.test(msg)) return true;
+  if (/timeout|timed?\s*out|ETIMEDOUT|ECONNRESET|ECONNREFUSED|EAI_AGAIN|ENOTFOUND/i.test(msg)) return true;
+  if (/overloaded/i.test(msg)) return true;
+  if (/claude CLI (exit|api error|output not JSON)/i.test(msg)) return true;
+  return false;
+}
 
 export interface DiscoveredEdge {
   source_slug: string;
@@ -40,7 +56,9 @@ export async function discoverEdges(
       .map(n => `### ${n.title} (${n.slug}, type: ${n.node_type})\n${n.content.slice(0, 2000)}`)
       .join("\n\n===\n\n");
 
-    const text = await callLLM({
+    const text = await withRetry(
+      () =>
+        callLLM({
       system: `You are discovering connections between nodes in a boxing knowledge graph.
 
 Available edge types:
@@ -69,7 +87,9 @@ Each object: {"source_slug": "...", "target_slug": "...", "edge_type": "...", "w
       user: `Discover edges for these nodes:\n\n${batchText}`,
       model: process.env.SYNTHESIS_MODEL ?? "claude-opus-4-6",
       maxTokens: 8192,
-    });
+        }),
+      { label: `pass3-batch-${i}`, maxAttempts: 4, shouldRetry: shouldRetryLLM }
+    );
 
     let jsonStr = text;
     const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
