@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 import { Questionnaire } from "./style-finder/questionnaire";
 import { DashboardView } from "./style-finder/dashboard-view";
@@ -9,6 +9,7 @@ import type { DimensionScores } from "@/data/fighter-profiles";
 import { computeDimensionScores } from "@/lib/dimension-scoring";
 import { matchFighters } from "@/lib/fighter-matching";
 import { createBrowserClient } from "@/lib/supabase-browser";
+import { ensureStyleProfileInDb } from "@/lib/style-profile-sync";
 import { allQuestions } from "@/data/questions";
 import { compareTopFighters, getMissingQuestionIds } from "@/lib/profile-freshness";
 import { mergeAnswersForRefinement } from "@/lib/style-profile-storage";
@@ -32,45 +33,51 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
   const [storedAnswers, setStoredAnswers] = useState<Record<string, string | string[] | number>>({});
   const [narrativeStale, setNarrativeStale] = useState(false);
   const [refinementOpen, setRefinementOpen] = useState(false);
-  const backfillFiredRef = useRef(false);
 
-  // Check for existing saved profile on mount
-  // Load saved profile on mount: query Supabase by anon userId, fall back to
-  // localStorage. If only localStorage has data, best-effort backfill to DB so
-  // /api/profile (server-side, service role) can read the same profile.
+  // Load saved profile on mount via the shared sync helper. The helper handles
+  // DB read + localStorage→DB backfill (so /drills and /me see the same row),
+  // dedups concurrent callers, and surfaces failures via console + telemetry
+  // instead of swallowing them silently.
   useEffect(() => {
     async function load() {
-      const supabase = createBrowserClient();
+      const sync = await ensureStyleProfileInDb(userId);
 
-      try {
-        const { data } = await supabase
-          .from("style_profiles")
-          .select("*")
-          .eq("user_id", userId)
-          .eq("is_current", true)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .maybeSingle() as { data: Record<string, unknown> | null };
-        if (data) {
-          setResult({
-            ...(data.ai_result as Omit<StyleProfileResult, "dimension_scores" | "matched_fighters" | "counter_fighters">),
-            dimension_scores: data.dimension_scores as DimensionScores,
-            matched_fighters: data.matched_fighters as StyleProfileResult["matched_fighters"],
-            counter_fighters: (data.counter_fighters as StyleProfileResult["counter_fighters"]) ?? [],
-          });
-          setPhysicalContext(data.physical_context as typeof physicalContext);
-          setExperienceLevel((data.experience_level as string) ?? "beginner");
-          setProfileId(data.id as string);
-          setStoredAnswers((data.answers as Record<string, string | string[] | number>) ?? {});
-          setNarrativeStale(Boolean(data.narrative_stale));
-          setView("dashboard");
-          return;
+      if (sync.status === "db-existing" || sync.status === "db-inserted") {
+        try {
+          const supabase = createBrowserClient();
+          const { data } = await supabase
+            .from("style_profiles")
+            .select("*")
+            .eq("id", sync.profileId)
+            .maybeSingle() as { data: Record<string, unknown> | null };
+          if (data) {
+            setResult({
+              ...(data.ai_result as Omit<StyleProfileResult, "dimension_scores" | "matched_fighters" | "counter_fighters">),
+              dimension_scores: data.dimension_scores as DimensionScores,
+              matched_fighters: data.matched_fighters as StyleProfileResult["matched_fighters"],
+              counter_fighters: (data.counter_fighters as StyleProfileResult["counter_fighters"]) ?? [],
+            });
+            setPhysicalContext(data.physical_context as typeof physicalContext);
+            setExperienceLevel((data.experience_level as string) ?? "beginner");
+            setProfileId(data.id as string);
+            setStoredAnswers((data.answers as Record<string, string | string[] | number>) ?? {});
+            setNarrativeStale(Boolean(data.narrative_stale));
+            setView("dashboard");
+            return;
+          }
+        } catch {
+          // fall through to localStorage if SELECT-by-id fails (rare)
         }
-      } catch {
-        // Supabase unavailable — fall through to localStorage.
       }
 
-      // Fallback: check localStorage
+      if (sync.status === "no-profile") {
+        // Genuine "user has never taken the quiz" — stay on quiz view.
+        return;
+      }
+
+      // sync.status === "error" OR SELECT-by-id missed — render from
+      // localStorage so the user still sees their profile even when the DB
+      // round trip is broken.
       try {
         const saved = localStorage.getItem("boxing-coach-style-profile");
         if (saved) {
@@ -84,34 +91,6 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
           setStoredAnswers(parsed.answers ?? {});
           setNarrativeStale(Boolean(parsed.narrativeStale));
           setView("dashboard");
-
-          // Backfill: legacy localStorage-only profile → DB so /me can see it.
-          // Ref-guard prevents StrictMode double-fire from inserting twice before
-          // the first INSERT lands and the SELECT could short-circuit on row 2.
-          if (backfillFiredRef.current) return;
-          backfillFiredRef.current = true;
-          (async () => {
-            try {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const { data: newRow } = await (supabase.from("style_profiles") as any)
-                .insert({
-                  user_id: userId,
-                  answers: parsed.answers ?? {},
-                  dimension_scores: parsed.result.dimension_scores,
-                  physical_context: parsed.physicalContext,
-                  experience_level: parsed.experienceLevel ?? "beginner",
-                  ai_result: parsed.result,
-                  matched_fighters: parsed.result.matched_fighters ?? [],
-                  counter_fighters: parsed.result.counter_fighters ?? [],
-                  narrative_stale: Boolean(parsed.narrativeStale),
-                })
-                .select("id")
-                .single();
-              if (newRow) setProfileId(newRow.id as string);
-            } catch {
-              // best-effort
-            }
-          })();
         }
       } catch {
         // ignore
