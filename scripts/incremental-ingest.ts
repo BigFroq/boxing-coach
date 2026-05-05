@@ -7,7 +7,8 @@ dotenv.config({ path: ".env.local" });
 import { promises as fs } from "fs";
 import path from "path";
 import { createClient } from "@supabase/supabase-js";
-import Anthropic from "@anthropic-ai/sdk";
+import { callLLM } from "./vault-generation/llm-provider";
+import { withRetry } from "../src/lib/retry";
 
 const CONTENT_DIR = path.join(process.cwd(), "content");
 const TRANSCRIPTS_DIR = path.join(CONTENT_DIR, "transcripts");
@@ -20,9 +21,20 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+// withRetry's defaultShouldRetry only matches HTTP-shaped errors (429/5xx/timeout/overloaded).
+// CLI mode (claude -p subprocess) throws "claude CLI exit N: ...", "claude CLI api error: ...",
+// or "claude CLI output not JSON: ..." — none of which match the default. Without this,
+// withRetry would fail-fast on every CLI failure, defeating the wrapper.
+function shouldRetryLLM(err: unknown): boolean {
+  const msg = err instanceof Error ? err.message : String(err);
+  if (err instanceof TypeError) return true;
+  if (/429|rate[\s_-]?limit/i.test(msg)) return true;
+  if (/\b5\d\d\b/.test(msg)) return true;
+  if (/timeout|timed?\s*out|ETIMEDOUT|ECONNRESET|ECONNREFUSED|EAI_AGAIN|ENOTFOUND/i.test(msg)) return true;
+  if (/overloaded/i.test(msg)) return true;
+  if (/claude CLI (exit|api error|output not JSON)/i.test(msg)) return true;
+  return false;
+}
 
 // --- Types ---
 
@@ -147,20 +159,22 @@ async function extractMetadataBatch(chunks: RawChunk[]): Promise<ChunkMetadata[]
       .map((c, idx) => `[CHUNK ${idx}]\n${c.content.slice(0, 1500)}`)
       .join("\n\n");
 
-    const response = await anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
-      max_tokens: 4096,
-      system: `Extract metadata from boxing content chunks. For each chunk, identify:
+    const text = await withRetry(
+      () =>
+        callLLM({
+          model: "claude-opus-4-7",
+          maxTokens: 4096,
+          system: `Extract metadata from boxing content chunks. For each chunk, identify:
 - techniques: specific boxing techniques mentioned (e.g., "jab", "hook", "uppercut", "kinetic chain", "phase 1", "phase 2", "hip rotation", "follow through", "stance")
 - fighters: fighter names mentioned (e.g., "Canelo", "GGG", "Tyson", "Beterbiev")
 - category: one of "mechanics" (punch technique/biomechanics), "analysis" (fight breakdown/fighter study), "drill" (exercises/training), "injury_prevention" (shoulder stability/neck/rehab), "theory" (physics/concepts/general principles)
 
 Return a JSON array with one object per chunk, in order. Each object: {"techniques": [...], "fighters": [...], "category": "..."}
 Return ONLY the JSON array, no markdown.`,
-      messages: [{ role: "user", content: batchPrompt }],
-    });
-
-    const text = response.content[0].type === "text" ? response.content[0].text : "[]";
+          user: batchPrompt,
+        }),
+      { label: `metadata-batch-${i}`, maxAttempts: 4, shouldRetry: shouldRetryLLM }
+    );
     let jsonStr = text;
     const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
     if (jsonMatch) jsonStr = jsonMatch[1].trim();
@@ -282,19 +296,16 @@ async function matchChunkToNodes(
 
   const nodeList = nodes.map((n) => `- ${n.slug} (${n.title})`).join("\n");
 
-  const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 2048,
-    system: `Given a boxing content chunk and a list of existing knowledge graph nodes, identify which nodes this chunk is related to. Return a JSON array of { slug: string, relevance: "high" | "medium" | "low" }. Only include nodes that are genuinely mentioned or directly relevant. Return ONLY the JSON array, no markdown.`,
-    messages: [
-      {
-        role: "user",
-        content: `Chunk content: ${chunkContent.slice(0, 2000)}\n\nExisting nodes:\n${nodeList}`,
-      },
-    ],
-  });
-
-  const text = response.content[0].type === "text" ? response.content[0].text : "[]";
+  const text = await withRetry(
+    () =>
+      callLLM({
+        model: "claude-opus-4-7",
+        maxTokens: 2048,
+        system: `Given a boxing content chunk and a list of existing knowledge graph nodes, identify which nodes this chunk is related to. Return a JSON array of { slug: string, relevance: "high" | "medium" | "low" }. Only include nodes that are genuinely mentioned or directly relevant. Return ONLY the JSON array, no markdown.`,
+        user: `Chunk content: ${chunkContent.slice(0, 2000)}\n\nExisting nodes:\n${nodeList}`,
+      }),
+    { label: `node-match`, maxAttempts: 4, shouldRetry: shouldRetryLLM }
+  );
   let jsonStr = text;
   const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (jsonMatch) jsonStr = jsonMatch[1].trim();
@@ -387,6 +398,7 @@ async function createSourcedFromEdges(
 
 async function main() {
   console.log("=== Punch Doctor AI — Incremental Ingest ===\n");
+  console.log(`Provider: ${process.env.SYNTHESIS_PROVIDER ?? "sdk"} | Model: claude-opus-4-7\n`);
 
   // 1. Find new transcripts
   console.log("1. Scanning for new transcripts...");
