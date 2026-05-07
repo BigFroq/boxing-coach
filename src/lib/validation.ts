@@ -91,3 +91,7 @@ export const clipReviewRequestSchema = z.object({
   filename: z.string().max(200).optional(),
   userId: z.string().max(128).optional(),
 });
+
+export const dailyDrillPickPatchSchema = z.object({
+  action: z.enum(["complete", "skip"]),
+});
