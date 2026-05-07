@@ -89,6 +89,11 @@ function AppContent() {
     }
   }, [userId]);
 
+  // Per-submit provider for ChatTab. Re-fetches at each chat submit so the
+  // coach sees clips logged mid-session. Known race: if saveClipLog is still
+  // in-flight when submit fires, the new clip may not yet be in the DB.
+  // Accepted tradeoff — even with the race, strictly better than the previous
+  // "stale until page reload" behavior.
   const getClipHistory = useCallback(async (): Promise<Record<string, unknown>> => {
     if (!userId || userId === "anon") return {};
     const r = await fetchRecentClips(userId, 60);
