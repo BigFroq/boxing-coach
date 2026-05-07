@@ -5,6 +5,7 @@ import { Loader2, TrendingUp, Target, Calendar, AlertTriangle } from "lucide-rea
 import { formatRelativeTime } from "@/lib/relative-time";
 import { createBrowserClient } from "@/lib/supabase-browser";
 import { TrendGraph } from "@/components/clip-log/trend-graph";
+import { TodayDrillCard } from "@/components/today-drill/card";
 
 interface FocusArea {
   id: string;
@@ -128,6 +129,12 @@ export function CoachProgress({ userId }: { userId: string }) {
 
   return (
     <div className="h-full overflow-y-auto px-4 sm:px-6 py-4 space-y-6">
+      {userId && userId !== "anon" && (
+        <div className="mb-4">
+          <TodayDrillCard userId={userId} />
+        </div>
+      )}
+
       {/* Streak chip */}
       {engagement && engagement.current_streak_days >= 1 && (
         <div className="inline-flex items-center gap-2 rounded-full bg-orange-500/10 px-3 py-1.5 text-sm">
