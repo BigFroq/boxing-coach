@@ -80,7 +80,7 @@ export function ReactionTap({ userId, onBack }: ReactionTapProps) {
 
   if (state.kind === "idle") {
     return (
-      <div className="px-4 py-6 space-y-4">
+      <div className="px-4 py-6 space-y-4 max-w-md mx-auto">
         <button onClick={onBack} className="text-xs text-muted">← Back to games</button>
         <h2 className="text-lg font-semibold">Reaction Tap</h2>
         <p className="text-sm text-muted">
@@ -122,7 +122,7 @@ export function ReactionTap({ userId, onBack }: ReactionTapProps) {
   if (state.kind === "round-done") {
     const avg = state.attempts.reduce((a, b) => a + b, 0) / state.attempts.length;
     return (
-      <div className="px-4 py-6 space-y-4">
+      <div className="px-4 py-6 space-y-4 max-w-md mx-auto">
         <h2 className="text-lg font-semibold">Round complete</h2>
         <div className="rounded-xl bg-surface-hover p-5">
           <div className="text-3xl font-bold">{Math.round(avg)} ms</div>

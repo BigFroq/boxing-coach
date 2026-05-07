@@ -141,7 +141,7 @@ export function PunchPrediction({ userId, onBack }: PunchPredictionProps) {
 
   if (state.kind === "no-content") {
     return (
-      <div className="px-4 py-6 space-y-3">
+      <div className="px-4 py-6 space-y-3 max-w-md mx-auto">
         <button onClick={onBack} className="text-xs text-muted">← Back to games</button>
         <h2 className="text-lg font-semibold">Punch Prediction</h2>
         <div className="rounded-xl bg-surface-hover p-5 text-center text-sm text-muted">
@@ -153,7 +153,7 @@ export function PunchPrediction({ userId, onBack }: PunchPredictionProps) {
 
   if (state.kind === "idle") {
     return (
-      <div className="px-4 py-6 space-y-4">
+      <div className="px-4 py-6 space-y-4 max-w-md mx-auto">
         <button onClick={onBack} className="text-xs text-muted">← Back to games</button>
         <h2 className="text-lg font-semibold">Punch Prediction</h2>
         <p className="text-sm text-muted">
@@ -176,7 +176,7 @@ export function PunchPrediction({ userId, onBack }: PunchPredictionProps) {
     const accuracyPct = Math.round((totalPoints / (PROMPTS_PER_ROUND * 100)) * 100);
     const correct = state.answers.filter((a) => a.guess === a.correctLabel).length;
     return (
-      <div className="px-4 py-6 space-y-4">
+      <div className="px-4 py-6 space-y-4 max-w-md mx-auto">
         <h2 className="text-lg font-semibold">Round complete</h2>
         <div className="rounded-xl bg-surface-hover p-5">
           <div className="text-3xl font-bold">{accuracyPct}%</div>
@@ -203,7 +203,7 @@ export function PunchPrediction({ userId, onBack }: PunchPredictionProps) {
   if (state.kind === "showing") {
     const clip = state.clips[state.idx];
     return (
-      <div className="px-4 py-6 space-y-3">
+      <div className="px-4 py-6 space-y-3 max-w-md mx-auto">
         <div className="text-xs text-muted">
           {state.idx + 1} / {state.clips.length}
         </div>
@@ -220,7 +220,7 @@ export function PunchPrediction({ userId, onBack }: PunchPredictionProps) {
 
   // answering
   return (
-    <div className="px-4 py-6 space-y-4">
+    <div className="px-4 py-6 space-y-4 max-w-md mx-auto">
       <div className="text-xs text-muted">
         {state.idx + 1} / {state.clips.length} — what punch?
       </div>

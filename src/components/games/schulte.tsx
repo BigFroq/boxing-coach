@@ -98,19 +98,20 @@ export function Schulte({ userId, onBack }: SchulteProps) {
   }
 
   return (
-    <div className="px-4 py-6">
-      <div className="mb-4 text-sm text-muted">
-        Find: <span className="text-foreground font-bold">{state.nextNumber}</span>
+    <div className="px-4 py-6 max-w-md mx-auto">
+      <div className="mb-4 text-center">
+        <div className="text-xs uppercase tracking-wide text-muted mb-1">Find</div>
+        <div className="text-5xl font-bold text-foreground">{state.nextNumber}</div>
       </div>
       <div
-        className="grid gap-1.5"
+        className="grid gap-2"
         style={{ gridTemplateColumns: `repeat(${GRID_SIZE}, minmax(0, 1fr))` }}
       >
         {state.cells.map((n) => (
           <button
             key={n}
             onClick={() => handleTap(n)}
-            className="aspect-square rounded-md bg-surface-hover hover:bg-surface text-base font-medium"
+            className="aspect-square rounded-lg bg-surface-hover hover:bg-surface text-xl font-semibold transition-colors"
           >
             {n}
           </button>
