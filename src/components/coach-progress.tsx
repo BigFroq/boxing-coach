@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Loader2, TrendingUp, Target, Calendar, AlertTriangle } from "lucide-react";
 import { formatRelativeTime } from "@/lib/relative-time";
+import { createBrowserClient } from "@/lib/supabase-browser";
 
 interface FocusArea {
   id: string;
@@ -49,12 +50,35 @@ interface ProgressData {
 export function CoachProgress({ userId }: { userId: string }) {
   const [data, setData] = useState<ProgressData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [engagement, setEngagement] = useState<{
+    current_streak_days: number;
+    longest_streak_days: number;
+  } | null>(null);
 
   useEffect(() => {
     fetch(`/api/coach/progress?userId=${userId}`)
       .then((r) => r.json())
       .then((d) => { setData(d); setLoading(false); })
       .catch(() => setLoading(false));
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId || userId === "anon") return;
+    let cancelled = false;
+    (async () => {
+      const supabase = createBrowserClient();
+      const { data } = await supabase
+        .from("user_engagement")
+        .select("current_streak_days, longest_streak_days")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (!cancelled && data) {
+        setEngagement(data as { current_streak_days: number; longest_streak_days: number });
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [userId]);
 
   if (loading) {
@@ -100,6 +124,19 @@ export function CoachProgress({ userId }: { userId: string }) {
 
   return (
     <div className="h-full overflow-y-auto px-4 sm:px-6 py-4 space-y-6">
+      {/* Streak chip */}
+      {engagement && engagement.current_streak_days >= 1 && (
+        <div className="inline-flex items-center gap-2 rounded-full bg-orange-500/10 px-3 py-1.5 text-sm">
+          <span className="text-orange-400">🔥</span>
+          <span className="font-medium">{engagement.current_streak_days} day streak</span>
+          {engagement.longest_streak_days > engagement.current_streak_days && (
+            <span className="text-xs text-muted">
+              · best {engagement.longest_streak_days}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Stats bar */}
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-xl bg-surface-hover p-4 text-center">
