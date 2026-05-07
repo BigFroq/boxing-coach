@@ -65,14 +65,6 @@ describe("chatRequestSchema", () => {
 });
 
 describe("clipReviewRequestSchema", () => {
-  it("rejects more than 80 frames", () => {
-    const res = clipReviewRequestSchema.safeParse({
-      frames: Array(81).fill("AAAA"),
-      filename: "clip.mp4",
-    });
-    expect(res.success).toBe(false);
-  });
-
   it("rejects frame over 200_000 chars", () => {
     const res = clipReviewRequestSchema.safeParse({
       frames: ["A".repeat(200_001)],

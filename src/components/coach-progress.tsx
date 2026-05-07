@@ -67,11 +67,14 @@ export function CoachProgress({ userId }: { userId: string }) {
     let cancelled = false;
     (async () => {
       const supabase = createBrowserClient();
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("user_engagement")
         .select("current_streak_days, longest_streak_days")
         .eq("user_id", userId)
         .maybeSingle();
+      if (error) {
+        console.error("[coach-progress] engagement fetch failed:", error);
+      }
       if (!cancelled && data) {
         setEngagement(data as { current_streak_days: number; longest_streak_days: number });
       }

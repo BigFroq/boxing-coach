@@ -20,5 +20,6 @@ CREATE INDEX IF NOT EXISTS idx_user_engagement_last_seen
 
 ALTER TABLE user_engagement ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow all on user_engagement" ON user_engagement;
 CREATE POLICY "Allow all on user_engagement"
   ON user_engagement FOR ALL USING (true) WITH CHECK (true);
