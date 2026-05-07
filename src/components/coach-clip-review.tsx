@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { Upload, Loader2, AlertCircle, RotateCcw } from "lucide-react";
 import { saveClipLog, fetchRecentClips } from "@/lib/clip-log-storage";
 import type { ClipLog } from "@/lib/clip-log-types";
+import { DiffCard } from "@/components/clip-log/diff-card";
 
 interface AnalysisResult {
   summary: string;
@@ -16,6 +17,14 @@ interface CoachClipReviewProps {
   userId?: string;
 }
 
+function getPhaseScore(
+  analysis: { phases: { phase: string; score?: number }[] },
+  phase: string
+): number | null {
+  const p = analysis.phases.find((x) => x.phase === phase);
+  return typeof p?.score === "number" ? p.score : null;
+}
+
 export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -24,6 +33,7 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [recentClips, setRecentClips] = useState<ClipLog[]>([]);
+  const [priorClipForDiff, setPriorClipForDiff] = useState<ClipLog | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -169,6 +179,7 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
 
       const result = await response.json();
       setAnalysis(result);
+      setPriorClipForDiff(recentClips[0] ?? null);
 
       // Compute thumbnail from middle frame and persist asynchronously.
       // Failure does NOT surface to the user — analysis UX still works,
@@ -205,6 +216,17 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
           <h3 className="text-sm font-semibold mb-2">Summary</h3>
           <p className="text-sm text-muted leading-relaxed">{analysis.summary}</p>
         </div>
+
+        <DiffCard
+          current={{
+            loading: getPhaseScore(analysis, "Loading"),
+            hipExplosion: getPhaseScore(analysis, "Hip Explosion"),
+            energyTransfer: getPhaseScore(analysis, "Energy Transfer"),
+            followThrough: getPhaseScore(analysis, "Follow Through"),
+            overall: null,
+          }}
+          previous={priorClipForDiff}
+        />
 
         <div className="space-y-3">
           <h3 className="text-sm font-semibold">Phase Breakdown</h3>
