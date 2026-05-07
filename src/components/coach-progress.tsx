@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Loader2, TrendingUp, Target, Calendar, AlertTriangle } from "lucide-react";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { createBrowserClient } from "@/lib/supabase-browser";
+import { TrendGraph } from "@/components/clip-log/trend-graph";
 
 interface FocusArea {
   id: string;
@@ -137,6 +138,12 @@ export function CoachProgress({ userId }: { userId: string }) {
               · best {engagement.longest_streak_days}
             </span>
           )}
+        </div>
+      )}
+
+      {userId && userId !== "anon" && (
+        <div className="mb-4">
+          <TrendGraph userId={userId} />
         </div>
       )}
 
