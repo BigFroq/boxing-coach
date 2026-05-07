@@ -23,6 +23,9 @@ import { track, identify } from "@/lib/analytics";
 import { ensureUserEngagement } from "@/lib/user-engagement-sync";
 import { initialsFrom } from "@/lib/profile-initials";
 import { DrillProgramView } from "@/components/drills/program-view";
+import { fetchRecentClips } from "@/lib/clip-log-storage";
+import { aggregateClipHistory } from "@/lib/clip-log-aggregation";
+import type { ClipHistoryContext } from "@/lib/clip-log-types";
 
 const tabs = [
   { id: "technique", label: "Technique", shortLabel: "Technique", icon: MessageSquare, description: "Ask about punching mechanics" },
@@ -46,6 +49,7 @@ function getAnonymousUserId(): string {
 function AppContent() {
   const [activeTab, setActiveTab] = useState<TabId>("technique");
   const [coachQuery, setCoachQuery] = useState<string | undefined>();
+  const [clipHistory, setClipHistory] = useState<ClipHistoryContext | null>(null);
   const userId = getAnonymousUserId();
 
   useEffect(() => {
@@ -85,6 +89,22 @@ function AppContent() {
     if (userId && userId !== "anon") {
       void ensureUserEngagement(userId);
     }
+  }, [userId]);
+
+  useEffect(() => {
+    // Fetch recent clips and aggregate into clip history context for ChatTab.
+    if (!userId || userId === "anon") return;
+    let cancelled = false;
+    (async () => {
+      const r = await fetchRecentClips(userId, 60);
+      if (cancelled) return;
+      if (r.status === "ok") {
+        setClipHistory(aggregateClipHistory(r.clips, new Date()));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [userId]);
 
   useEffect(() => {
@@ -163,6 +183,7 @@ function AppContent() {
               ]}
               initialQuery={coachQuery}
               userId={userId}
+              extraContext={clipHistory ? { clipHistory } : undefined}
             />
           </ErrorBoundary>
         )}
@@ -190,6 +211,7 @@ function AppContent() {
                     { text: "What's the right way to throw a medicine ball for punching power?", Icon: Target },
                   ]}
                   userId={userId}
+                  extraContext={clipHistory ? { clipHistory } : undefined}
                 />
               </div>
             </ErrorBoundary>
