@@ -78,9 +78,9 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
     }
 
     const duration = video.duration;
-    if (duration > 20) {
+    if (duration > 40) {
       setError(
-        "Clip must be under 20 seconds. This video is " +
+        "Clip must be under 40 seconds. This video is " +
           Math.round(duration) +
           "s."
       );
@@ -88,7 +88,7 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
     }
 
     const fps = 5;
-    const totalFrames = Math.min(Math.floor(duration * fps), 60);
+    const totalFrames = Math.min(Math.floor(duration * fps), 80);
     const interval = duration / totalFrames;
 
     const maxW = 640,
@@ -244,7 +244,7 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
         >
           <Upload className="mx-auto mb-3 h-8 w-8 text-muted" />
           <p className="text-sm font-medium mb-1">Upload a short clip</p>
-          <p className="text-xs text-muted">Up to 20 seconds — single punch or combination</p>
+          <p className="text-xs text-muted">Up to 40 seconds — single punch, combination, or short flurry</p>
           <p className="text-xs text-muted mt-1">MP4, MOV, or WebM • Max 50MB</p>
         </div>
       ) : (
