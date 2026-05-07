@@ -43,7 +43,10 @@ export function TrendGraph({ userId }: TrendGraphProps) {
       if (cancelled) return;
       if (r.status === "ok") {
         setClipCount(r.clips.length);
-        setPoints(computeRollingAvgTrend(r.clips, ROLL));
+        // fetchRecentClips returns DESC (newest first); computeRollingAvgTrend
+        // expects chronological input for left-to-right chart rendering.
+        const chronological = [...r.clips].reverse();
+        setPoints(computeRollingAvgTrend(chronological, ROLL));
       }
       setLoaded(true);
     })();

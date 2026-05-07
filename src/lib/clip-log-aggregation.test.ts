@@ -44,7 +44,7 @@ describe("aggregateClipHistory", () => {
     expect(ctx.trend).toBeUndefined();
   });
 
-  it("omits trend until there are at least 6 clips (need 5+5 split, but we ship at 6)", () => {
+  it("omits trend until there are at least 10 clips (need 5+5 split)", () => {
     const clips = Array.from({ length: 5 }, (_, i) => makeClip(i, { overall: 5 + i }));
     const ctx = aggregateClipHistory(clips, today);
     expect(ctx.totalClips).toBe(5);
