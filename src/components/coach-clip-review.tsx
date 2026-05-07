@@ -5,6 +5,7 @@ import { Upload, Loader2, AlertCircle, RotateCcw } from "lucide-react";
 import { saveClipLog, fetchRecentClips } from "@/lib/clip-log-storage";
 import type { ClipLog } from "@/lib/clip-log-types";
 import { DiffCard } from "@/components/clip-log/diff-card";
+import { Timeline } from "@/components/clip-log/timeline";
 
 interface AnalysisResult {
   summary: string;
@@ -292,16 +293,19 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
       />
 
       {!videoFile ? (
-        <div
-          onClick={() => fileInputRef.current?.click()}
-          onDrop={handleDrop}
-          onDragOver={(e) => e.preventDefault()}
-          className="w-full max-w-sm rounded-xl border-2 border-dashed border-border hover:border-accent/50 p-8 text-center cursor-pointer transition-colors"
-        >
-          <Upload className="mx-auto mb-3 h-8 w-8 text-muted" />
-          <p className="text-sm font-medium mb-1">Upload a short clip</p>
-          <p className="text-xs text-muted">Up to 40 seconds — single punch, combination, or short flurry</p>
-          <p className="text-xs text-muted mt-1">MP4, MOV, or WebM • Max 50MB</p>
+        <div className="w-full max-w-md space-y-6">
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            onDrop={handleDrop}
+            onDragOver={(e) => e.preventDefault()}
+            className="w-full rounded-xl border-2 border-dashed border-border hover:border-accent/50 p-8 text-center cursor-pointer transition-colors"
+          >
+            <Upload className="mx-auto mb-3 h-8 w-8 text-muted" />
+            <p className="text-sm font-medium mb-1">Upload a short clip</p>
+            <p className="text-xs text-muted">Up to 40 seconds — single punch, combination, or short flurry</p>
+            <p className="text-xs text-muted mt-1">MP4, MOV, or WebM • Max 50MB</p>
+          </div>
+          <Timeline clips={recentClips} />
         </div>
       ) : (
         <div className="w-full max-w-sm space-y-4">
