@@ -20,6 +20,7 @@ import { CoachTab } from "@/components/coach-tab";
 import { StyleFinderTab } from "@/components/style-finder-tab";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { track, identify } from "@/lib/analytics";
+import { ensureUserEngagement } from "@/lib/user-engagement-sync";
 import { initialsFrom } from "@/lib/profile-initials";
 import { DrillProgramView } from "@/components/drills/program-view";
 
@@ -75,6 +76,15 @@ function AppContent() {
   useEffect(() => {
     // Identify the anon user in PostHog so we can track cohorts across sessions.
     if (userId && userId !== "anon") identify(userId);
+  }, [userId]);
+
+  useEffect(() => {
+    // Track per-user return cadence — feeds the streak chip and D1/D7/D30
+    // cohort metrics. Single-flight inside the helper handles StrictMode
+    // double-mount.
+    if (userId && userId !== "anon") {
+      void ensureUserEngagement(userId);
+    }
   }, [userId]);
 
   useEffect(() => {
