@@ -96,8 +96,13 @@ export function CoachProgress({ userId }: { userId: string }) {
 
   if (!data || data.stats.totalSessions === 0) {
     return (
-      <div className="flex h-full items-center justify-center px-6">
-        <div className="text-center">
+      <div className="h-full overflow-y-auto px-4 sm:px-6 py-4">
+        {userId && userId !== "anon" && (
+          <div className="mb-4">
+            <TodayDrillCard userId={userId} />
+          </div>
+        )}
+        <div className="flex flex-col items-center justify-center text-center py-12">
           <Calendar className="mx-auto mb-3 h-10 w-10 text-muted" />
           <p className="font-medium">No sessions yet</p>
           <p className="mt-1 text-sm text-muted">Log your first training session to start tracking progress.</p>

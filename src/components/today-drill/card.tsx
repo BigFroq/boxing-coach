@@ -75,7 +75,7 @@ export function TodayDrillCard({ userId }: TodayDrillCardProps) {
     }
     try {
       const res = await fetch(
-        `/api/coach/today-drill?userId=${encodeURIComponent(userId)}`,
+        `/api/coach/today-drill?userId=${encodeURIComponent(userId)}&today=${encodeURIComponent(state.pick.drillDate)}`,
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
