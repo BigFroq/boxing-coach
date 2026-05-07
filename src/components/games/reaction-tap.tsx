@@ -62,7 +62,7 @@ export function ReactionTap({ userId, onBack }: ReactionTapProps) {
           });
         }
       } else {
-        setTimeout(() => startAttempt(nextIdx), 600);
+        timerRef.current = setTimeout(() => startAttempt(nextIdx), 600);
       }
     }
   }

@@ -26,6 +26,13 @@ export async function POST(request: NextRequest) {
     }
     const { userId, gameType, scoreValue, scoreUnit } = parsed.data;
 
+    if (userId === "anon") {
+      return NextResponse.json(
+        { status: "error", message: "Login required to save scores" },
+        { status: 400 }
+      );
+    }
+
     if (scoreUnit !== unitForGameType(gameType)) {
       return NextResponse.json(
         { status: "error", message: "scoreUnit doesn't match gameType" },

@@ -12,6 +12,7 @@ import fs from "fs/promises";
 import path from "path";
 import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
+import { withRetry } from "../../src/lib/retry";
 
 const SOURCE_DIR = path.join(__dirname, "source-clips");
 
@@ -119,7 +120,10 @@ async function main() {
     const buf = await fs.readFile(path.join(SOURCE_DIR, filename));
     const imageB64 = buf.toString("base64");
     console.log(`Labeling: ${filename} ...`);
-    const result = await labelOne(anthropic, imageB64);
+    const result = await withRetry(
+      () => labelOne(anthropic, imageB64),
+      { label: `label-${filename}`, maxAttempts: 3 }
+    );
 
     if (!result || result.punch_label === null) {
       console.log(`  -> skipped (unclear setup)`);

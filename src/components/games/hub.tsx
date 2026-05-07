@@ -75,6 +75,11 @@ export function GamesHub({ userId }: HubProps) {
         <h2 className="text-lg font-semibold">Games</h2>
         <p className="text-sm text-muted">Quick reflex challenges and pattern-recognition fun.</p>
       </div>
+      {(!userId || userId === "anon") && (
+        <div className="rounded-xl bg-yellow-500/10 border border-yellow-500/20 p-3 text-xs text-muted">
+          Take the <a href="/?tab=style" className="text-accent underline">style quiz</a> first to save your scores.
+        </div>
+      )}
       <div className="space-y-2">
         {GAMES.map((g) => {
           const Icon = g.icon;

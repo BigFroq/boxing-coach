@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
     // Fetch a wider pool than count, exclude seen, shuffle in memory.
     let query = supabase.from("punch_prediction_clips").select("*").limit(count * 4);
     if (excludeIds.length > 0) {
-      query = query.not("id", "in", `(${excludeIds.map((id) => `"${id}"`).join(",")})`);
+      query = query.not("id", "in", `(${excludeIds.join(",")})`);
     }
 
     const { data, error } = await query;
