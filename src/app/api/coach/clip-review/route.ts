@@ -41,21 +41,31 @@ You are analyzing a DENSE sequence of frames (5 frames per second) from a short 
 - Stance too narrow or too wide
 - No weight shift in loading phase
 
+## Scoring rubric (per phase)
+
+For each phase, return an integer score 1–10 calibrated against textbook technique:
+- 1–3 — needs significant work (basic alignment off, sequence broken)
+- 4–6 — developing (form recognizable, key flaws present)
+- 7–8 — competent (textbook execution, minor refinements possible)
+- 9–10 — elite (fight-ready precision)
+
+Score against the platonic ideal, NOT against the user's previous attempts. Be honest, not generous.
+
 ## Response Format
 Return a JSON object:
 {
   "summary": "2-3 sentence overall assessment",
   "phases": [
-    { "phase": "Loading", "feedback": "what you observe" },
-    { "phase": "Hip Explosion", "feedback": "what you observe" },
-    { "phase": "Energy Transfer", "feedback": "what you observe" },
-    { "phase": "Follow Through", "feedback": "what you observe" }
+    { "phase": "Loading", "feedback": "what you observe", "score": 7 },
+    { "phase": "Hip Explosion", "feedback": "what you observe", "score": 6 },
+    { "phase": "Energy Transfer", "feedback": "what you observe", "score": 7 },
+    { "phase": "Follow Through", "feedback": "what you observe", "score": 5 }
   ],
   "strengths": ["specific strength observed"],
   "improvements": ["specific improvement needed"]
 }
 
-Be specific about what you SEE in the frames. Reference the frame sequence when relevant (e.g., "In the early frames... by mid-sequence..."). Be encouraging but honest.`;
+Be specific about what you SEE in the frames. Reference the frame sequence when relevant (e.g., "In the early frames... by mid-sequence..."). Be encouraging but honest. Score honestly — inflated scores rob the user of useful feedback.`;
 
 export async function POST(request: NextRequest) {
   try {
