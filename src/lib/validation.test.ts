@@ -65,9 +65,9 @@ describe("chatRequestSchema", () => {
 });
 
 describe("clipReviewRequestSchema", () => {
-  it("rejects more than 60 frames", () => {
+  it("rejects more than 80 frames", () => {
     const res = clipReviewRequestSchema.safeParse({
-      frames: Array(61).fill("AAAA"),
+      frames: Array(81).fill("AAAA"),
       filename: "clip.mp4",
     });
     expect(res.success).toBe(false);
@@ -87,5 +87,29 @@ describe("clipReviewRequestSchema", () => {
       filename: "clip.mp4",
     });
     expect(res.success).toBe(true);
+  });
+});
+
+describe("clipReviewRequestSchema (frame cap)", () => {
+  it("accepts 80 frames", () => {
+    const frames = Array.from({ length: 80 }, () => "x");
+    const res = clipReviewRequestSchema.safeParse({ frames });
+    expect(res.success).toBe(true);
+  });
+
+  it("rejects 81 frames", () => {
+    const frames = Array.from({ length: 81 }, () => "x");
+    const res = clipReviewRequestSchema.safeParse({ frames });
+    expect(res.success).toBe(false);
+  });
+
+  it("accepts 1 frame (lower bound unchanged)", () => {
+    const res = clipReviewRequestSchema.safeParse({ frames: ["x"] });
+    expect(res.success).toBe(true);
+  });
+
+  it("rejects 0 frames", () => {
+    const res = clipReviewRequestSchema.safeParse({ frames: [] });
+    expect(res.success).toBe(false);
   });
 });
