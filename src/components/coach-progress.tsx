@@ -107,6 +107,13 @@ export function CoachProgress({ userId }: { userId: string }) {
           <p className="font-medium">No sessions yet</p>
           <p className="mt-1 text-sm text-muted">Log your first training session to start tracking progress.</p>
         </div>
+        <div className="rounded-xl bg-surface-hover border border-accent/20 p-4 mt-6">
+          <div className="text-[10px] text-accent uppercase tracking-wide mb-1.5 font-semibold">Coming soon</div>
+          <div className="text-sm font-semibold mb-1">Your coach with memory</div>
+          <p className="text-xs text-muted leading-relaxed">
+            Multi-day training programs that adjust to how you&apos;re feeling. Proactive check-ins. Coach remembers every clip, every session, every breakthrough — your full training arc.
+          </p>
+        </div>
       </div>
     );
   }
@@ -327,6 +334,14 @@ export function CoachProgress({ userId }: { userId: string }) {
             );
           })}
         </div>
+      </div>
+
+      <div className="rounded-xl bg-surface-hover border border-accent/20 p-4 mt-6">
+        <div className="text-[10px] text-accent uppercase tracking-wide mb-1.5 font-semibold">Coming soon</div>
+        <div className="text-sm font-semibold mb-1">Your coach with memory</div>
+        <p className="text-xs text-muted leading-relaxed">
+          Multi-day training programs that adjust to how you&apos;re feeling. Proactive check-ins. Coach remembers every clip, every session, every breakthrough — your full training arc.
+        </p>
       </div>
     </div>
   );

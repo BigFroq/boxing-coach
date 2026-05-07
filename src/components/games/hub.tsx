@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Zap, Grid3x3, Crosshair } from "lucide-react";
-import { fetchUserBest } from "@/lib/games-storage";
+import { fetchUserBest, fetchPunchClips } from "@/lib/games-storage";
 import { ReactionTap } from "./reaction-tap";
 import { Schulte } from "./schulte";
 import { PunchPrediction } from "./punch-prediction";
@@ -41,6 +41,7 @@ function formatScore(value: number, unit: ScoreUnit): string {
 export function GamesHub({ userId }: HubProps) {
   const [view, setView] = useState<ActiveView>({ kind: "hub" });
   const [bests, setBests] = useState<Partial<Record<GameType, number | null>>>({});
+  const [punchClipsAvailable, setPunchClipsAvailable] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (view.kind !== "hub") return;
@@ -58,6 +59,18 @@ export function GamesHub({ userId }: HubProps) {
       cancelled = true;
     };
   }, [view.kind, userId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const r = await fetchPunchClips(1, []);
+      if (cancelled) return;
+      setPunchClipsAvailable(r.status === "ok" && r.clips.length > 0);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   if (view.kind === "reaction_tap") {
     return <ReactionTap userId={userId} onBack={() => setView({ kind: "hub" })} />;
@@ -84,20 +97,36 @@ export function GamesHub({ userId }: HubProps) {
         {GAMES.map((g) => {
           const Icon = g.icon;
           const best = bests[g.type];
+          const isComingSoon = g.type === "punch_prediction" && punchClipsAvailable === false;
+          const blurb = isComingSoon
+            ? "Watch a fighter set up, predict the punch. Boxing-specific cognition built on real fight footage. Launching once the catalog is labeled."
+            : g.blurb;
           return (
             <button
               key={g.type}
               onClick={() => setView({ kind: g.type })}
               className="w-full text-left rounded-xl bg-surface-hover hover:bg-surface p-4 flex items-center gap-3"
             >
-              <Icon size={20} className="text-accent flex-shrink-0" />
+              <Icon
+                size={20}
+                className={`flex-shrink-0 ${isComingSoon ? "text-muted" : "text-accent"}`}
+              />
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-semibold">{g.name}</div>
-                <div className="text-xs text-muted">{g.blurb}</div>
+                <div className="flex items-center gap-2 mb-0.5">
+                  <span className="text-sm font-semibold">{g.name}</span>
+                  {isComingSoon && (
+                    <span className="text-[10px] uppercase tracking-wide text-yellow-400 bg-yellow-500/10 px-1.5 py-0.5 rounded">
+                      Coming soon
+                    </span>
+                  )}
+                </div>
+                <div className="text-xs text-muted">{blurb}</div>
               </div>
-              <div className="text-xs text-muted text-right flex-shrink-0">
-                {best != null ? `Best ${formatScore(best, g.unit)}` : "—"}
-              </div>
+              {!isComingSoon && (
+                <div className="text-xs text-muted text-right flex-shrink-0">
+                  {best != null ? `Best ${formatScore(best, g.unit)}` : "—"}
+                </div>
+              )}
             </button>
           );
         })}
