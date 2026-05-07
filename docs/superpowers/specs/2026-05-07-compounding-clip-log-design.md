@@ -96,9 +96,9 @@ CREATE TABLE IF NOT EXISTS clip_logs (
 
   -- Denormalized numeric scores for fast trend queries
   score_loading int CHECK (score_loading BETWEEN 1 AND 10),
-  score_force_generation int CHECK (score_force_generation BETWEEN 1 AND 10),
-  score_delivery int CHECK (score_delivery BETWEEN 1 AND 10),
-  score_recovery int CHECK (score_recovery BETWEEN 1 AND 10),
+  score_hip_explosion int CHECK (score_hip_explosion BETWEEN 1 AND 10),
+  score_energy_transfer int CHECK (score_energy_transfer BETWEEN 1 AND 10),
+  score_follow_through int CHECK (score_follow_through BETWEEN 1 AND 10),
   score_overall numeric(3,1),
 
   -- Visual
@@ -143,7 +143,7 @@ The existing analysis prompt asks for free-text feedback per phase. Extend it to
 interface AnalysisResult {
   summary: string;
   phases: Array<{
-    phase: string;          // "Loading" | "Force Generation" | "Delivery" | "Recovery"
+    phase: string;          // "Loading" | "Hip Explosion" | "Energy Transfer" | "Follow Through"
     feedback: string;
     score: number;          // 1-10, integer
   }>;
@@ -186,7 +186,7 @@ Auto-persist on successful analysis. No "save" button.
 ┌──────────────────────────────────────────────────────────────────────┐
 │ [thumbnail]  May 7 · 12:14                                            │
 │   80×60     "Lead-side jab — solid hip drive, late guard recovery"   │
-│             Loading 7 · Force 6 · Delivery 8 · Recovery 5            │
+│             Loading 7 · Hip 6 · Transfer 8 · Follow 5                │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -207,9 +207,9 @@ Auto-persist on successful analysis. No "save" button.
 **Graph spec:**
 - 30-day rolling window, x-axis date.
 - Y-axis 1–10, fixed range.
-- Five lines: Loading (blue), Force Generation (orange), Delivery (red), Recovery (purple), and Overall (thick gray).
+- Five lines: Loading (blue), Hip Explosion (orange), Energy Transfer (red), Follow Through (purple), and Overall (thick gray).
 - Each line renders a 3-clip rolling average — not raw points — to smooth model variance.
-- Below the graph, a current snapshot row: "Last 5 clips avg: Loading 7.2 · Force 6.8 · Delivery 7.4 · Recovery 6.0".
+- Below the graph, a current snapshot row: "Last 5 clips avg: Loading 7.2 · Hip 6.8 · Transfer 7.4 · Follow 6.0".
 - Empty state: "Log 3 clips to see your trend." (Renders if user has 0–2 clips logged.)
 
 ## 6. "vs last clip" diff card
@@ -222,7 +222,7 @@ Auto-persist on successful analysis. No "save" button.
 
 ```
 ┌─ vs your last clip · 3 days ago ────────────────────────────────────┐
-│ Loading 7 → 8 ↑    Force 6 → 6 –    Delivery 7 → 8 ↑    Recovery 5 → 5 – │
+│ Loading 7 → 8 ↑   Hip 6 → 6 –   Transfer 7 → 8 ↑   Follow 5 → 5 – │
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -245,8 +245,8 @@ interface ClipHistoryContext {
   windowDays: number;        // e.g. 14
   totalClips: number;
   trend?: {                  // omitted if <6 clips (need 5+5 for last/prior split)
-    last5Avg: { loading: number; forceGeneration: number; delivery: number; recovery: number };
-    prior5Avg: { loading: number; forceGeneration: number; delivery: number; recovery: number };
+    last5Avg: { loading: number; hipExplosion: number; energyTransfer: number; followThrough: number };
+    prior5Avg: { loading: number; hipExplosion: number; energyTransfer: number; followThrough: number };
   };
   mostRecent?: {
     daysAgo: number;
@@ -269,9 +269,9 @@ Three changes to make the chat API consume `clipHistory`:
 Clip history (last 14 days, 8 clips logged):
 - Phase trend (avg of last 5 vs prior 5):
   · Loading 6.2 → 7.0 (+13%)
-  · Force Generation 5.8 → 5.9 (+2%)
-  · Delivery 7.4 → 6.8 (-8%)
-  · Recovery 6.0 → 6.5 (+8%)
+  · Hip Explosion 5.8 → 5.9 (+2%)
+  · Energy Transfer 7.4 → 6.8 (-8%)
+  · Follow Through 6.0 → 6.5 (+8%)
 - Most recent clip: 2 days ago — "good hip drive but late guard recovery"
 ```
 
