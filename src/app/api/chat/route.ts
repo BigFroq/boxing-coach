@@ -84,6 +84,69 @@ interface StyleProfilePayload {
   experience_level?: string;
 }
 
+interface ClipHistoryPayload {
+  windowDays: number;
+  totalClips: number;
+  trend?: {
+    last5Avg: {
+      loading: number | null;
+      hipExplosion: number | null;
+      energyTransfer: number | null;
+      followThrough: number | null;
+      overall: number | null;
+    };
+    prior5Avg: {
+      loading: number | null;
+      hipExplosion: number | null;
+      energyTransfer: number | null;
+      followThrough: number | null;
+      overall: number | null;
+    };
+  };
+  mostRecent?: { daysAgo: number; summary: string };
+}
+
+function formatPct(prior: number | null, last: number | null): string {
+  if (prior == null || last == null || prior === 0) return "—";
+  const delta = ((last - prior) / prior) * 100;
+  const sign = delta >= 0 ? "+" : "";
+  return `${sign}${Math.round(delta)}%`;
+}
+
+function formatClipHistory(c: ClipHistoryPayload): string {
+  if (c.totalClips === 0) return "";
+  const lines: string[] = [
+    `\n\n## This fighter's recent clip log\n<clip_history>`,
+    `Last ${c.windowDays} days: ${c.totalClips} clips logged.`,
+  ];
+  if (c.trend) {
+    lines.push(`Phase trend (avg of last 5 vs prior 5):`);
+    const t = c.trend;
+    lines.push(
+      `- Loading ${t.prior5Avg.loading ?? "—"} → ${t.last5Avg.loading ?? "—"} (${formatPct(t.prior5Avg.loading, t.last5Avg.loading)})`
+    );
+    lines.push(
+      `- Hip Explosion ${t.prior5Avg.hipExplosion ?? "—"} → ${t.last5Avg.hipExplosion ?? "—"} (${formatPct(t.prior5Avg.hipExplosion, t.last5Avg.hipExplosion)})`
+    );
+    lines.push(
+      `- Energy Transfer ${t.prior5Avg.energyTransfer ?? "—"} → ${t.last5Avg.energyTransfer ?? "—"} (${formatPct(t.prior5Avg.energyTransfer, t.last5Avg.energyTransfer)})`
+    );
+    lines.push(
+      `- Follow Through ${t.prior5Avg.followThrough ?? "—"} → ${t.last5Avg.followThrough ?? "—"} (${formatPct(t.prior5Avg.followThrough, t.last5Avg.followThrough)})`
+    );
+  }
+  if (c.mostRecent) {
+    lines.push(
+      `Most recent clip: ${c.mostRecent.daysAgo === 0 ? "today" : c.mostRecent.daysAgo === 1 ? "yesterday" : `${c.mostRecent.daysAgo} days ago`} — "${c.mostRecent.summary}"`
+    );
+  }
+  lines.push("</clip_history>");
+  lines.push(
+    "\nReference these phase trends and recent feedback when answering — the user expects you to know their progression. Don't ask them to tell you what they've worked on; check the log."
+  );
+  return lines.join("\n");
+}
+
 function formatStyleProfile(p: StyleProfilePayload): string {
   const lines: string[] = ["\n\n## This fighter's profile (reference it freely — you already know this about them)\n<fighter_profile>"];
   if (p.style_name) lines.push(`Style name: ${p.style_name}`);
@@ -127,7 +190,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const { messages, context, thinkLonger, styleProfile, userId } = parsed.data;
+    const { messages, context, thinkLonger, styleProfile, clipHistory, userId } = parsed.data;
 
     const limited = await enforceRateLimit(request, userId);
     if (limited) return limited;
@@ -163,6 +226,7 @@ export async function POST(request: NextRequest) {
     }
 
     const styleNote = context === "style" && styleProfile ? formatStyleProfile(styleProfile) : "";
+    const clipHistoryNote = clipHistory ? formatClipHistory(clipHistory) : "";
 
     const thinkLongerNote = thinkLonger
       ? "\n\nThe user has asked you to think longer. Give a more detailed, thorough answer — work through the mechanics step by step, name specific phases and chains, and include the 'one thing to do' at the end. Still no markdown headings."
@@ -177,7 +241,7 @@ export async function POST(request: NextRequest) {
     const stream = anthropic.messages.stream({
       model: "claude-sonnet-4-20250514",
       max_tokens: maxTokens,
-      system: SYSTEM_PROMPT + contextText + contextNote + styleNote + thinkLongerNote,
+      system: SYSTEM_PROMPT + contextText + contextNote + styleNote + clipHistoryNote + thinkLongerNote,
       messages: clampHistoryForAnthropic(
         messages.map((m: { role: string; content: string }) => ({
           role: m.role as "user" | "assistant",

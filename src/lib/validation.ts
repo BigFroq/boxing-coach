@@ -40,6 +40,35 @@ export const styleProfileSchema = z
   })
   .passthrough();
 
+export const clipHistorySchema = z.object({
+  windowDays: z.number().int().min(1).max(365),
+  totalClips: z.number().int().min(0),
+  trend: z
+    .object({
+      last5Avg: z.object({
+        loading: z.number().nullable(),
+        hipExplosion: z.number().nullable(),
+        energyTransfer: z.number().nullable(),
+        followThrough: z.number().nullable(),
+        overall: z.number().nullable(),
+      }),
+      prior5Avg: z.object({
+        loading: z.number().nullable(),
+        hipExplosion: z.number().nullable(),
+        energyTransfer: z.number().nullable(),
+        followThrough: z.number().nullable(),
+        overall: z.number().nullable(),
+      }),
+    })
+    .optional(),
+  mostRecent: z
+    .object({
+      daysAgo: z.number().int().min(0),
+      summary: z.string().max(2000),
+    })
+    .optional(),
+});
+
 export const chatRequestSchema = z.object({
   messages: z
     .array(
@@ -52,6 +81,7 @@ export const chatRequestSchema = z.object({
     .max(100),
   context: z.enum(["technique", "drills", "style"]).optional(),
   styleProfile: styleProfileSchema.optional(),
+  clipHistory: clipHistorySchema.optional(),
   thinkLonger: z.boolean().optional(),
   userId: z.string().max(128).optional(),
 });
