@@ -2,6 +2,8 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Upload, Loader2, AlertCircle, RotateCcw } from "lucide-react";
+import { saveClipLog, fetchRecentClips } from "@/lib/clip-log-storage";
+import type { ClipLog } from "@/lib/clip-log-types";
 
 interface AnalysisResult {
   summary: string;
@@ -21,6 +23,7 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
   const [status, setStatus] = useState("");
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [recentClips, setRecentClips] = useState<ClipLog[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -30,6 +33,18 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
       if (videoUrl) URL.revokeObjectURL(videoUrl);
     };
   }, [videoUrl]);
+
+  useEffect(() => {
+    if (!userId || userId === "anon") return;
+    let cancelled = false;
+    (async () => {
+      const r = await fetchRecentClips(userId, 30);
+      if (!cancelled && r.status === "ok") setRecentClips(r.clips);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
 
   const reset = () => {
     if (videoUrl) URL.revokeObjectURL(videoUrl);
@@ -154,6 +169,25 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
 
       const result = await response.json();
       setAnalysis(result);
+
+      // Compute thumbnail from middle frame and persist asynchronously.
+      // Failure does NOT surface to the user — analysis UX still works,
+      // we just lose persistence for this clip. Tracked in PostHog.
+      const middleFrame = frames[Math.floor(frames.length / 2)] ?? null;
+      const durationSeconds = videoRef.current?.duration ?? null;
+      if (userId && userId !== "anon") {
+        void saveClipLog({
+          userId,
+          filename: videoFile.name,
+          durationSeconds,
+          analysis: result,
+          thumbnailB64: middleFrame,
+        }).then((res) => {
+          if (res.status === "saved") {
+            setRecentClips((prev) => [res.clip, ...prev]);
+          }
+        });
+      }
     } catch (err) {
       console.error("Analysis error:", err);
       setError("Failed to analyze clip. Please try again.");
