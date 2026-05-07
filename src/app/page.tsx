@@ -14,10 +14,12 @@ import {
   Shield,
   Target,
   Timer,
+  Gamepad2,
 } from "lucide-react";
 import { ChatTab } from "@/components/chat-tab";
 import { CoachTab } from "@/components/coach-tab";
 import { StyleFinderTab } from "@/components/style-finder-tab";
+import { GamesHub } from "@/components/games/hub";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { track, identify } from "@/lib/analytics";
 import { ensureUserEngagement } from "@/lib/user-engagement-sync";
@@ -31,6 +33,7 @@ const tabs = [
   { id: "drills", label: "Drills", shortLabel: "Drills", icon: Dumbbell, description: "Exercises & training" },
   { id: "coach", label: "My Coach", shortLabel: "Coach", icon: ClipboardList, description: "Log sessions & track progress" },
   { id: "style", label: "Find Your Style", shortLabel: "Style", icon: User, description: "Discover your fighting style" },
+  { id: "games", label: "Games", shortLabel: "Games", icon: Gamepad2, description: "Reflex challenges & fun" },
 ] as const;
 
 type TabId = (typeof tabs)[number]["id"];
@@ -225,6 +228,11 @@ function AppContent() {
                 setActiveTab("technique");
               }}
             />
+          </ErrorBoundary>
+        )}
+        {activeTab === "games" && (
+          <ErrorBoundary label="Games">
+            <GamesHub userId={userId} />
           </ErrorBoundary>
         )}
       </main>
