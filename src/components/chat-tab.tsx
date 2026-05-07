@@ -34,6 +34,7 @@ interface ChatTabProps {
   heroSubtitle: string;
   /** Extra payload sent to /api/chat (e.g. style profile). */
   extraContext?: Record<string, unknown>;
+  extraContextProvider?: () => Promise<Record<string, unknown>>;
   /** Storage namespace override so embedded chats don't collide with tabbed ones. */
   storageKeyOverride?: string;
   /** Anonymous user id, used as the rate-limit key server-side. */
@@ -68,6 +69,7 @@ export function ChatTab({
   heroTitle,
   heroSubtitle,
   extraContext,
+  extraContextProvider,
   storageKeyOverride,
   userId,
 }: ChatTabProps) {
@@ -265,6 +267,17 @@ export function ChatTab({
     const controller = new AbortController();
     abortRef.current = controller;
 
+    let dynamicContext: Record<string, unknown> = {};
+    if (extraContextProvider) {
+      try {
+        dynamicContext = await extraContextProvider();
+      } catch (err) {
+        // Silent — chat submit must not break because of context fetch failure.
+        // Coach falls back to whatever static extraContext was passed.
+        console.error("[chat-tab] extraContextProvider failed:", err);
+      }
+    }
+
     try {
       const res = await fetch("/api/chat", {
         method: "POST",
@@ -278,6 +291,7 @@ export function ChatTab({
           thinkLonger,
           userId,
           ...(extraContext ?? {}),
+          ...dynamicContext,
         }),
       });
 
@@ -467,7 +481,7 @@ export function ChatTab({
       setStreaming(false);
       inputRef.current?.focus();
     }
-  }, [messages, loading, streaming, systemContext, thinkLonger, extraContext, userId, stopTypewriter]);
+  }, [messages, loading, streaming, systemContext, thinkLonger, extraContext, extraContextProvider, userId, stopTypewriter]);
 
   const initialQueryFiredRef = useRef(false);
   useEffect(() => {
