@@ -95,3 +95,10 @@ export const clipReviewRequestSchema = z.object({
 export const dailyDrillPickPatchSchema = z.object({
   action: z.enum(["complete", "skip"]),
 });
+
+export const gameScoreSubmitSchema = z.object({
+  userId: z.string().min(1).max(128),
+  gameType: z.enum(["reaction_tap", "schulte", "punch_prediction"]),
+  scoreValue: z.number().finite(),
+  scoreUnit: z.enum(["ms", "seconds", "accuracy_pct"]),
+});
