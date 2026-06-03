@@ -97,29 +97,39 @@ No markdown fencing.`,
     messages: [
       { role: "user", content: JSON.stringify(graphSummary, null, 2) },
     ],
+  }).catch((err: unknown) => {
+    // Advisory validation: its result is only logged below, so a transient
+    // failure (e.g. an Anthropic 529/429) must NOT abort pass 4 and force a
+    // re-run. Log and continue with the insert.
+    console.warn(
+      `Skipping graph validation (non-essential): ${err instanceof Error ? err.message : String(err)}`
+    );
+    return null;
   });
 
-  const valText = validationResponse.content[0].type === "text" ? validationResponse.content[0].text : "{}";
-  let valJson = valText;
-  const valMatch = valText.match(/```(?:json)?\s*([\s\S]*?)```/);
-  if (valMatch) valJson = valMatch[1].trim();
+  if (validationResponse) {
+    const valText = validationResponse.content[0].type === "text" ? validationResponse.content[0].text : "{}";
+    let valJson = valText;
+    const valMatch = valText.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (valMatch) valJson = valMatch[1].trim();
 
-  try {
-    const validation = JSON.parse(valJson) as {
-      overall_quality?: string;
-      summary?: string;
-      issues?: { type: string; description: string }[];
-    };
-    console.log(`Validation: ${validation.overall_quality}`);
-    console.log(`Summary: ${validation.summary}`);
-    if (validation.issues && validation.issues.length > 0) {
-      console.log(`Issues found: ${validation.issues.length}`);
-      for (const issue of validation.issues) {
-        console.log(`  [${issue.type}] ${issue.description}`);
+    try {
+      const validation = JSON.parse(valJson) as {
+        overall_quality?: string;
+        summary?: string;
+        issues?: { type: string; description: string }[];
+      };
+      console.log(`Validation: ${validation.overall_quality}`);
+      console.log(`Summary: ${validation.summary}`);
+      if (validation.issues && validation.issues.length > 0) {
+        console.log(`Issues found: ${validation.issues.length}`);
+        for (const issue of validation.issues) {
+          console.log(`  [${issue.type}] ${issue.description}`);
+        }
       }
+    } catch {
+      console.warn("Could not parse validation response, continuing with insert");
     }
-  } catch {
-    console.warn("Could not parse validation response, continuing with insert");
   }
 
   // --- Embed all node content BEFORE any destructive DB change, so a Voyage
