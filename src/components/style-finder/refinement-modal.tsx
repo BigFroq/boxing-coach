@@ -30,7 +30,10 @@ export function RefinementModal({
   const total = questions.length;
   const current = questions[index];
   const isLast = index === total - 1;
-  const allAnswered = questions.every((q) => q.id in answers);
+  // A slider always has a meaningful value (the midpoint, until the user moves
+  // it), so it counts as answered without an explicit interaction.
+  const isAnswered = (q: Question) => q.format === "slider" || q.id in answers;
+  const allAnswered = questions.every(isAnswered);
 
   if (total === 0) {
     // Defensive — should not be opened with an empty list.
@@ -56,6 +59,19 @@ export function RefinementModal({
       return;
     }
     setAnswers({ ...answers, [qId]: next });
+  }
+
+  function setSlider(qId: string, value: number) {
+    setAnswers({ ...answers, [qId]: value });
+  }
+
+  function submit() {
+    // Fill in the midpoint for any slider the user left untouched.
+    const filled = { ...answers };
+    for (const q of questions) {
+      if (q.format === "slider" && !(q.id in filled)) filled[q.id] = 50;
+    }
+    onSubmit(filled);
   }
 
   return (
@@ -93,7 +109,31 @@ export function RefinementModal({
         )}
 
         <div className="space-y-2 mb-4">
-          {current.format === "multiselect"
+          {current.format === "slider" ? (
+            <div className="space-y-3">
+              <input
+                type="range"
+                min={0}
+                max={100}
+                value={(answers[current.id] as number) ?? 50}
+                onChange={(e) => setSlider(current.id, Number(e.target.value))}
+                aria-label={current.question}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={(answers[current.id] as number) ?? 50}
+                aria-valuetext={
+                  current.sliderLabels
+                    ? `${(answers[current.id] as number) ?? 50} (${current.sliderLabels.min} → ${current.sliderLabels.max})`
+                    : `${(answers[current.id] as number) ?? 50}`
+                }
+                className="w-full accent-accent"
+              />
+              <div className="flex justify-between text-xs text-muted">
+                <span>{current.sliderLabels?.min}</span>
+                <span>{current.sliderLabels?.max}</span>
+              </div>
+            </div>
+          ) : current.format === "multiselect"
             ? current.options.map((opt) => {
                 const cur = (answers[current.id] as string[] | undefined) ?? [];
                 const checked = cur.includes(opt.value);
@@ -149,7 +189,7 @@ export function RefinementModal({
             <button
               type="button"
               disabled={!allAnswered}
-              onClick={() => onSubmit(answers)}
+              onClick={submit}
               className="rounded-md bg-accent px-3 py-1.5 text-sm text-white disabled:opacity-50"
             >
               Refine
@@ -158,7 +198,7 @@ export function RefinementModal({
             <button
               type="button"
               onClick={() => setIndex((i) => Math.min(total - 1, i + 1))}
-              disabled={!(current.id in answers)}
+              disabled={!isAnswered(current)}
               className="rounded-md border border-border px-3 py-1.5 text-sm disabled:opacity-50"
             >
               Next <ChevronRight className="inline h-3 w-3" />
