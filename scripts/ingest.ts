@@ -6,6 +6,7 @@ import path from "path";
 import { createClient } from "@supabase/supabase-js";
 import Anthropic from "@anthropic-ai/sdk";
 import { VoyageAIClient } from "voyageai";
+import { withRetry } from "../src/lib/retry";
 
 const CONTENT_DIR = path.join(process.cwd(), "content");
 const CHUNK_TARGET = 2000;
@@ -116,7 +117,8 @@ async function extractMetadataBatch(chunks: RawChunk[]): Promise<ChunkMetadata[]
       .map((c, idx) => `[CHUNK ${idx}]\n${c.content.slice(0, 1500)}`)
       .join("\n\n");
 
-    const response = await anthropic.messages.create({
+    const response = await withRetry(() =>
+      anthropic.messages.create({
       model: "claude-sonnet-4-20250514",
       max_tokens: 4096,
       system: `Extract metadata from boxing content chunks. For each chunk, identify:
@@ -127,7 +129,9 @@ async function extractMetadataBatch(chunks: RawChunk[]): Promise<ChunkMetadata[]
 Return a JSON array with one object per chunk, in order. Each object: {"techniques": [...], "fighters": [...], "category": "..."}
 Return ONLY the JSON array, no markdown.`,
       messages: [{ role: "user", content: batchPrompt }],
-    });
+      }),
+      { label: `ingest-metadata-batch-${i}`, maxAttempts: 4 }
+    );
 
     const text = response.content[0].type === "text" ? response.content[0].text : "[]";
     let jsonStr = text;

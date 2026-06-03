@@ -3,6 +3,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import type { SynthesizedNode } from "./pass2-synthesize";
 import type { DiscoveredEdge } from "./pass3-edges";
+import { withRetry } from "../../src/lib/retry";
 
 let _anthropic: Anthropic | null = null;
 function getAnthropic() {
@@ -18,19 +19,24 @@ async function embedBatch(texts: string[]): Promise<number[][]> {
 
   for (let i = 0; i < texts.length; i += batchSize) {
     const batch = texts.slice(i, i + batchSize);
-    const res = await fetch(VOYAGE_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.VOYAGE_API_KEY}`,
+    const data = await withRetry(
+      async () => {
+        const res = await fetch(VOYAGE_API_URL, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${process.env.VOYAGE_API_KEY}`,
+          },
+          body: JSON.stringify({ input: batch, model: "voyage-3-lite" }),
+        });
+        if (!res.ok) {
+          const body = await res.text();
+          throw new Error(`Voyage error ${res.status}: ${body}`);
+        }
+        return (await res.json()) as { data: { embedding: number[] }[] };
       },
-      body: JSON.stringify({ input: batch, model: "voyage-3-lite" }),
-    });
-    if (!res.ok) {
-      const body = await res.text();
-      throw new Error(`Voyage error ${res.status}: ${body}`);
-    }
-    const data = (await res.json()) as { data: { embedding: number[] }[] };
+      { label: "pass4-voyage-embed", maxAttempts: 5 }
+    );
     allEmbeddings.push(...data.data.map((d) => d.embedding));
 
     if (i + batchSize < texts.length) {
@@ -116,16 +122,18 @@ No markdown fencing.`,
     console.warn("Could not parse validation response, continuing with insert");
   }
 
-  // --- Clear existing graph data ---
-  console.log("\nClearing existing knowledge graph data...");
-  await supabase.from("knowledge_edges").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-  await supabase.from("knowledge_nodes").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-
-  // --- Embed all node content ---
-  console.log("Embedding node content...");
+  // --- Embed all node content BEFORE any destructive DB change, so a Voyage
+  // failure can't leave the live graph emptied (the deletes below commit
+  // immediately and are not transactional). ---
+  console.log("\nEmbedding node content...");
   const nodeContents = nodes.map(n => n.content.slice(0, 8000)); // Voyage input limit
   const embeddings = await embedBatch(nodeContents);
   console.log(`Embedded ${embeddings.length} nodes`);
+
+  // --- Clear existing graph data (only after embeddings are in hand) ---
+  console.log("Clearing existing knowledge graph data...");
+  await supabase.from("knowledge_edges").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+  await supabase.from("knowledge_nodes").delete().neq("id", "00000000-0000-0000-0000-000000000000");
 
   // --- Insert nodes ---
   console.log("Inserting nodes...");
