@@ -4,6 +4,7 @@ import {
   getMissingDimensions,
   compareTopFighters,
 } from "./profile-freshness";
+import { allQuestions, getQuestionSequence } from "@/data/questions";
 
 describe("profile-freshness", () => {
   describe("getMissingQuestionIds", () => {
@@ -30,6 +31,26 @@ describe("profile-freshness", () => {
         ["a", "b"]
       );
       expect(result).toEqual([]);
+    });
+
+    // Regression: the refinement CTA compared answers against ALL questions, so
+    // a beginner who completed their whole (filtered) quiz still showed the
+    // advancedOnly question as "missing" — a phantom "new question" prompt.
+    it("a beginner who answered their whole sequence has zero missing", () => {
+      const seq = getQuestionSequence("beginner");
+      const answers = Object.fromEntries(seq.map((q) => [q.id, "x"]));
+      expect(getMissingQuestionIds(answers, seq.map((q) => q.id))).toEqual([]);
+    });
+
+    it("comparing a beginner's answers against ALL questions surfaces exactly the advancedOnly gaps (the old bug)", () => {
+      const advancedOnly = allQuestions.filter((q) => q.advancedOnly).map((q) => q.id);
+      expect(advancedOnly.length).toBeGreaterThan(0);
+      const answers = Object.fromEntries(
+        getQuestionSequence("beginner").map((q) => [q.id, "x"])
+      );
+      expect(
+        getMissingQuestionIds(answers, allQuestions.map((q) => q.id)).sort()
+      ).toEqual(advancedOnly.sort());
     });
   });
 

@@ -10,7 +10,7 @@ import { computeDimensionScores } from "@/lib/dimension-scoring";
 import { matchFighters } from "@/lib/fighter-matching";
 import { createBrowserClient } from "@/lib/supabase-browser";
 import { ensureStyleProfileInDb } from "@/lib/style-profile-sync";
-import { allQuestions } from "@/data/questions";
+import { getQuestionSequence, type ExperienceLevel } from "@/data/questions";
 import { compareTopFighters, getMissingQuestionIds } from "@/lib/profile-freshness";
 import { mergeAnswersForRefinement } from "@/lib/style-profile-storage";
 import { RefinementModal } from "./style-finder/refinement-modal";
@@ -274,9 +274,12 @@ export function StyleFinderTab({ userId, onSwitchToChat }: StyleFinderTabProps) 
     setView("quiz");
   }
 
+  // Compare against the SAME experience-filtered sequence the quiz asked, not
+  // all questions — otherwise advancedOnly questions a beginner was never shown
+  // count as "missing" and surface a phantom refinement CTA.
   const missingQuestionIds = getMissingQuestionIds(
     storedAnswers,
-    allQuestions.map((q) => q.id)
+    getQuestionSequence(experienceLevel as ExperienceLevel).map((q) => q.id)
   );
 
   async function handleRefreshNarrative() {
