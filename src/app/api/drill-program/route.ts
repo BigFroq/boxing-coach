@@ -154,6 +154,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ drill_program: drillProgram, cached: false });
   } catch (error) {
     console.error("drill-program error:", error);
+    const msg = error instanceof Error ? error.message.toLowerCase() : "";
+    if (/credit balance|quota|insufficient_quota|billing/i.test(msg)) {
+      return NextResponse.json(
+        { error: "The drill generator is temporarily unavailable. Please try again later." },
+        { status: 503 }
+      );
+    }
     return NextResponse.json({ error: "Failed to generate drill program" }, { status: 500 });
   }
 }

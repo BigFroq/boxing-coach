@@ -5,6 +5,9 @@ import { computeLastWorkedMap } from "@/lib/focus-area-last-worked";
 
 export async function GET(request: NextRequest) {
   const userId = request.nextUrl.searchParams.get("userId");
+  if (!userId) {
+    return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+  }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const supabase = createServerClient() as any;

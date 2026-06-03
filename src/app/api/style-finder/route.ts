@@ -360,6 +360,13 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error("Style finder error:", error);
+    const msg = error instanceof Error ? error.message.toLowerCase() : "";
+    if (/credit balance|quota|insufficient_quota|billing/i.test(msg)) {
+      return NextResponse.json(
+        { error: "Style analysis is temporarily unavailable. Please try again later." },
+        { status: 503 }
+      );
+    }
     return NextResponse.json({ error: "Failed to analyze style" }, { status: 500 });
   }
 }

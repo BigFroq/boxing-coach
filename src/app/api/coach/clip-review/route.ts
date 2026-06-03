@@ -132,6 +132,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(analysis);
   } catch (error) {
     console.error("Clip review error:", error);
+    const msg = error instanceof Error ? error.message.toLowerCase() : "";
+    if (/credit balance|quota|insufficient_quota|billing/i.test(msg)) {
+      return NextResponse.json(
+        { error: "Clip analysis is temporarily unavailable. Please try again later." },
+        { status: 503 }
+      );
+    }
     return NextResponse.json({ error: "Failed to analyze clip" }, { status: 500 });
   }
 }
