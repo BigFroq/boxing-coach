@@ -4,8 +4,18 @@ import { useState, useEffect } from "react";
 import { Loader2, TrendingUp, Target, Calendar, AlertTriangle } from "lucide-react";
 import { formatRelativeTime } from "@/lib/relative-time";
 import { createBrowserClient } from "@/lib/supabase-browser";
-import { TrendGraph } from "@/components/clip-log/trend-graph";
+import dynamic from "next/dynamic";
 import { TodayDrillCard } from "@/components/today-drill/card";
+
+// recharts (+ ~2MB of d3-*) is the heaviest dependency in the app and is only
+// needed when this trend chart actually renders (logged-in user, Coach >
+// Progress, >= 3 clips). Load it on demand via next/dynamic so it stays out of
+// the root route's initial client bundle. ssr:false is valid here — this is a
+// Client Component ("use client" above) and the chart is browser-only anyway.
+const TrendGraph = dynamic(
+  () => import("@/components/clip-log/trend-graph").then((m) => m.TrendGraph),
+  { ssr: false }
+);
 
 interface FocusArea {
   id: string;
