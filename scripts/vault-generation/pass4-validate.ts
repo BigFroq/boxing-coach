@@ -46,8 +46,8 @@ async function embedBatch(texts: string[]): Promise<number[][]> {
   return allEmbeddings;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function validateAndInsert(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
   nodes: SynthesizedNode[],
   edges: DiscoveredEdge[]
