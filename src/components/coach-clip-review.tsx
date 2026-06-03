@@ -295,10 +295,19 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
       {!videoFile ? (
         <div className="w-full max-w-md space-y-6">
           <div
+            role="button"
+            tabIndex={0}
+            aria-label="Upload a clip"
             onClick={() => fileInputRef.current?.click()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                fileInputRef.current?.click();
+              }
+            }}
             onDrop={handleDrop}
             onDragOver={(e) => e.preventDefault()}
-            className="w-full rounded-xl border-2 border-dashed border-border hover:border-accent/50 p-8 text-center cursor-pointer transition-colors"
+            className="w-full rounded-xl border-2 border-dashed border-border hover:border-accent/50 p-8 text-center cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
           >
             <Upload className="mx-auto mb-3 h-8 w-8 text-muted" />
             <p className="text-sm font-medium mb-1">Upload a short clip</p>

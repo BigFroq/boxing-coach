@@ -165,11 +165,13 @@ export function ReactionTap({ userId, onBack }: ReactionTapProps) {
   const bg = isReady ? "bg-green-500" : "bg-red-500";
   const label = isReady ? "TAP NOW" : "WAIT";
   return (
-    <div
-      className={`min-h-[60vh] ${bg} flex items-center justify-center cursor-pointer text-white text-3xl font-bold`}
+    <button
+      type="button"
+      aria-label={isReady ? "Tap now" : "Wait for green, then tap"}
+      className={`min-h-[60vh] w-full ${bg} flex items-center justify-center cursor-pointer text-white text-3xl font-bold`}
       onClick={handleTap}
     >
       {label}
-    </div>
+    </button>
   );
 }

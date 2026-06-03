@@ -59,8 +59,17 @@ export function Timeline({ clips }: TimelineProps) {
         return (
           <div
             key={c.id}
-            className="rounded-xl bg-surface-hover p-3 cursor-pointer"
+            role="button"
+            tabIndex={0}
+            aria-expanded={expanded}
+            className="rounded-xl bg-surface-hover p-3 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             onClick={() => setExpandedId(expanded ? null : c.id)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                setExpandedId(expanded ? null : c.id);
+              }
+            }}
           >
             <div className="flex items-start gap-3">
               {c.thumbnailB64 ? (
