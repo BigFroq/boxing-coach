@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     }
     const { frames, filename, userId } = parsed.data;
 
-    const limited = await enforceRateLimit(request, userId);
+    const limited = await enforceRateLimit(request);
     if (limited) return limited;
 
     const safeName = (filename ?? "").replace(/[^\w\s\-.]/g, "").slice(0, 100) || "clip";
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
     const response = await withRetry(
       () =>
         anthropic.messages.create({
-          model: "claude-sonnet-4-20250514",
+          model: "claude-sonnet-4-6",
           max_tokens: 2048,
           system: ANALYSIS_PROMPT,
           messages: [{ role: "user", content }],

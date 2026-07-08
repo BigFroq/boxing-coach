@@ -15,22 +15,17 @@ export const ratelimit =
       })
     : null;
 
-export function getRateLimitKey(
-  request: Request,
-  userId: string | undefined
-): string {
-  if (userId && userId !== "anon") return `user:${userId}`;
+// Key on IP only: userId comes from the unauthenticated request body, so a
+// caller rotating userIds would mint a fresh bucket per request.
+export function getRateLimitKey(request: Request): string {
   const fwd = request.headers.get("x-forwarded-for") ?? "";
   const ip = fwd.split(",")[0].trim() || "unknown";
   return `ip:${ip}`;
 }
 
-export async function enforceRateLimit(
-  request: Request,
-  userId?: string
-): Promise<Response | null> {
+export async function enforceRateLimit(request: Request): Promise<Response | null> {
   if (!ratelimit) return null; // soft-fail if unconfigured (dev)
-  const key = getRateLimitKey(request, userId);
+  const key = getRateLimitKey(request);
   const { success, limit, remaining, reset } = await ratelimit.limit(key);
   if (!success) {
     return NextResponse.json(

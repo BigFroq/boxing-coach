@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@/lib/supabase";
 import { withRetry } from "@/lib/retry";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import { readAllDrillVaultEntries } from "@/lib/vault-reader";
 import { buildDrillProgramPrompt } from "@/lib/drill-program-prompt";
 import { validateDrillProgram } from "@/lib/drill-program-validator";
@@ -13,6 +14,9 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await enforceRateLimit(request);
+    if (limited) return limited;
+
     const body = await request.json().catch(() => ({}));
     const force = body?.force === true;
     const userId: string | undefined = body?.userId;

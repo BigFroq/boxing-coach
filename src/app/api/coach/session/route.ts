@@ -5,6 +5,7 @@ import { createServerClient } from "@/lib/supabase";
 import { retrieveContext, formatChunksForPrompt, extractCitations, type SourceCitation } from "@/lib/graph-rag";
 import { FOUR_PHASES, CORE_PRINCIPLES, MYTHS } from "@/lib/framework";
 import { styleProfileSchema } from "@/lib/validation";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import { formatStyleProfileBlock } from "@/lib/style-profile-context";
 import { computeNeglected } from "@/lib/neglected-focus-areas";
 const anthropic = new Anthropic({
@@ -196,6 +197,9 @@ async function loadUserContext(userId: string) {
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await enforceRateLimit(request);
+    if (limited) return limited;
+
     const rawBody = await request.json();
     const parsed = coachSessionRequestSchema.safeParse(rawBody);
     if (!parsed.success) {
@@ -234,7 +238,7 @@ export async function POST(request: NextRequest) {
     );
 
     const stream = anthropic.messages.stream({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: 1000,
       system: systemPrompt,
       messages: messages.slice(-12).map((m: { role: string; content: string }) => ({

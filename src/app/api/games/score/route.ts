@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const limited = await enforceRateLimit(request, userId);
+    const limited = await enforceRateLimit(request);
     if (limited) return limited;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

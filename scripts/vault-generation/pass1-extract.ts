@@ -62,7 +62,7 @@ export async function extractEntities(
     const text = await withRetry(
       () =>
         callLLM({
-          model: "claude-opus-4-7",
+          model: "claude-opus-4-8",
           maxTokens: 8192,
           system: `You are analyzing boxing coaching content from Dr. Alex Wiant's "Punch Doctor" channel and "Power Punching Blueprint" course.
 
@@ -127,7 +127,7 @@ Return ONLY a JSON array of objects. No markdown fencing.`,
     const dedupeText = await withRetry(
       () =>
         callLLM({
-          model: "claude-opus-4-7",
+          model: "claude-opus-4-8",
           maxTokens: 16384,
           system: `You are deduplicating a list of knowledge graph node candidates from a boxing coaching corpus.
 

@@ -5,6 +5,7 @@ import { VAULT_SLUGS, dimensionLabelToKey, isDimensionKey } from "@/lib/dimensio
 import { matchReportedDrill } from "@/lib/drill-matching";
 import { deriveFocusAreaKeys } from "@/lib/focus-area-keys";
 import { withRetry } from "@/lib/retry";
+import { enforceRateLimit } from "@/lib/rate-limit";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -70,6 +71,9 @@ Available slugs: ${VAULT_SLUGS.join(", ")}
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await enforceRateLimit(request);
+    if (limited) return limited;
+
     const { messages, userId } = await request.json();
 
     if (!messages || messages.length === 0) {
@@ -84,7 +88,7 @@ export async function POST(request: NextRequest) {
     const extractionResponse = await withRetry(
       () =>
         anthropic.messages.create({
-          model: "claude-sonnet-4-20250514",
+          model: "claude-sonnet-4-6",
           max_tokens: 2048,
           system: EXTRACTION_PROMPT,
           messages: [{ role: "user", content: transcript }],

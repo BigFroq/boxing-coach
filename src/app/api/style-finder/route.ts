@@ -7,6 +7,7 @@ import { matchCounters, ATTACK_VECTORS, type CounterMatch, type AttackVectorId }
 import { readFighterVaultEntry } from "@/lib/vault-reader";
 import { VAULT_SLUGS } from "@/lib/dimensions";
 import { withRetry } from "@/lib/retry";
+import { enforceRateLimit } from "@/lib/rate-limit";
 import { getTopDimensions, getBottomDimensions } from "@/lib/dimension-helpers";
 
 const anthropic = new Anthropic({
@@ -190,6 +191,9 @@ Rules:
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await enforceRateLimit(request);
+    if (limited) return limited;
+
     const body = await request.json();
     const {
       dimension_scores,
@@ -277,7 +281,7 @@ export async function POST(request: NextRequest) {
     // Call Claude with retry
     const response = await withRetry(() =>
       anthropic.messages.create({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-6",
         max_tokens: 4096,
         system: systemPrompt,
         messages: [

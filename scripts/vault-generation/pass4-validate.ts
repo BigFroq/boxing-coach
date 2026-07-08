@@ -77,7 +77,7 @@ export async function validateAndInsert(
 
   console.log("Running validation with Claude...");
   const validationResponse = await getAnthropic().messages.create({
-    model: process.env.SYNTHESIS_MODEL ?? "claude-opus-4-6",
+    model: process.env.SYNTHESIS_MODEL ?? "claude-opus-4-8",
     max_tokens: 4096,
     system: `You are validating a boxing knowledge graph for completeness and accuracy.
 
@@ -136,7 +136,10 @@ No markdown fencing.`,
   // failure can't leave the live graph emptied (the deletes below commit
   // immediately and are not transactional). ---
   console.log("\nEmbedding node content...");
-  const nodeContents = nodes.map(n => n.content.slice(0, 8000)); // Voyage input limit
+  const nodeContents = nodes.map(n => {
+    const trimmed = n.content?.trim();
+    return trimmed ? trimmed.slice(0, 8000) : "No content available.";
+  }); // Voyage input limit, guard against empty strings
   const embeddings = await embedBatch(nodeContents);
   console.log(`Embedded ${embeddings.length} nodes`);
 

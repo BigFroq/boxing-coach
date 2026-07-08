@@ -192,7 +192,7 @@ export async function POST(request: NextRequest) {
     }
     const { messages, context, thinkLonger, styleProfile, clipHistory, userId } = parsed.data;
 
-    const limited = await enforceRateLimit(request, userId);
+    const limited = await enforceRateLimit(request);
     if (limited) return limited;
 
     const lastUserMessage = [...messages].reverse().find((m: { role: string }) => m.role === "user");
@@ -232,14 +232,13 @@ export async function POST(request: NextRequest) {
       ? "\n\nThe user has asked you to think longer. Give a more detailed, thorough answer — work through the mechanics step by step, name specific phases and chains, and include the 'one thing to do' at the end. Still no markdown headings."
       : "";
 
-    // When thinkLonger is on, enable extended thinking and bump max_tokens so
-    // the budget (which counts toward max_tokens) doesn't eat the final answer.
-    const thinkingBudget = 2000;
+    // When thinkLonger is on, enable adaptive thinking and bump max_tokens so
+    // thinking output doesn't eat the final answer.
     const maxTokens = thinkLonger ? 6000 : 1500;
 
     // Stream the response via SSE
     const stream = anthropic.messages.stream({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: maxTokens,
       system: SYSTEM_PROMPT + contextText + contextNote + styleNote + clipHistoryNote + thinkLongerNote,
       messages: clampHistoryForAnthropic(
@@ -248,9 +247,7 @@ export async function POST(request: NextRequest) {
           content: m.content,
         }))
       ),
-      ...(thinkLonger
-        ? { thinking: { type: "enabled" as const, budget_tokens: thinkingBudget } }
-        : {}),
+      ...(thinkLonger ? { thinking: { type: "adaptive" as const } } : {}),
     });
 
     let fullContent = "";

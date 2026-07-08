@@ -119,7 +119,7 @@ async function extractMetadataBatch(chunks: RawChunk[]): Promise<ChunkMetadata[]
 
     const response = await withRetry(() =>
       anthropic.messages.create({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-opus-4-8",
       max_tokens: 4096,
       system: `Extract metadata from boxing content chunks. For each chunk, identify:
 - techniques: specific boxing techniques mentioned (e.g., "jab", "hook", "uppercut", "kinetic chain", "phase 1", "phase 2", "hip rotation", "follow through", "stance")

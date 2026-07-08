@@ -12,6 +12,7 @@
     "vault-to-db": "tsx scripts/vault-to-db.ts",
     "eval": "tsx scripts/eval.ts",
     "incremental-ingest": "tsx scripts/incremental-ingest.ts",
+    "resynth-dirty": "tsx scripts/resynth-dirty.ts",
     "stress-test": "tsx scripts/stress-test.ts",
     "test": "vitest run",
     "test:watch": "vitest",

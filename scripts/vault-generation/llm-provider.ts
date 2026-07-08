@@ -19,13 +19,28 @@ function getAnthropic() {
 }
 
 async function callSDK(req: LLMRequest): Promise<string> {
-  const response = await getAnthropic().messages.create({
+  const client = getAnthropic();
+  const stream = await client.messages.create({
     model: req.model,
     max_tokens: req.maxTokens ?? 4096,
     system: req.system,
     messages: [{ role: "user", content: req.user }],
+    stream: true,
   });
-  return response.content[0].type === "text" ? response.content[0].text : "";
+  let result = "";
+  const TIMEOUT_MS = 300_000; // 5 min per call — streaming should produce tokens continuously
+  const timeout = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error(`LLM streaming timeout after ${TIMEOUT_MS / 1000}s`)), TIMEOUT_MS)
+  );
+  const reader = (async () => {
+    for await (const event of stream) {
+      if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
+        result += event.delta.text;
+      }
+    }
+  })();
+  await Promise.race([reader, timeout]);
+  return result;
 }
 
 async function callCLI(req: LLMRequest): Promise<string> {

@@ -117,8 +117,9 @@ export async function synthesizeNodes(
   }
 
   const synthesized = [...existing];
+  const failedCandidates: NodeCandidate[] = [];
   const provider = process.env.SYNTHESIS_PROVIDER ?? "sdk";
-  const model = process.env.SYNTHESIS_MODEL ?? "claude-opus-4-6";
+  const model = process.env.SYNTHESIS_MODEL ?? "claude-opus-4-8";
   console.log(`  Provider: ${provider}, model: ${model}\n`);
 
   for (let i = 0; i < pending.length; i++) {
@@ -128,6 +129,7 @@ export async function synthesizeNodes(
     const relevantChunks = await findRelevantChunks(supabase, candidate);
     if (relevantChunks.length === 0) {
       console.warn(`    No chunks found for "${candidate.title}", skipping`);
+      failedCandidates.push(candidate);
       continue;
     }
 
@@ -196,6 +198,14 @@ Rules:
         if (headingIdx > 0) content = content.slice(headingIdx);
         // Strip surrounding code fences if model wrapped the markdown
         content = content.replace(/^```(?:markdown)?\s*\n?/, "").replace(/\n?```\s*$/, "").trim();
+        // Reject empty content — the model can return empty string without throwing
+        if (!content) {
+          console.warn(`    Empty content for "${candidate.title}", attempt ${attempt + 1}`);
+          if (attempt < 2) {
+            await new Promise((r) => setTimeout(r, 5000 * (attempt + 1)));
+          }
+          continue;
+        }
         ok = true;
         break;
       } catch (err) {
@@ -207,7 +217,10 @@ Rules:
         }
       }
     }
-    if (!ok) continue;
+    if (!ok) {
+      failedCandidates.push(candidate);
+      continue;
+    }
 
     synthesized.push({
       ...candidate,
@@ -224,6 +237,122 @@ Rules:
     }
   }
 
-  console.log(`\nSynthesized ${synthesized.length} nodes total (${synthesized.length - existing.length} new this run)\n`);
+  // --- End-of-pass retry for failed candidates ---
+  if (failedCandidates.length > 0) {
+    console.log(
+      `\n  === Retrying ${failedCandidates.length} failed candidate(s) ===\n`
+    );
+    for (const candidate of failedCandidates) {
+      console.log(`  [retry] Synthesizing: ${candidate.title}`);
+
+      const relevantChunks = await findRelevantChunks(supabase, candidate);
+      if (relevantChunks.length === 0) {
+        console.warn(`    Still no chunks for "${candidate.title}", permanently skipping`);
+        continue;
+      }
+
+      const chunksText = relevantChunks
+        .map((c, idx) => {
+          const source =
+            c.source_type === "transcript"
+              ? `[Video: ${c.video_title}]`
+              : `[Course: ${c.pdf_file}]`;
+          return `[SOURCE ${idx + 1}] ${source}\n${c.content}`;
+        })
+        .join("\n\n---\n\n");
+
+      const systemPrompt = `You are synthesizing a knowledge node for Dr. Alex Wiant's boxing methodology knowledge graph.
+
+Output ONLY the markdown content described below. No preamble, no "Here is...", no permission requests, no closing remarks. Your entire response must start with "# ${candidate.title}" and contain only the note itself.
+
+Create a structured concept note about "${candidate.title}" (type: ${candidate.node_type}).
+
+Follow this EXACT format:
+
+# ${candidate.title}
+
+## Summary
+[2-3 sentences capturing the essence of what Alex teaches about this topic]
+
+## What Alex Teaches
+[3-5 paragraphs synthesizing ALL relevant information from the source material. Be specific and technical. Use Alex's exact terminology, analogies (baseball pitch, tennis serve, golf swing), and framework. Do NOT add information Alex hasn't taught.]
+
+## Key Quotes
+> "Exact quote from source material..."
+> — Video/Course title
+
+[Include 2-4 direct quotes that capture Alex's voice]
+
+## Common Mistakes
+- [Specific mistake Alex corrects, if applicable]
+[List 2-5 if the topic has common errors. Omit this section entirely if not applicable.]
+
+## Connections
+[Leave this section empty — it will be filled in Pass 3]
+
+## Sources
+[List each source chunk used, formatted as:]
+- [[src/VIDEO_ID]] — Video title
+- [[src/PDF_FILE]] — Course section title
+
+Rules:
+- Preserve Alex's EXACT voice, terminology, and analogies
+- Every claim must be traceable to the source material provided
+- Do NOT invent content Alex hasn't said
+- Be comprehensive — use ALL relevant source material
+- Key Quotes must be verbatim from the sources (or very close paraphrases clearly marked)`;
+
+      let content = "";
+      let ok = false;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+          content = await callLLM({
+            system: systemPrompt,
+            user: `Synthesize everything about "${candidate.title}" from these source chunks:\n\n${chunksText}`,
+            model,
+            maxTokens: 4096,
+          });
+          const titleHeading = `# ${candidate.title}`;
+          const headingIdx = content.indexOf(titleHeading);
+          if (headingIdx > 0) content = content.slice(headingIdx);
+          content = content
+            .replace(/^```(?:markdown)?\s*\n?/, "")
+            .replace(/\n?```\s*$/, "")
+            .trim();
+          if (!content) {
+            if (attempt < 1) await new Promise((r) => setTimeout(r, 10000));
+            continue;
+          }
+          ok = true;
+          break;
+        } catch (err) {
+          if (attempt < 1) {
+            console.warn(
+              `    Retry ${attempt + 1} for "${candidate.title}" (${(err as Error).message?.slice(0, 80)})`
+            );
+            await new Promise((r) => setTimeout(r, 10000));
+          } else {
+            console.error(
+              `    Failed after 2 retries: "${candidate.title}", permanently skipping`
+            );
+          }
+        }
+      }
+
+      if (!ok) continue;
+
+      synthesized.push({
+        ...candidate,
+        content,
+        source_chunk_ids: relevantChunks.map((c) => c.id),
+      });
+
+      await fs.writeFile(SYNTHESIZED_CACHE, JSON.stringify(synthesized, null, 2));
+    }
+  }
+
+  console.log(
+    `\nSynthesized ${synthesized.length} nodes total (${synthesized.length - existing.length} new this run)\n`
+  );
   return synthesized;
 }

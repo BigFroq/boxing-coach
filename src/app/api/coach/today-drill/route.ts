@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
     const todayParam = url.searchParams.get("today");
     const today = todayParam ?? utcDateString(new Date());
 
-    const limited = await enforceRateLimit(request, userId);
+    const limited = await enforceRateLimit(request);
     if (limited) return limited;
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

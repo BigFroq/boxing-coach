@@ -162,7 +162,7 @@ async function extractMetadataBatch(chunks: RawChunk[]): Promise<ChunkMetadata[]
     const text = await withRetry(
       () =>
         callLLM({
-          model: "claude-opus-4-7",
+          model: "claude-opus-4-8",
           maxTokens: 4096,
           system: `Extract metadata from boxing content chunks. For each chunk, identify:
 - techniques: specific boxing techniques mentioned (e.g., "jab", "hook", "uppercut", "kinetic chain", "phase 1", "phase 2", "hip rotation", "follow through", "stance")
@@ -299,7 +299,7 @@ async function matchChunkToNodes(
   const text = await withRetry(
     () =>
       callLLM({
-        model: "claude-opus-4-7",
+        model: "claude-opus-4-8",
         maxTokens: 2048,
         system: `Given a boxing content chunk and a list of existing knowledge graph nodes, identify which nodes this chunk is related to. Return a JSON array of { slug: string, relevance: "high" | "medium" | "low" }. Only include nodes that are genuinely mentioned or directly relevant. Return ONLY the JSON array, no markdown.`,
         user: `Chunk content: ${chunkContent.slice(0, 2000)}\n\nExisting nodes:\n${nodeList}`,
@@ -398,7 +398,7 @@ async function createSourcedFromEdges(
 
 async function main() {
   console.log("=== Punch Doctor AI — Incremental Ingest ===\n");
-  console.log(`Provider: ${process.env.SYNTHESIS_PROVIDER ?? "sdk"} | Model: claude-opus-4-7\n`);
+  console.log(`Provider: ${process.env.SYNTHESIS_PROVIDER ?? "sdk"} | Model: claude-opus-4-8\n`);
 
   // 1. Find new transcripts
   console.log("1. Scanning for new transcripts...");

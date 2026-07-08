@@ -107,8 +107,8 @@ ${nodeIndexText}
 Return a flat JSON array of edge objects. No markdown fencing.
 Each object: {"source_slug": "...", "target_slug": "...", "edge_type": "...", "weight": 0.8, "evidence": "..."}`,
       user: `Discover edges for these nodes:\n\n${batchText}`,
-      model: process.env.SYNTHESIS_MODEL ?? "claude-opus-4-6",
-      maxTokens: 8192,
+      model: process.env.SYNTHESIS_MODEL ?? "claude-opus-4-8",
+      maxTokens: 32768,
         }),
       { label: `pass3-batch-${i}`, maxAttempts: 4, shouldRetry: shouldRetryLLM }
     );

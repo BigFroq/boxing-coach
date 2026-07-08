@@ -80,7 +80,8 @@ function buildFrontmatter(
 
 export async function writeVaultFiles(
   nodes: SynthesizedNode[],
-  edges: DiscoveredEdge[]
+  edges: DiscoveredEdge[],
+  opts: { onlySlugs?: Set<string> } = {}
 ): Promise<void> {
   console.log("=== Writing Vault Files ===\n");
 
@@ -93,7 +94,10 @@ export async function writeVaultFiles(
   const nodesBySlug = new Map(nodes.map(n => [n.slug, n]));
 
   // Write each node as a .md file
+  let written = 0;
   for (const node of nodes) {
+    // Scoped mode (targeted re-synth): render only requested slugs, leave others alone.
+    if (opts.onlySlugs && !opts.onlySlugs.has(node.slug)) continue;
     const folder = TYPE_FOLDERS[node.node_type] ?? "concepts";
     const frontmatter = buildFrontmatter(node, edges);
     const connections = buildConnectionsSection(node, edges, nodesBySlug);
@@ -119,9 +123,14 @@ export async function writeVaultFiles(
     const fileContent = `${frontmatter}\n\n${content}\n`;
     const filePath = path.join(VAULT_DIR, folder, `${node.slug}.md`);
     await fs.writeFile(filePath, fileContent, "utf-8");
+    written++;
   }
 
-  console.log(`Wrote ${nodes.length} node files`);
+  console.log(`Wrote ${written} node files`);
+
+  // Scoped write (targeted re-synth): we deliberately touched only a subset, so skip
+  // orphan-pruning and _MOC regeneration — both would disturb files we didn't intend to.
+  if (opts.onlySlugs) return;
 
   // Remove orphaned .md files — nodes deleted from the DB (merge, stub cleanup, etc.)
   // leave stale files on disk unless we prune them here.

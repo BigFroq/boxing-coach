@@ -76,7 +76,7 @@ async function decomposeQuery(query: string): Promise<DecomposedQuery> {
   const anthropic = getAnthropic();
 
   const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-6",
     max_tokens: 300,
     system:
       'Break this boxing question into 2-3 focused sub-queries for knowledge retrieval. Also extract key terms (fighter names, technique names, concepts). Return JSON only, no markdown: { "sub_queries": string[], "keywords": string[] }',
@@ -120,7 +120,7 @@ async function generateHypotheticalAnswer(subQuery: string): Promise<string> {
   const anthropic = getAnthropic();
 
   const response = await anthropic.messages.create({
-    model: "claude-sonnet-4-20250514",
+    model: "claude-sonnet-4-6",
     max_tokens: 200,
     system:
       "Generate a short hypothetical answer (~100 words) to a boxing technique question, as if you were Dr. Alex Wiant explaining his methodology. Use specific terminology: kinetic chains, phases, hip opening/closing, shearing force, throw vs push. Respond with the answer text only, no preamble.",
