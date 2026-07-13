@@ -6,6 +6,7 @@ import { saveClipLog, fetchRecentClips } from "@/lib/clip-log-storage";
 import type { ClipLog } from "@/lib/clip-log-types";
 import { DiffCard } from "@/components/clip-log/diff-card";
 import { Timeline } from "@/components/clip-log/timeline";
+import { PoseOverlay } from "@/components/clip-log/pose-overlay";
 
 interface AnalysisResult {
   summary: string;
@@ -318,14 +319,17 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
         </div>
       ) : (
         <div className="w-full max-w-sm space-y-4">
-          <video
-            ref={videoRef}
-            src={videoUrl!}
-            controls
-            playsInline
-            muted
-            className="w-full rounded-xl"
-          />
+          <div className="relative w-full">
+            <video
+              ref={videoRef}
+              src={videoUrl!}
+              controls
+              playsInline
+              muted
+              className="w-full rounded-xl"
+            />
+            <PoseOverlay videoRef={videoRef} />
+          </div>
 
           {error && (
             <div className="flex items-center gap-2 text-sm text-red-400">
