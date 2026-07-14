@@ -2,10 +2,16 @@
 
 import { useState, useRef, useCallback, useEffect } from "react";
 import { Upload, Loader2, AlertCircle, RotateCcw } from "lucide-react";
+import {
+  PoseLandmarker,
+  FilesetResolver,
+  DrawingUtils,
+} from "@mediapipe/tasks-vision";
 import { saveClipLog, fetchRecentClips } from "@/lib/clip-log-storage";
 import type { ClipLog } from "@/lib/clip-log-types";
 import { DiffCard } from "@/components/clip-log/diff-card";
 import { Timeline } from "@/components/clip-log/timeline";
+import { PoseOverlay } from "@/components/clip-log/pose-overlay";
 
 interface AnalysisResult {
   summary: string;
@@ -128,6 +134,25 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
     canvas.height = Math.round(video.videoHeight * scale);
     const ctx = canvas.getContext("2d")!;
 
+    // Draw the pose skeleton onto each extracted frame so the coach model
+    // sees explicit joint markers. If the landmarker can't load, frames go
+    // out plain — same behavior as before.
+    let landmarker: PoseLandmarker | null = null;
+    try {
+      const fileset = await FilesetResolver.forVisionTasks("/mediapipe-wasm");
+      landmarker = await PoseLandmarker.createFromOptions(fileset, {
+        baseOptions: {
+          modelAssetPath: "/pose_landmarker_lite.task",
+          delegate: "GPU",
+        },
+        runningMode: "IMAGE",
+        numPoses: 1,
+      });
+    } catch (e) {
+      console.warn("Skeleton annotation unavailable, sending plain frames:", e);
+    }
+    const drawer = new DrawingUtils(ctx);
+
     const frames: string[] = [];
     const SEEK_TIMEOUT_MS = 500;
     for (let i = 0; i < totalFrames; i++) {
@@ -148,9 +173,20 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
         });
       }
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      if (landmarker) {
+        const lm = landmarker.detect(canvas).landmarks?.[0];
+        if (lm) {
+          drawer.drawConnectors(lm, PoseLandmarker.POSE_CONNECTIONS, {
+            color: "#3cf0ff",
+            lineWidth: 2,
+          });
+          drawer.drawLandmarks(lm, { color: "#ff8c28", radius: 2 });
+        }
+      }
       const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
       frames.push(dataUrl.split(",")[1]);
     }
+    landmarker?.close();
     return frames;
   }, []);
 
@@ -318,14 +354,17 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
         </div>
       ) : (
         <div className="w-full max-w-sm space-y-4">
-          <video
-            ref={videoRef}
-            src={videoUrl!}
-            controls
-            playsInline
-            muted
-            className="w-full rounded-xl"
-          />
+          <div className="relative w-full">
+            <video
+              ref={videoRef}
+              src={videoUrl!}
+              controls
+              playsInline
+              muted
+              className="w-full rounded-xl"
+            />
+            <PoseOverlay videoRef={videoRef} />
+          </div>
 
           {error && (
             <div className="flex items-center gap-2 text-sm text-red-400">
