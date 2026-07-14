@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Upload, Loader2, AlertCircle, RotateCcw } from "lucide-react";
+import { Upload, Loader2, AlertCircle, RotateCcw, Download, Share2 } from "lucide-react";
 import {
   PoseLandmarker,
   FilesetResolver,
@@ -12,6 +12,10 @@ import type { ClipLog } from "@/lib/clip-log-types";
 import { DiffCard } from "@/components/clip-log/diff-card";
 import { Timeline } from "@/components/clip-log/timeline";
 import { PoseOverlay } from "@/components/clip-log/pose-overlay";
+import {
+  exportAnnotatedClip,
+  type AnnotatedClipExport,
+} from "@/components/clip-log/export-annotated-clip";
 
 interface AnalysisResult {
   summary: string;
@@ -41,8 +45,13 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
   const [error, setError] = useState<string | null>(null);
   const [recentClips, setRecentClips] = useState<ClipLog[]>([]);
   const [priorClipForDiff, setPriorClipForDiff] = useState<ClipLog | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportPct, setExportPct] = useState(0);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [exported, setExported] = useState<AnnotatedClipExport | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
+  const resultVideoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -71,6 +80,55 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
     setStatus("");
     setAnalysis(null);
     setError(null);
+    setExporting(false);
+    setExportPct(0);
+    setExportError(null);
+    setExported(null);
+  };
+
+  const clipBaseName = () =>
+    (videoFile?.name.replace(/\.[^.]+$/, "") || "clip") + "-analyzed";
+
+  const ensureExported = async (): Promise<AnnotatedClipExport | null> => {
+    if (exported) return exported;
+    if (!videoUrl) return null;
+    setExportError(null);
+    setExporting(true);
+    setExportPct(0);
+    try {
+      const result = await exportAnnotatedClip(videoUrl, (f) =>
+        setExportPct(Math.round(f * 100))
+      );
+      setExported(result);
+      return result;
+    } catch (e) {
+      console.error("Annotated clip export failed:", e);
+      setExportError("Couldn't render the overlay video in this browser.");
+      return null;
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const downloadAnnotated = async () => {
+    const result = await ensureExported();
+    if (!result) return;
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(result.blob);
+    a.download = `${clipBaseName()}.${result.extension}`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10_000);
+  };
+
+  const shareAnnotated = async () => {
+    const result = await ensureExported();
+    if (!result) return;
+    const file = new File([result.blob], `${clipBaseName()}.${result.extension}`, {
+      type: result.blob.type,
+    });
+    if (navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ files: [file] }).catch(() => {});
+    }
   };
 
   const handleFileSelect = useCallback((file: File) => {
@@ -249,6 +307,58 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
   if (analysis) {
     return (
       <div className="h-full overflow-y-auto px-4 sm:px-6 py-6 space-y-5">
+        {videoUrl && (
+          <div className="mx-auto w-full max-w-sm space-y-2">
+            <div className="relative w-full">
+              <video
+                ref={resultVideoRef}
+                src={videoUrl}
+                controls
+                playsInline
+                muted
+                loop
+                autoPlay
+                className="w-full rounded-xl"
+              />
+              <PoseOverlay videoRef={resultVideoRef} />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={downloadAnnotated}
+                disabled={exporting}
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-surface-hover py-2.5 text-sm text-muted hover:text-foreground transition-colors disabled:opacity-60"
+              >
+                {exporting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Rendering… {exportPct}%
+                  </>
+                ) : (
+                  <>
+                    <Download size={14} />
+                    Download with overlay
+                  </>
+                )}
+              </button>
+              {typeof navigator !== "undefined" && !!navigator.share && (
+                <button
+                  onClick={shareAnnotated}
+                  disabled={exporting}
+                  aria-label="Share clip with overlay"
+                  className="flex items-center justify-center rounded-lg bg-surface-hover px-4 py-2.5 text-muted hover:text-foreground transition-colors disabled:opacity-60"
+                >
+                  <Share2 size={14} />
+                </button>
+              )}
+            </div>
+            {exportError && (
+              <div className="flex items-center gap-2 text-sm text-red-400">
+                <AlertCircle size={14} />
+                {exportError}
+              </div>
+            )}
+          </div>
+        )}
         <div className="rounded-xl bg-surface-hover p-5">
           <h3 className="text-sm font-semibold mb-2">Summary</h3>
           <p className="text-sm text-muted leading-relaxed">{analysis.summary}</p>
