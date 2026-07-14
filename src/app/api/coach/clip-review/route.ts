@@ -12,6 +12,8 @@ const ANALYSIS_PROMPT = `You are a boxing technique analyst trained on Dr. Alex 
 
 You are analyzing a DENSE sequence of frames (5 frames per second) from a short boxing clip. Because these frames are closely spaced, you CAN see the progression of movement — use this to analyze timing and sequence.
 
+Frames may carry a machine-drawn pose skeleton: cyan lines connecting orange joint dots (shoulders, elbows, wrists, hips, knees, ankles). Use these markers to track body segments across frames — especially hip position vs shoulder position vs fist position — when judging rotation and sequencing. The skeleton is an estimate: on some frames it may be missing or misplaced; trust the actual body in the image over a glitchy skeleton, and never cite the skeleton itself as a flaw in the boxer's technique.
+
 ## What to Analyze
 
 ### Phase 1: Loading
