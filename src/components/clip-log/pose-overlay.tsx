@@ -15,6 +15,17 @@ import {
 const TRAIL_LEN = 16; // frames of fading hand-path trail
 type Pt = { x: number; y: number } | null;
 
+// MediaPipe's GPU delegate needs a WebGL2 context. Some browsers/environments
+// can't create one (WebGL disabled, context limit reached) — probing here lets
+// us pick CPU up front instead of triggering MediaPipe's native emscripten error.
+const supportsWebGL2 = () => {
+  try {
+    return !!document.createElement("canvas").getContext("webgl2");
+  } catch {
+    return false;
+  }
+};
+
 export function PoseOverlay({
   videoRef,
 }: {
@@ -107,14 +118,22 @@ export function PoseOverlay({
       try {
         const fileset = await FilesetResolver.forVisionTasks("/mediapipe-wasm");
         if (cancelled) return;
-        landmarker = await PoseLandmarker.createFromOptions(fileset, {
-          baseOptions: {
-            modelAssetPath: "/pose_landmarker_lite.task",
-            delegate: "GPU",
-          },
-          runningMode: "VIDEO",
-          numPoses: 1,
-        });
+        const make = (delegate: "GPU" | "CPU") =>
+          PoseLandmarker.createFromOptions(fileset, {
+            baseOptions: {
+              modelAssetPath: "/pose_landmarker_lite.task",
+              delegate,
+            },
+            runningMode: "VIDEO",
+            numPoses: 1,
+          });
+        try {
+          landmarker = supportsWebGL2() ? await make("GPU") : await make("CPU");
+        } catch {
+          // GPU context creation failed at runtime — retry once on CPU.
+          if (cancelled) return;
+          landmarker = await make("CPU");
+        }
         if (cancelled) {
           landmarker.close();
           return;
