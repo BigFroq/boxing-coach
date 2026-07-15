@@ -32,8 +32,10 @@ Frames may carry a machine-drawn pose skeleton: cyan lines connecting orange joi
 - Does the arm appear loose until near impact?
 
 ### Phase 4: Follow Through
-- Is there follow-through past the impact point?
-- Does weight transfer through the target?
+Note: on a heavy bag the fist stops at contact — that is normal, NOT a lack of follow-through. Judge follow-through by the BODY, not fist travel:
+- Do the hips and torso keep rotating through the contact frame? (Rotation dying at contact = push, not throw)
+- If a bag is visible: does it visibly jump/fold/swing after contact (mass driven through), or barely move (arm-only tap)?
+- Is the arm near full extension at contact, with weight committed forward?
 - Is there a quick reset to neutral stance?
 
 ### Common Errors to Check
