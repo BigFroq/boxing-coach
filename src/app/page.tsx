@@ -146,11 +146,18 @@ function AppContent() {
     setActiveTab(id);
   };
 
-  // Logo → home: jump to Technique and reset it to the hero.
+  // Logo → home: always land on the Technique hero. If already on Technique,
+  // bump the reset signal (the mounted chat archives + clears). If coming from
+  // another tab, flag the unmounted chat to archive + open on the hero when it
+  // mounts (key mirrors ChatTab's `${storageKey}-gohome` for systemContext=technique).
   const goHome = () => {
-    if (activeTab !== "technique") track("tab_switch", { from: activeTab, to: "technique" });
+    if (activeTab === "technique") {
+      setHomeSignal((n) => n + 1);
+      return;
+    }
+    try { localStorage.setItem("boxing-coach-chat-technique-gohome", "1"); } catch { /* ignore */ }
+    track("tab_switch", { from: activeTab, to: "technique" });
     setActiveTab("technique");
-    setHomeSignal((n) => n + 1);
   };
 
   return (

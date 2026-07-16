@@ -150,17 +150,34 @@ export function ChatTab({
     }
   }, []);
 
-  // Load current conversation, history, and toggle state on mount
+  // Load current conversation, history, and toggle state on mount. If the parent
+  // requested "home" while this tab was unmounted (logo click from another tab),
+  // a one-shot flag tells us to archive the saved conversation and open on the
+  // hero instead of reloading it — matching the mounted reset path.
   useEffect(() => {
+    const goHomeKey = `${storageKey}-gohome`;
+    let goingHome = false;
+    try { goingHome = localStorage.getItem(goHomeKey) === "1"; } catch { /* ignore */ }
     try {
       const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+      const parsed = saved ? (JSON.parse(saved) as Message[]) : null;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        if (goingHome) {
+          const firstUser = parsed.find((m) => m.role === "user");
+          const conv: SavedConversation = {
+            id: Date.now().toString(),
+            preview: firstUser?.content.slice(0, 80) ?? "Conversation",
+            messages: parsed,
+            timestamp: Date.now(),
+          };
+          saveHistory(storageKey, [conv, ...loadHistory(storageKey)].slice(0, 20));
+          localStorage.removeItem(storageKey);
+        } else {
           setMessages(parsed);
         }
       }
     } catch { /* ignore */ }
+    try { localStorage.removeItem(goHomeKey); } catch { /* ignore */ }
     setHistory(loadHistory(storageKey));
     try {
       setThinkLonger(localStorage.getItem(thinkLongerKey) === "1");
