@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const { frames, filename, userId } = parsed.data;
+    const { frames, filename } = parsed.data;
 
     const limited = await enforceRateLimit(request);
     if (limited) return limited;

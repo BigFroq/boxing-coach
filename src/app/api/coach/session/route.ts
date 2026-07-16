@@ -2,7 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { createServerClient } from "@/lib/supabase";
-import { retrieveContext, formatChunksForPrompt, extractCitations, type SourceCitation } from "@/lib/graph-rag";
+import { retrieveContext, formatChunksForPrompt, type SourceCitation } from "@/lib/graph-rag";
 import { FOUR_PHASES, CORE_PRINCIPLES, MYTHS } from "@/lib/framework";
 import { styleProfileSchema } from "@/lib/validation";
 import { enforceRateLimit } from "@/lib/rate-limit";

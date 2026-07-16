@@ -1,7 +1,3 @@
-import type { DimensionScores } from "./fighter-profiles";
-
-type DimensionKey = keyof DimensionScores;
-
 /** Score contribution for a single answer option */
 interface ScoreEntry {
   [dimension: string]: number;

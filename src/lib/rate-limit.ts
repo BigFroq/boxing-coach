@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 const url = process.env.UPSTASH_REDIS_REST_URL;
 const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-export const ratelimit =
+const ratelimit =
   url && token
     ? new Ratelimit({
         redis: new Redis({ url, token }),
@@ -17,7 +17,7 @@ export const ratelimit =
 
 // Key on IP only: userId comes from the unauthenticated request body, so a
 // caller rotating userIds would mint a fresh bucket per request.
-export function getRateLimitKey(request: Request): string {
+function getRateLimitKey(request: Request): string {
   const fwd = request.headers.get("x-forwarded-for") ?? "";
   const ip = fwd.split(",")[0].trim() || "unknown";
   return `ip:${ip}`;

@@ -8,17 +8,6 @@ export const FOUR_PHASES = [
   "Phase 4: Follow Through — weight transfers through target, arm unwinds, quick reset",
 ] as const;
 
-export const KINETIC_CHAINS = [
-  "Spiral line",
-  "Front functional line",
-  "Superficial back line",
-  "Lateral line",
-  "Cross-body chains",
-  "Deep front arm line",
-  "Superficial front arm line",
-  "Back functional line",
-] as const;
-
 export const MYTHS = {
   shoulder: {
     myth: "Put your shoulder into it",

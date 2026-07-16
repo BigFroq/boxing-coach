@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ChevronRight, ChevronLeft, Loader2 } from "lucide-react";
-import { allQuestions, getQuestionSequence, getQuestionText } from "@/data/questions";
+import { getQuestionSequence, getQuestionText } from "@/data/questions";
 import type { Question, ExperienceLevel } from "@/data/questions";
 import { createBrowserClient } from "@/lib/supabase-browser";
 

@@ -6,6 +6,7 @@ import { embedText } from "./voyage";
 import {
   type RetrievedChunk,
   type SourceCitation,
+  type UntypedRpc,
   formatChunksForPrompt,
   extractCitations,
 } from "./rag";
@@ -141,7 +142,7 @@ async function vectorSearch(
 ): Promise<RawCandidate[]> {
   const supabase = createServerClient();
 
-  const { data, error } = await (supabase.rpc as Function)("match_chunks", {
+  const { data, error } = await (supabase.rpc as UntypedRpc)("match_chunks", {
     query_embedding: embedding,
     match_count: count,
     filter_categories: categories ?? null,
@@ -177,7 +178,7 @@ async function graphSearch(
 ): Promise<RawCandidate[]> {
   const supabase = createServerClient();
 
-  const { data, error } = await (supabase.rpc as Function)("search_graph", {
+  const { data, error } = await (supabase.rpc as UntypedRpc)("search_graph", {
     query_embedding: embedding,
     entry_keywords: keywords,
     max_hops: 1,

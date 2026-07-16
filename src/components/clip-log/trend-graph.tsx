@@ -30,13 +30,11 @@ const PHASE_COLORS = {
 export function TrendGraph({ userId }: TrendGraphProps) {
   const [points, setPoints] = useState<ReturnType<typeof computeRollingAvgTrend>>([]);
   const [clipCount, setClipCount] = useState(0);
+  const isAnon = !userId || userId === "anon";
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    if (!userId || userId === "anon") {
-      setLoaded(true);
-      return;
-    }
+    if (!userId || userId === "anon") return;
     let cancelled = false;
     (async () => {
       const r = await fetchRecentClips(userId, 60);
@@ -55,7 +53,7 @@ export function TrendGraph({ userId }: TrendGraphProps) {
     };
   }, [userId]);
 
-  if (!loaded) return null;
+  if (!loaded && !isAnon) return null;
 
   if (clipCount < ROLL) {
     return (

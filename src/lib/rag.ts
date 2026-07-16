@@ -1,6 +1,9 @@
 import { createServerClient } from "./supabase";
 import { embedText } from "./voyage";
 
+// The generated Supabase client has no RPC typings for our SQL functions
+export type UntypedRpc = (fn: string, args: Record<string, unknown>) => PromiseLike<{ data: unknown; error: unknown }>;
+
 export interface RetrievedChunk {
   content: string;
   source_type: "pdf" | "transcript";
@@ -26,7 +29,7 @@ export async function retrieveChunks(
   const queryEmbedding = await embedText(query);
   const supabase = createServerClient();
 
-  const { data, error } = await (supabase.rpc as Function)("match_chunks", {
+  const { data, error } = await (supabase.rpc as UntypedRpc)("match_chunks", {
     query_embedding: queryEmbedding,
     match_count: count,
     filter_categories: categories ?? null,

@@ -28,8 +28,8 @@ function rowToPick(row: Record<string, unknown>): DailyDrillPick {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function gatherInputs(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
   userId: string
 ): Promise<DiagnosisInputs | { status: "no-program" }> {

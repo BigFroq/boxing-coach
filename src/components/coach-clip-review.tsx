@@ -301,7 +301,7 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
       setAnalyzing(false);
       setStatus("");
     }
-  }, [videoFile, extractFrames, userId]);
+  }, [videoFile, extractFrames, userId, recentClips]);
 
   // Results view
   if (analysis) {

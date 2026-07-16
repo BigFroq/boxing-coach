@@ -140,18 +140,22 @@ export function CoachSession({ userId }: CoachSessionProps) {
 
           for (const line of lines) {
             if (!line.startsWith("data: ")) continue;
+            let data;
             try {
-              const data = JSON.parse(line.slice(6));
-              if (data.type === "text") {
-                assistantContent += data.content;
-                setMessages((prev) => {
-                  const updated = [...prev];
-                  updated[updated.length - 1] = { role: "assistant", content: assistantContent };
-                  return updated;
-                });
-              }
+              data = JSON.parse(line.slice(6));
             } catch {
-              // Skip malformed JSON
+              continue; // Skip malformed JSON
+            }
+            if (data.type === "text") {
+              assistantContent += data.content;
+              setMessages((prev) => {
+                const updated = [...prev];
+                updated[updated.length - 1] = { role: "assistant", content: assistantContent };
+                return updated;
+              });
+            } else if (data.type === "error") {
+              // Server signals mid-stream failure with a 200 stream; surface it
+              throw new Error("STREAM_ERROR");
             }
           }
         }
@@ -164,10 +168,16 @@ export function CoachSession({ userId }: CoachSessionProps) {
             : code === "QUOTA"
               ? "The coach is temporarily unavailable (AI usage limit reached). Try again a bit later."
               : "Something went wrong reaching the coach. Please try again.";
-        setMessages((prev) => [
-          ...prev,
-          { role: "assistant", content: msg },
-        ]);
+        setMessages((prev) => {
+          const updated = [...prev];
+          const last = updated[updated.length - 1];
+          if (last?.role === "assistant" && last.content === "") {
+            // Reuse the placeholder bubble pushed before streaming started
+            updated[updated.length - 1] = { role: "assistant", content: msg };
+            return updated;
+          }
+          return [...updated, { role: "assistant", content: msg }];
+        });
       } finally {
         setLoading(false);
         setStreaming(false);

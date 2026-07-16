@@ -1,5 +1,3 @@
-import type { DimensionScores } from "./fighter-profiles";
-
 export type QuestionFormat = "mc" | "slider" | "multiselect";
 export type QuestionPart = "A" | "B" | "C" | "D" | "E";
 export type ExperienceLevel = "beginner" | "intermediate" | "advanced" | "competitor";

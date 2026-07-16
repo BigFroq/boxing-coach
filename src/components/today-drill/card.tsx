@@ -24,13 +24,12 @@ function deriveState(pick: DailyDrillPick): ViewState {
 }
 
 export function TodayDrillCard({ userId }: TodayDrillCardProps) {
-  const [state, setState] = useState<ViewState>({ kind: "loading" });
+  const [state, setState] = useState<ViewState>(() =>
+    !userId || userId === "anon" ? { kind: "error" } : { kind: "loading" }
+  );
 
   useEffect(() => {
-    if (!userId || userId === "anon") {
-      setState({ kind: "error" });
-      return;
-    }
+    if (!userId || userId === "anon") return;
     let cancelled = false;
     (async () => {
       try {
@@ -135,7 +134,7 @@ export function TodayDrillCard({ userId }: TodayDrillCardProps) {
     <div className="rounded-xl bg-surface-hover p-5">
       <div className="flex items-center gap-2 text-xs font-semibold text-accent mb-2">
         <Target size={14} />
-        TODAY'S DRILL
+        TODAY&apos;S DRILL
       </div>
       <h3 className="text-base font-semibold mb-1">{drill.name}</h3>
       <p className="text-sm text-muted leading-relaxed mb-3">{state.pick.diagnosis}</p>

@@ -43,6 +43,7 @@ export function Schulte({ userId, onBack }: SchulteProps) {
     if (n !== state.nextNumber) return;
     const next = state.nextNumber + 1;
     if (next > TOTAL_CELLS) {
+      // eslint-disable-next-line react-hooks/purity -- runs in a tap handler, never during render
       const elapsedSec = (Date.now() - state.startedAt) / 1000;
       setState({ kind: "done", elapsedSec });
       if (userId && userId !== "anon") {

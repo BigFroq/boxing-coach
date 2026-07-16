@@ -5,7 +5,7 @@
  * session log (coach-session).
  */
 
-export function pickThinkingOpener(msg: string): string | null {
+function pickThinkingOpener(msg: string): string | null {
   const m = msg.toLowerCase();
   if (/\bjab\b/.test(m)) return "Looking at jab mechanics…";
   if (/\bcross\b|\bstraight right\b|\bstraight left\b/.test(m)) return "Looking at cross mechanics…";

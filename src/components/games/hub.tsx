@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { Zap, Grid3x3, Crosshair } from "lucide-react";
 import { fetchUserBest, fetchPunchClips } from "@/lib/games-storage";
 import { ReactionTap } from "./reaction-tap";
@@ -86,7 +87,7 @@ export function GamesHub({ userId }: HubProps) {
     <div className="relative z-10 px-4 py-4 sm:px-8 sm:py-5">
       {(!userId || userId === "anon") && (
         <div className="mb-5 border-l-2 border-accent bg-accent/8 px-4 py-3 font-mono text-[11px] uppercase tracking-wide text-muted">
-          Take the <a href="/?tab=style" className="text-ember underline underline-offset-4">style quiz</a> to put your scores on the board.
+          Take the <Link href="/?tab=style" className="text-ember underline underline-offset-4">style quiz</Link> to put your scores on the board.
         </div>
       )}
       <div className="grid overflow-hidden border-l border-t border-ink/10 md:grid-cols-3">

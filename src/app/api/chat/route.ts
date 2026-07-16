@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const { messages, context, thinkLonger, styleProfile, clipHistory, userId } = parsed.data;
+    const { messages, context, thinkLonger, styleProfile, clipHistory } = parsed.data;
 
     const limited = await enforceRateLimit(request);
     if (limited) return limited;
