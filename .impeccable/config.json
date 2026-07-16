@@ -1,0 +1,26 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "design-system-color",
+        "value": "rgba(255,255,255,0.1)",
+        "reason": "User confirmed rgba(255,255,255,0.1) is intentional",
+        "createdAt": "2026-07-16T21:46:54.639Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#3cf0ff",
+        "reason": "User confirmed #3cf0ff is intentional",
+        "createdAt": "2026-07-16T21:46:54.690Z"
+      },
+      {
+        "rule": "design-system-color",
+        "value": "#ff8c28",
+        "reason": "User confirmed #ff8c28 is intentional",
+        "createdAt": "2026-07-16T21:46:54.740Z"
+      }
+    ]
+  }
+}
