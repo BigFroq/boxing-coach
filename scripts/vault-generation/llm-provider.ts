@@ -4,6 +4,7 @@
 // Switch via SYNTHESIS_PROVIDER=cli env var.
 import Anthropic from "@anthropic-ai/sdk";
 import { spawn } from "child_process";
+import { traceGeneration } from "./tracing";
 
 export interface LLMRequest {
   system: string;
@@ -93,6 +94,14 @@ async function callCLI(req: LLMRequest): Promise<string> {
 
 export async function callLLM(req: LLMRequest): Promise<string> {
   const provider = process.env.SYNTHESIS_PROVIDER ?? "sdk";
-  if (provider === "cli") return callCLI(req);
-  return callSDK(req);
+  const startTime = new Date();
+  const base = { provider, model: req.model, system: req.system, user: req.user, startTime };
+  try {
+    const result = provider === "cli" ? await callCLI(req) : await callSDK(req);
+    await traceGeneration({ ...base, output: result });
+    return result;
+  } catch (err) {
+    await traceGeneration({ ...base, error: (err as Error).message });
+    throw err;
+  }
 }
