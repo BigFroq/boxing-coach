@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Boxing Coach AI",
-  description: "AI Boxing Coach",
+  title: "Punch Doctor AI",
+  description: "AI Punch Doctor",
 };
 
 export default function RootLayout({
@@ -25,9 +25,20 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased dark`}
     >
-      <body className="h-full bg-background text-foreground">{children}</body>
+      <body className="h-full bg-background text-foreground">
+        {/* Apply persisted theme/corner before paint to avoid a flash of the wrong theme. */}
+        <script
+          suppressHydrationWarning
+          dangerouslySetInnerHTML={{
+            __html:
+              'try{var d=document.documentElement,t=localStorage.getItem("pd-theme"),c=localStorage.getItem("pd-corner");if(t)d.dataset.theme=t;if(c)d.dataset.corner=c;}catch(e){}',
+          }}
+        />
+        {children}
+      </body>
     </html>
   );
 }

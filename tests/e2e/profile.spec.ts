@@ -7,6 +7,7 @@ test.describe("/me — personal profile", () => {
 
     // Identity card renders with empty inputs.
     await expect(page.getByRole("heading", { name: /your profile/i })).toBeVisible();
+    await expect(page.getByText(/changes save automatically/i)).toBeVisible();
     await expect(page.getByPlaceholder(/your name/i)).toBeVisible();
 
     // Style + coach sections render their empty states.

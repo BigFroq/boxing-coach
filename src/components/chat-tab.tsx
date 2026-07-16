@@ -6,6 +6,7 @@ import { FeedbackWidget } from "@/components/feedback-widget";
 import { track } from "@/lib/analytics";
 import { renderInlineBold } from "@/lib/render-inline-bold";
 import { getThinkingSequence } from "@/lib/thinking-sequence";
+import { formatRelativeTime } from "@/lib/relative-time";
 
 interface Message {
   role: "user" | "assistant";
@@ -74,6 +75,7 @@ export function ChatTab({
   userId,
 }: ChatTabProps) {
   const storageKey = storageKeyOverride ?? `boxing-coach-chat-${systemContext}`;
+  const isTechnique = systemContext === "technique";
   const thinkLongerKey = `${storageKey}-think-longer`;
   const [messages, setMessages] = useState<Message[]>([]);
   const [history, setHistory] = useState<SavedConversation[]>([]);
@@ -105,6 +107,37 @@ export function ChatTab({
   // the start; when the first text delta arrives we lock in the duration.
   const thinkingStartRef = useRef<number | null>(null);
   const firstTextSeenRef = useRef(false);
+
+  // Fight card (technique station aside) — real data from the coach progress
+  // API: top focus area, session count, last-session recap.
+  const [fightCard, setFightCard] = useState<{
+    focus: string | null;
+    totalSessions: number;
+    lastSession: { summary: string | null; createdAt: string } | null;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!isTechnique || !userId || userId === "anon") return;
+    let cancelled = false;
+    fetch(`/api/coach/progress?userId=${userId}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled || !data) return;
+        const active = (data.focusAreas ?? []).find(
+          (f: { status: string }) => ["new", "active", "improving"].includes(f.status)
+        );
+        const last = (data.recentSessions ?? [])[0];
+        setFightCard({
+          focus: active?.name ?? null,
+          totalSessions: data.stats?.totalSessions ?? 0,
+          lastSession: last ? { summary: last.summary ?? null, createdAt: last.created_at } : null,
+        });
+      })
+      .catch(() => {}); // decorative aside — silent failure keeps placeholders
+    return () => {
+      cancelled = true;
+    };
+  }, [isTechnique, userId]);
 
   const stopTypewriter = useCallback(() => {
     if (typewriterIntervalRef.current) {
@@ -570,34 +603,106 @@ export function ChatTab({
               </div>
             )}
 
-            {/* Hero + suggestion grid */}
-            <div className="flex-1 flex flex-col items-center justify-start sm:justify-center px-4 sm:px-6 py-6 sm:py-10">
-              <div className="w-full max-w-3xl flex flex-col items-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 border border-accent/20 mb-5">
-                  <HeroIcon size={26} className="text-accent" />
-                </div>
-                <h2 className="text-2xl font-semibold mb-2 text-center">{heroTitle}</h2>
-                <p className="text-sm text-muted text-center max-w-md mb-8 leading-relaxed">
-                  {heroSubtitle}
-                </p>
+            {/* Technique is a training station; other chats retain the compact coach hero. */}
+            {isTechnique ? (
+              <div className="flex-1 overflow-y-auto text-foreground">
+                <div className="mx-auto max-w-6xl px-5 py-4 sm:px-9 sm:py-5 lg:px-14 lg:py-6">
+                  <p className="font-mono text-[11px] font-medium uppercase tracking-[0.18em] text-ember">The mechanics room</p>
+                  <h2 className="mt-2 max-w-3xl text-3xl font-semibold normal-case leading-[0.95] tracking-[-0.055em] sm:text-4xl sm:uppercase lg:text-5xl">{heroTitle}</h2>
+                  <p className="mt-3 max-w-xl text-sm leading-relaxed text-ink/50 sm:text-base">{heroSubtitle}</p>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
-                  {suggestions.map((s) => {
-                    const Icon = s.Icon;
-                    return (
-                      <button
-                        key={s.text}
-                        onClick={() => sendMessage(s.text)}
-                        className="flex items-start gap-3 text-left px-4 py-3 rounded-xl border border-border bg-surface hover:bg-surface-hover hover:border-accent/40 transition-colors text-sm"
-                      >
-                        <Icon size={16} className="text-accent shrink-0 mt-0.5" />
-                        <span className="leading-snug">{s.text}</span>
-                      </button>
-                    );
-                  })}
+                  <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(15rem,.8fr)]">
+                    <section className="flex min-h-44 flex-col justify-between border border-ink/10 bg-gradient-to-br from-surface-hover/85 via-surface/85 to-surface-2/85 p-5 text-foreground backdrop-blur-sm sm:p-6">
+                      <div>
+                        <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-ember">Ask the coach</p>
+                        <h3 className="mt-3 max-w-md text-3xl font-semibold uppercase leading-[.95] tracking-[-0.045em]">What are we improving today?</h3>
+                      </div>
+                      <div>
+                        <div className="flex items-end gap-3 border-b-2 border-ink/15 pb-2">
+                          <textarea
+                            ref={inputRef}
+                            aria-label={placeholder}
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Punch, sequence, or problem…"
+                            rows={1}
+                            className="min-h-11 flex-1 resize-none bg-transparent px-0 py-2 text-base placeholder:text-ink/35 focus:outline-none"
+                          />
+                          <button
+                            onClick={() => sendMessage(input)}
+                            disabled={!input.trim() || loading || streaming}
+                            className="shrink-0 bg-accent px-4 py-3 font-mono text-xs font-medium uppercase tracking-wide text-white hover:bg-accent-hover disabled:opacity-40"
+                          >
+                            Break it down →
+                          </button>
+                        </div>
+                        <button onClick={toggleThinkLonger} aria-pressed={thinkLonger} className={`mt-3 flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wide ${thinkLonger ? "text-ember" : "text-ink/45"}`}>
+                          <Sparkles size={12} /> Think longer {thinkLonger && "· on"}
+                        </button>
+                      </div>
+                    </section>
+
+                    <aside className="border border-border-accent/65 bg-surface-2/80 p-5 backdrop-blur-sm sm:p-6">
+                      <p className="font-mono text-[10px] font-medium uppercase tracking-[0.18em] text-ember">Fight card</p>
+                      <div className="mt-5 grid grid-cols-2 gap-x-5 gap-y-5 text-sm lg:grid-cols-1">
+                        <div className="border-b border-ink/12 pb-4">
+                          <p className="text-ink/40">Focus</p>
+                          <p className="mt-1 font-mono text-xs uppercase">{fightCard?.focus ?? "—"}</p>
+                        </div>
+                        <div className="border-b border-ink/12 pb-4">
+                          <p className="text-ink/40">Sessions logged</p>
+                          <p className="mt-1 font-mono text-xs">{fightCard ? fightCard.totalSessions : "—"}</p>
+                        </div>
+                        <div className="col-span-2 lg:col-span-1">
+                          <p className="text-ink/40">Last session</p>
+                          {fightCard?.lastSession ? (
+                            <>
+                              <p className="mt-1 font-mono text-xs text-ember">{formatRelativeTime(fightCard.lastSession.createdAt)}</p>
+                              {fightCard.lastSession.summary && (
+                                <p className="mt-1.5 line-clamp-3 text-xs leading-relaxed text-ink/55">{fightCard.lastSession.summary}</p>
+                              )}
+                            </>
+                          ) : (
+                            <p className="mt-1 font-mono text-xs text-ink/55">Nothing logged yet — see My Coach</p>
+                          )}
+                        </div>
+                      </div>
+                    </aside>
+                  </div>
+
+                  <div className="mt-8 flex items-center justify-between gap-4">
+                    <h3 className="font-mono text-[11px] font-medium uppercase tracking-[0.16em] text-ink/55">Start with a fight question</h3>
+                    <span className="hidden font-mono text-[10px] uppercase tracking-wide text-ink/30 sm:block">Pick one to begin</span>
+                  </div>
+                  <div className="mt-4 grid border-l border-t border-ink/12 sm:grid-cols-2 lg:grid-cols-4">
+                    {suggestions.map((s, index) => {
+                      const Icon = s.Icon;
+                      return (
+                        <button key={s.text} onClick={() => sendMessage(s.text)} className="group min-h-36 border-b border-r border-ink/12 bg-surface/72 p-5 text-left hover:bg-surface-hover">
+                          <span className="flex items-center gap-2 font-mono text-[10px] uppercase tracking-wider text-ember"><Icon size={15} /> 0{index + 1} / technique</span>
+                          <span className="mt-5 block text-sm font-medium leading-snug text-ink/80 group-hover:text-foreground">{s.text}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="flex-1 flex flex-col items-center justify-start px-4 sm:px-6 py-6 sm:py-8">
+                <div className="w-full max-w-4xl flex flex-col items-center">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 border border-accent/20 mb-5"><HeroIcon size={26} className="text-accent" /></div>
+                  <h2 className="text-2xl font-semibold mb-2 text-center">{heroTitle}</h2>
+                  <p className="text-sm text-muted text-center max-w-md mb-8 leading-relaxed">{heroSubtitle}</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+                    {suggestions.map((s) => {
+                      const Icon = s.Icon;
+                      return <button key={s.text} onClick={() => sendMessage(s.text)} className="flex items-start gap-3 text-left px-4 py-3 rounded-xl border border-border bg-surface hover:bg-surface-hover hover:border-accent/40 transition-colors text-sm"><Icon size={16} className="text-accent shrink-0 mt-0.5" /><span className="leading-snug">{s.text}</span></button>;
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="px-4 sm:px-6 py-4">
@@ -722,7 +827,8 @@ export function ChatTab({
         )}
       </div>
 
-      <div className="border-t border-border px-4 sm:px-6 py-4">
+      {(!isTechnique || messages.length > 0) && (
+        <div className="border-t border-border px-4 sm:px-6 py-4">
         {messages.length > 0 && !loading && !streaming && (
           <div className="max-w-3xl mx-auto mb-2">
             <button
@@ -768,7 +874,8 @@ export function ChatTab({
             {thinkLonger && <span className="text-[10px] opacity-70">(on)</span>}
           </button>
         </div>
-      </div>
+        </div>
+      )}
     </div>
   );
 }

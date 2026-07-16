@@ -81,22 +81,39 @@ export function CoachSession({ userId }: CoachSessionProps) {
           }
         }
 
-        const response = await fetch("/api/coach/session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            userId,
-            messages: allMessages,
-            ...(styleProfile ? { styleProfile } : {}),
-          }),
+        // Connect with one retry on a transient failure (network drop or 5xx) —
+        // the coach connection occasionally blips. 429/503 won't self-heal on an
+        // immediate retry, so surface those right away with a specific message.
+        const requestBody = JSON.stringify({
+          userId,
+          messages: allMessages,
+          ...(styleProfile ? { styleProfile } : {}),
         });
-
-        if (!response.ok || !response.body) {
-          if (response.status === 429) {
-            throw new Error("RATE_LIMIT");
+        let response: Response | undefined;
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            response = await fetch("/api/coach/session", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: requestBody,
+            });
+          } catch (netErr) {
+            if (attempt === 0) {
+              await new Promise((r) => setTimeout(r, 700));
+              continue;
+            }
+            throw netErr;
+          }
+          if (response.ok && response.body) break;
+          if (response.status === 429) throw new Error("RATE_LIMIT");
+          if (response.status === 503) throw new Error("QUOTA");
+          if (response.status >= 500 && attempt === 0) {
+            await new Promise((r) => setTimeout(r, 700));
+            continue;
           }
           throw new Error("Failed to connect to coach");
         }
+        if (!response || !response.body) throw new Error("Failed to connect to coach");
 
         setLoading(false);
         setStreaming(true);
@@ -140,10 +157,13 @@ export function CoachSession({ userId }: CoachSessionProps) {
         }
       } catch (err) {
         console.error("Coach error:", err);
-        const isRateLimit = err instanceof Error && err.message === "RATE_LIMIT";
-        const msg = isRateLimit
-          ? "You're sending messages fast — give it about a minute, then try again."
-          : "Something went wrong. Please try again.";
+        const code = err instanceof Error ? err.message : "";
+        const msg =
+          code === "RATE_LIMIT"
+            ? "You're sending messages fast — give it about a minute, then try again."
+            : code === "QUOTA"
+              ? "The coach is temporarily unavailable (AI usage limit reached). Try again a bit later."
+              : "Something went wrong reaching the coach. Please try again.";
         setMessages((prev) => [
           ...prev,
           { role: "assistant", content: msg },

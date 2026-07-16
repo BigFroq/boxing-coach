@@ -100,11 +100,14 @@ export function ProfileView({ userId }: { userId: string }) {
 
   return (
     <div className="mx-auto w-full max-w-2xl space-y-4 px-4 py-6 sm:px-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Your profile</h1>
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <h1 className="text-xl font-semibold">Your profile</h1>
+          <p className="mt-1 text-sm text-muted">Changes save automatically.</p>
+        </div>
         <Link
           href="/"
-          className="text-sm text-muted underline-offset-2 hover:text-foreground hover:underline"
+          className="pt-1 text-sm text-muted underline-offset-2 hover:text-foreground hover:underline"
         >
           ← Back to the coach
         </Link>

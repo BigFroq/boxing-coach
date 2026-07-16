@@ -83,50 +83,48 @@ export function GamesHub({ userId }: HubProps) {
   }
 
   return (
-    <div className="px-4 sm:px-6 py-6 space-y-4">
-      <div>
-        <h2 className="text-lg font-semibold">Games</h2>
-        <p className="text-sm text-muted">Quick reflex challenges and pattern-recognition fun.</p>
-      </div>
+    <div className="relative z-10 px-4 py-4 sm:px-8 sm:py-5">
       {(!userId || userId === "anon") && (
-        <div className="rounded-xl bg-yellow-500/10 border border-yellow-500/20 p-3 text-xs text-muted">
-          Take the <a href="/?tab=style" className="text-accent underline">style quiz</a> first to save your scores.
+        <div className="mb-5 border-l-2 border-accent bg-accent/8 px-4 py-3 font-mono text-[11px] uppercase tracking-wide text-muted">
+          Take the <a href="/?tab=style" className="text-ember underline underline-offset-4">style quiz</a> to put your scores on the board.
         </div>
       )}
-      <div className="space-y-2">
-        {GAMES.map((g) => {
+      <div className="grid overflow-hidden border-l border-t border-ink/10 md:grid-cols-3">
+        {GAMES.map((g, index) => {
           const Icon = g.icon;
           const best = bests[g.type];
-          const isComingSoon = g.type === "punch_prediction" && punchClipsAvailable === false;
+          const isWorkInProgress = g.type === "punch_prediction";
+          const isComingSoon = isWorkInProgress && punchClipsAvailable === false;
           const blurb = isComingSoon
-            ? "Watch a fighter set up, predict the punch. Boxing-specific cognition built on real fight footage. Launching once the catalog is labeled."
+            ? "Read the setup and call the shot. Real fight footage enters the arena when the catalog is ready."
             : g.blurb;
           return (
             <button
               key={g.type}
               onClick={() => setView({ kind: g.type })}
-              className="w-full text-left rounded-xl bg-surface-hover hover:bg-surface p-4 flex items-center gap-3"
+              className="group relative min-h-60 overflow-hidden border-b border-r border-ink/10 bg-surface/80 p-5 text-left transition-colors hover:bg-surface-hover sm:p-6"
             >
-              <Icon
-                size={20}
-                className={`flex-shrink-0 ${isComingSoon ? "text-muted" : "text-accent"}`}
-              />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-sm font-semibold">{g.name}</span>
-                  {isComingSoon && (
-                    <span className="text-[10px] uppercase tracking-wide text-yellow-400 bg-yellow-500/10 px-1.5 py-0.5 rounded">
-                      Coming soon
-                    </span>
+              <span className="absolute -right-3 -top-6 text-[8rem] font-black leading-none tracking-[-0.1em] text-ink/[.025]">0{index + 1}</span>
+              <div className="relative flex h-full flex-col">
+                <div className="flex items-center justify-between">
+                  <span className="grid h-11 w-11 place-items-center border border-accent/45 bg-accent/10 text-ember"><Icon size={19} /></span>
+                  {isWorkInProgress ? (
+                    <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-wip">WIP / Arena 0{index + 1}</span>
+                  ) : (
+                    <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-ink/35">Arena 0{index + 1}</span>
                   )}
                 </div>
-                <div className="text-xs text-muted">{blurb}</div>
-              </div>
-              {!isComingSoon && (
-                <div className="text-xs text-muted text-right flex-shrink-0">
-                  {best != null ? `Best ${formatScore(best, g.unit)}` : "—"}
+                <h3 className="mt-7 text-2xl font-semibold tracking-[-0.04em]">{g.name}</h3>
+                <p className="mt-3 max-w-xs text-sm leading-relaxed text-ink/50">{blurb}</p>
+                <div className="mt-auto flex items-end justify-between pt-8">
+                  {isComingSoon ? (
+                    <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-wip">In development</span>
+                  ) : (
+                    <span><span className="block font-mono text-[9px] uppercase tracking-[0.16em] text-ink/30">Personal best</span><span className="mt-1 block text-sm font-medium text-ink/75">{best != null ? formatScore(best, g.unit) : "No score yet"}</span></span>
+                  )}
+                  <span className="font-mono text-xs text-ember transition-transform group-hover:translate-x-1">ENTER →</span>
                 </div>
-              )}
+              </div>
             </button>
           );
         })}

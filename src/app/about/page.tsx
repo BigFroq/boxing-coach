@@ -2,13 +2,13 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "About — Boxing Coach AI",
+  title: "About — Punch Doctor AI",
   description: "What's in the knowledge base, how the coach works, and what it can't do yet.",
 };
 
 export default function AboutPage() {
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
+    <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
       <nav className="mb-8">
         <Link
           href="/"
@@ -18,7 +18,7 @@ export default function AboutPage() {
         </Link>
       </nav>
 
-      <header className="mb-10">
+      <header className="mb-8">
         <h1 className="mb-3 text-3xl font-semibold">About this coach</h1>
         <p className="text-muted">
           An AI boxing coach built on Dr. Alex Wiant&rsquo;s{" "}
@@ -28,7 +28,7 @@ export default function AboutPage() {
         </p>
       </header>
 
-      <section className="mb-10">
+      <section className="mb-8">
         <h2 className="mb-3 text-xl font-semibold">What&rsquo;s in the vault</h2>
         <p className="mb-4 text-sm">
           The coach answers from a retrieval-augmented knowledge base built
@@ -58,7 +58,7 @@ export default function AboutPage() {
         </p>
       </section>
 
-      <section className="mb-10">
+      <section className="mb-8">
         <h2 className="mb-3 text-xl font-semibold">How retrieval works</h2>
         <p className="mb-3 text-sm">
           When you ask a question:
@@ -88,7 +88,7 @@ export default function AboutPage() {
         </p>
       </section>
 
-      <section className="mb-10">
+      <section className="mb-8">
         <h2 className="mb-3 text-xl font-semibold">Known limitations</h2>
         <p className="mb-4 text-sm">
           The coach has blind spots. Better to name them than pretend they
@@ -133,7 +133,7 @@ export default function AboutPage() {
         </ul>
       </section>
 
-      <section className="mb-10">
+      <section className="mb-8">
         <h2 className="mb-3 text-xl font-semibold">Where mistakes can still happen</h2>
         <p className="mb-3 text-sm">
           Even on topics the vault covers deeply, a retrieval-augmented coach

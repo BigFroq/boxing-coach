@@ -25,7 +25,7 @@ function scoreColor(score: number | null): string {
   if (score <= 3) return "bg-red-500/10 text-red-400";
   if (score <= 6) return "bg-yellow-500/10 text-yellow-400";
   if (score <= 8) return "bg-green-500/10 text-green-400";
-  return "bg-amber-500/15 text-amber-300";
+  return "bg-amber-500/15 text-wip";
 }
 
 function ScoreChip({ label, score }: { label: string; score: number | null }) {

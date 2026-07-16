@@ -9,29 +9,31 @@ type Props = {
 
 export function ProgramEmptyState({ onSwitchTab }: Props) {
   return (
-    <div className="flex flex-col items-center justify-center h-full px-6 py-16 text-center">
-      <div className="rounded-2xl bg-surface-hover p-8 max-w-sm w-full space-y-4">
-        <Dumbbell className="mx-auto h-10 w-10 text-muted" />
-        <h2 className="text-base font-semibold">Find your style first</h2>
-        <p className="text-sm text-muted leading-relaxed">
-          Your drill program is tailored to your fighting style profile. Complete the style quiz
-          to unlock drills matched to your strengths.
-        </p>
-        {onSwitchTab ? (
-          <button
-            onClick={() => onSwitchTab("style")}
-            className="inline-block rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-white hover:bg-accent/90 transition-colors"
-          >
-            Take the style quiz
-          </button>
-        ) : (
-          <Link
-            href="/?tab=style"
-            className="inline-block rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-white hover:bg-accent/90 transition-colors"
-          >
-            Take the style quiz
-          </Link>
-        )}
+    <div className="relative z-10 px-4 py-7 sm:px-8 sm:py-10">
+      <div className="grid overflow-hidden border border-ink/10 bg-surface/85 lg:grid-cols-[1fr_20rem]">
+        <div className="p-7 sm:p-10">
+          <p className="font-mono text-[10px] uppercase tracking-[0.18em] text-ember">Program status / locked</p>
+          <h3 className="mt-5 max-w-lg text-3xl font-semibold leading-[.96] tracking-[-0.05em] sm:text-4xl">Find your style first.</h3>
+          <p className="mt-5 max-w-xl text-sm leading-relaxed text-ink/50 sm:text-base">
+            Your rounds should match the fighter you are—not a generic workout list. Complete the style scan to unlock drills built around your strengths and gaps.
+          </p>
+          {onSwitchTab ? (
+            <button onClick={() => onSwitchTab("style")} className="mt-8 border border-accent bg-accent px-5 py-3 font-mono text-xs font-medium uppercase tracking-wide text-white hover:bg-accent-hover">
+              Run the style scan →
+            </button>
+          ) : (
+            <Link href="/?tab=style" className="mt-8 inline-block border border-accent bg-accent px-5 py-3 font-mono text-xs font-medium uppercase tracking-wide text-white hover:bg-accent-hover">
+              Run the style scan →
+            </Link>
+          )}
+        </div>
+        <div className="relative grid min-h-52 place-items-center overflow-hidden border-t border-ink/10 bg-surface-hover lg:border-l lg:border-t-0">
+          <span className="absolute text-[11rem] font-black leading-none text-ink/[.025]">02</span>
+          <div className="relative text-center">
+            <span className="mx-auto grid h-20 w-20 place-items-center border border-accent/45 bg-accent/10 text-ember"><Dumbbell size={32} /></span>
+            <p className="mt-4 font-mono text-[10px] uppercase tracking-[0.18em] text-ink/35">Awaiting fighter ID</p>
+          </div>
+        </div>
       </div>
     </div>
   );

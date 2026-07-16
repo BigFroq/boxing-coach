@@ -12,7 +12,7 @@ interface FighterCounterCardProps {
 
 export function FighterCounterCard({ rank, counter, onAskMatchup }: FighterCounterCardProps) {
   const threatLabel = rank === 1 ? "High Threat" : "Moderate Threat";
-  const threatTone = rank === 1 ? "bg-red-500/20 text-red-300" : "bg-amber-500/20 text-amber-300";
+  const threatTone = rank === 1 ? "bg-red-500/20 text-red-300" : "bg-amber-500/20 text-wip";
 
   const handleAsk = () => {
     if (onAskMatchup) {

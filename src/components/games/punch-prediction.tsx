@@ -155,7 +155,10 @@ export function PunchPrediction({ userId, onBack }: PunchPredictionProps) {
     return (
       <div className="px-4 py-6 space-y-4 max-w-md mx-auto">
         <button onClick={onBack} className="text-xs text-muted">← Back to games</button>
-        <h2 className="text-lg font-semibold">Punch Prediction</h2>
+        <div className="flex items-center gap-2">
+          <h2 className="text-lg font-semibold">Punch Prediction</h2>
+          <span className="border border-wip/40 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-[0.16em] text-wip">WIP</span>
+        </div>
         <p className="text-sm text-muted">
           Watch a fighter set up. {SHOW_MS}ms after the image hides, choose the punch you think is coming.
           Faster correct answers score more. {state.clips.length} prompts.

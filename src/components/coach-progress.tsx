@@ -242,7 +242,7 @@ export function CoachProgress({ userId }: { userId: string }) {
                     <p className="text-xs text-muted mb-3">
                       Last worked: {formatRelativeTime(data.focusAreaLastWorked?.[fa.id] ?? null)}
                     </p>
-                    <div className="h-1.5 rounded-full bg-white/5 overflow-hidden">
+                    <div className="h-1.5 rounded-full bg-ink/5 overflow-hidden">
                       <div
                         className={`h-full rounded-full transition-all ${statusBarColor[fa.status] ?? "bg-blue-500"}`}
                         style={{ width: statusBarWidth[fa.status] ?? "15%" }}
@@ -312,7 +312,7 @@ export function CoachProgress({ userId }: { userId: string }) {
         <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold">
           <TrendingUp size={14} /> Recent Sessions
         </h3>
-        <div className="border-l-2 border-white/10 ml-2 pl-4 space-y-4">
+        <div className="border-l-2 border-ink/10 ml-2 pl-4 space-y-4">
           {data.recentSessions.map((s) => {
             const label = formatRelativeTime(s.created_at);
             const breakthroughs = s.summary?.breakthroughs ?? [];
@@ -320,7 +320,7 @@ export function CoachProgress({ userId }: { userId: string }) {
 
             return (
               <div key={s.id} className="relative">
-                <div className="absolute -left-[22px] top-1 h-2.5 w-2.5 rounded-full bg-white/20" />
+                <div className="absolute -left-[22px] top-1 h-2.5 w-2.5 rounded-full bg-ink/20" />
                 <div className="text-xs text-muted">{label}</div>
                 <div className="mt-0.5 text-sm">
                   {formatSessionType(s.session_type)}

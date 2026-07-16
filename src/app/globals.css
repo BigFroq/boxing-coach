@@ -1,14 +1,53 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --accent: #ef4444;
-  --accent-hover: #dc2626;
-  --surface: #141414;
-  --surface-hover: #1a1a1a;
-  --border: #262626;
-  --muted: #8a8a8a;
+  /* theme axis: dark (default) / light via data-theme */
+  --background: #0a0808;
+  --foreground: #f5f0e8;
+  --surface: #151011;
+  --surface-2: #100d0e;
+  --surface-hover: #211719;
+  --border: #3b292b;
+  --muted: #9e9190;
+  --canvas: #e9e1d3;
+  --canvas-ink: #1f1c19;
+  --ink: #ffffff; /* replaces raw white/NN utilities so light mode can flip them */
+  --wip: #fcd34d;
+  --watermark: rgba(255, 255, 255, .035);
+  --grid-line: rgba(255, 255, 255, .018);
+  /* corner axis: red (default) / blue via data-corner */
+  --accent: #e44732;
+  --accent-hover: #c73524;
+  --ember: #ff725e;
+  /* derived — one formula serves all four theme×corner combos */
+  --accent-surface: color-mix(in srgb, var(--accent) 22%, var(--background));
+  --border-accent: color-mix(in srgb, var(--accent) 45%, var(--background));
+  --glow-shadow: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+
+[data-corner="blue"] {
+  --accent: #2f6fed;
+  --accent-hover: #1d55c9;
+  --ember: #6ea8ff;
+}
+
+[data-theme="light"] {
+  --background: #f2ede4;
+  --foreground: #1f1c19;
+  --surface: #eae3d6;
+  --surface-2: #efe9dd;
+  --surface-hover: #ded5c4;
+  --border: #d3c7b5;
+  --muted: #6f655c;
+  --ink: #1f1c19;
+  --wip: #b45309;
+  --watermark: rgba(31, 28, 25, .06);
+  --grid-line: rgba(31, 28, 25, .04);
+  --ember: #c73524; /* small ember text needs more contrast on paper */
+}
+
+[data-theme="light"][data-corner="blue"] {
+  --ember: #1d55c9;
 }
 
 @theme inline {
@@ -17,9 +56,15 @@
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
   --color-surface-hover: var(--surface-hover);
   --color-border: var(--border);
+  --color-border-accent: var(--border-accent);
   --color-muted: var(--muted);
+  --color-ink: var(--ink);
+  --color-ember: var(--ember);
+  --color-wip: var(--wip);
+  --color-accent-surface: var(--accent-surface);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -28,6 +73,128 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+.fight-shell {
+  isolation: isolate;
+  background:
+    radial-gradient(circle at 72% 20%, color-mix(in srgb, var(--accent) 24%, var(--background)) 0, color-mix(in srgb, var(--accent) 17%, var(--background)) 12%, transparent 27%),
+    radial-gradient(circle at 12% 84%, color-mix(in srgb, var(--accent) 12%, var(--background)) 0, transparent 28%),
+    linear-gradient(125deg, var(--background) 58%, color-mix(in srgb, var(--accent) 9%, var(--background)) 100%);
+}
+
+.fight-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 0.36;
+  background-image: linear-gradient(var(--grid-line) 1px, transparent 1px), linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to bottom, black, transparent 72%);
+}
+
+.brand-mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+}
+
+/* Breathing glow — a soft radial halo BEHIND the gloves. Lives on the container
+   (not .glove-mark) so the glove mask doesn't clip it. Clearly visible on dark. */
+.brand-mark::before {
+  content: "";
+  position: absolute;
+  inset: -45%;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--accent) 0%, color-mix(in srgb, var(--accent) 50%, transparent) 38%, transparent 68%);
+  filter: blur(5px);
+  pointer-events: none;
+  z-index: 0;
+  animation: glove-glow 3.6s ease-in-out infinite;
+}
+
+/* Glove artwork as a mask: tints to the active corner (--accent) and breathes
+   a matching glow. No tile/background — just the gloves on the dark shell. */
+.glove-mark {
+  position: relative;
+  display: block;
+  width: 2.4rem;
+  height: 2.4rem;
+  background-color: var(--accent);
+  -webkit-mask-image: url("/glove-mask.png");
+  mask-image: url("/glove-mask.png");
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  z-index: 1;
+}
+
+/* Breathing halo: pulse the radial glow's size + opacity. */
+@keyframes glove-glow {
+  0%, 100% { opacity: .16; transform: scale(.9); }
+  50%      { opacity: .5; transform: scale(1.04); }
+}
+
+/* Corner-aware brand kicker — CSS swap, no state plumbing */
+.corner-label-blue { display: none; }
+[data-corner="blue"] .corner-label-red { display: none; }
+[data-corner="blue"] .corner-label-blue { display: inline; }
+
+.app-room {
+  position: relative;
+  min-height: 100%;
+}
+
+.app-room::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(42rem 24rem at 10% 12%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 72%);
+}
+
+.room-masthead {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 8%, transparent);
+  background: linear-gradient(110deg, color-mix(in srgb, var(--accent) 11%, var(--background)), color-mix(in srgb, var(--accent) 2%, var(--background)) 65%);
+}
+
+.room-masthead::after {
+  content: attr(data-round);
+  position: absolute;
+  right: 1.5rem;
+  top: 50%;
+  color: var(--watermark);
+  font-size: clamp(3.75rem, 9vw, 6.5rem);
+  font-weight: 800;
+  letter-spacing: -.08em;
+  line-height: .7;
+  transform: translateY(-48%);
+}
+
+.room-kicker {
+  font-family: var(--font-mono);
+  color: var(--ember);
+  font-size: .67rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+}
+
+.room-title {
+  font-size: clamp(1.5rem, 2.4vw, 2.2rem);
+  font-weight: 700;
+  letter-spacing: -.055em;
+  line-height: .96;
+}
+
+@media (max-width: 639px) {
+  .room-masthead::after { right: .75rem; font-size: 4.25rem; }
 }
 
 /* Smooth transitions globally */
@@ -44,7 +211,7 @@ button, a, input, textarea {
 
 /* Selection color */
 ::selection {
-  background: rgba(239, 68, 68, 0.3);
+  background: color-mix(in srgb, var(--accent) 30%, transparent);
   color: var(--foreground);
 }
 

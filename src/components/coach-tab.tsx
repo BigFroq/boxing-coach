@@ -14,40 +14,26 @@ export function CoachTab({ userId }: CoachTabProps) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex gap-2 px-4 sm:px-6 pt-4">
-        <button
-          onClick={() => setView("session")}
-          aria-pressed={view === "session"}
-          className={`rounded-lg px-4 py-2.5 min-h-[44px] text-sm font-medium transition-colors ${
-            view === "session"
-              ? "bg-accent text-white"
-              : "bg-surface-hover text-muted hover:text-foreground"
-          }`}
-        >
-          Log Session
-        </button>
-        <button
-          onClick={() => setView("clip")}
-          aria-pressed={view === "clip"}
-          className={`rounded-lg px-4 py-2.5 min-h-[44px] text-sm font-medium transition-colors ${
-            view === "clip"
-              ? "bg-accent text-white"
-              : "bg-surface-hover text-muted hover:text-foreground"
-          }`}
-        >
-          Review Clip
-        </button>
-        <button
-          onClick={() => setView("progress")}
-          aria-pressed={view === "progress"}
-          className={`rounded-lg px-4 py-2.5 min-h-[44px] text-sm font-medium transition-colors ${
-            view === "progress"
-              ? "bg-accent text-white"
-              : "bg-surface-hover text-muted hover:text-foreground"
-          }`}
-        >
-          My Progress
-        </button>
+      <div className="relative z-10 grid grid-cols-3 border-b border-ink/10 bg-black/20 px-3 py-3 sm:flex sm:px-8">
+        {([
+          ["session", "01", "Log Session"],
+          ["clip", "02", "Review Clip"],
+          ["progress", "03", "Progress"],
+        ] as const).map(([id, index, label]) => {
+          const active = view === id;
+          return (
+            <button
+              key={id}
+              onClick={() => setView(id)}
+              aria-pressed={active}
+              className={`relative min-h-[48px] border px-3 py-2 text-left transition-colors sm:min-w-40 ${active ? "border-accent/55 bg-accent-surface/55 text-white" : "border-transparent text-muted hover:bg-ink/[.035] hover:text-foreground"}`}
+            >
+              <span className={`block font-mono text-[9px] tracking-[0.14em] ${active ? "text-ember" : "text-ink/25"}`}>{index} / CORNER</span>
+              <span className="mt-1 block text-xs font-medium sm:text-sm">{label}</span>
+              {active && <span className="absolute inset-x-3 bottom-0 h-px bg-ember" />}
+            </button>
+          );
+        })}
       </div>
 
       <div className="flex-1 overflow-hidden">

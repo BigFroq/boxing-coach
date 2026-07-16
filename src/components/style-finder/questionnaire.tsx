@@ -196,7 +196,7 @@ export function Questionnaire({ userId, onComplete }: QuestionnaireProps) {
   const showPartHeader = !prevQuestion || prevQuestion.part !== currentQuestion.part;
 
   return (
-    <div className="max-w-xl mx-auto w-full px-6 py-8 flex-1 flex flex-col">
+    <div className="relative z-10 mx-auto flex w-full max-w-4xl flex-1 flex-col border-x border-ink/10 bg-surface-2/72 px-6 py-8 sm:px-12">
       {/* Progress */}
       <div className="mb-6">
         <div className="flex justify-between text-xs text-muted mb-2">
@@ -206,9 +206,9 @@ export function Questionnaire({ userId, onComplete }: QuestionnaireProps) {
           </span>
           <span>{Math.round(progress)}%</span>
         </div>
-        <div className="h-1 bg-border rounded-full overflow-hidden">
+        <div className="h-px overflow-hidden bg-ink/10">
           <div
-            className="h-full bg-accent rounded-full transition-all duration-500"
+            className="h-full bg-ember shadow-[0_0_12px_#e44732] transition-all duration-500"
             style={{ width: `${progress}%` }}
           />
         </div>
@@ -248,10 +248,10 @@ export function Questionnaire({ userId, onComplete }: QuestionnaireProps) {
                   key={opt.value}
                   onClick={() => selectAnswer(currentQuestion.id, opt.value)}
                   aria-pressed={isSelected}
-                  className={`w-full text-left px-4 py-3 rounded-xl border transition-all ${
+                  className={`w-full border px-5 py-4 text-left transition-all ${
                     isSelected
-                      ? "border-accent bg-accent/10 text-foreground"
-                      : "border-border bg-surface hover:bg-surface-hover"
+                      ? "border-accent bg-accent-surface/45 text-foreground shadow-[inset_3px_0_0_var(--ember)]"
+                      : "border-ink/10 bg-ink/[.025] hover:border-ink/20 hover:bg-ink/[.045]"
                   }`}
                 >
                   <div className="font-medium text-sm">{opt.label}</div>

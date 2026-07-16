@@ -15,6 +15,8 @@ import {
   Target,
   Timer,
   Gamepad2,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { ChatTab } from "@/components/chat-tab";
 import { CoachTab } from "@/components/coach-tab";
@@ -29,7 +31,7 @@ import { fetchRecentClips } from "@/lib/clip-log-storage";
 import { aggregateClipHistory } from "@/lib/clip-log-aggregation";
 
 const tabs = [
-  { id: "technique", label: "Technique", shortLabel: "Technique", icon: MessageSquare, description: "Ask about punching mechanics" },
+  { id: "technique", label: "Technique", shortLabel: "Tech", icon: MessageSquare, description: "Ask about punching mechanics" },
   { id: "drills", label: "Drills", shortLabel: "Drills", icon: Dumbbell, description: "Exercises & training" },
   { id: "coach", label: "My Coach", shortLabel: "Coach", icon: ClipboardList, description: "Log sessions & track progress" },
   { id: "style", label: "Find Your Style", shortLabel: "Style", icon: User, description: "Discover your fighting style" },
@@ -37,6 +39,25 @@ const tabs = [
 ] as const;
 
 type TabId = (typeof tabs)[number]["id"];
+
+type RoomMastheadProps = {
+  index: string;
+  kicker: string;
+  title: string;
+  description: string;
+};
+
+function RoomMasthead({ index, kicker, title, description }: RoomMastheadProps) {
+  return (
+    <div className="room-masthead shrink-0 px-5 py-3 sm:px-8 sm:py-4" data-round={index}>
+      <div className="relative z-10 max-w-3xl">
+        <p className="room-kicker">{index} / {kicker}</p>
+        <h2 className="room-title mt-1.5 max-w-2xl">{title}</h2>
+        <p className="mt-1.5 max-w-xl text-sm leading-relaxed text-ink/55 sm:text-base">{description}</p>
+      </div>
+    </div>
+  );
+}
 
 function getAnonymousUserId(): string {
   if (typeof window === "undefined") return "anon";
@@ -119,54 +140,60 @@ function AppContent() {
   };
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Header + Tab Navigation */}
-      <header className="border-b border-border">
-        <div className="flex items-center justify-between gap-3 px-4 sm:px-6 pt-4 pb-3">
-          <div className="flex items-center gap-3">
-            <span className="text-xl" role="img" aria-label="Boxing glove">🥊</span>
-            <h1 className="text-lg font-semibold leading-tight">Boxing Coach AI</h1>
+    <div className="fight-shell flex h-full flex-col">
+      <header className="relative z-20 border-b border-ink/10 bg-background/82 backdrop-blur-xl">
+        <div className="flex items-center justify-between gap-3 px-4 pb-3 pt-4 sm:px-6">
+          <div className="flex items-center gap-3.5">
+            <span className="brand-mark" aria-hidden="true"><GloveMark /></span>
+            <div>
+              <p className="font-mono text-[9px] font-medium uppercase tracking-[0.22em] text-ember"><span className="corner-label-red">Red</span><span className="corner-label-blue">Blue</span> corner intelligence</p>
+              <h1 className="mt-0.5 flex items-baseline gap-2 text-[15px] font-extrabold uppercase leading-none tracking-[-0.02em] sm:text-lg">
+                <span>Punch Doctor</span>
+                <span className="border border-accent/60 px-1.5 py-0.5 font-mono text-[9px] tracking-[0.12em] text-ember">AI</span>
+              </h1>
+            </div>
           </div>
           <div className="flex items-center gap-3">
-            <Link
-              href="/about"
-              className="text-xs text-muted hover:text-foreground underline-offset-2 hover:underline"
-            >
-              About & limitations
+            <Link href="/about" className="hidden font-mono text-[10px] uppercase tracking-[0.12em] text-muted hover:text-foreground sm:block">
+              Protocol / limits
             </Link>
+            <ThemeControls />
             <ProfileAvatarLink />
           </div>
         </div>
-        <nav className="flex px-4 sm:px-6">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => handleTabClick(tab.id)}
-              aria-label={tab.label}
-              aria-current={isActive ? "page" : undefined}
-              className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-4 py-3 min-h-[44px] text-xs sm:text-sm font-medium whitespace-nowrap transition-colors border-b-2 -mb-px ${
-                isActive
-                  ? "border-accent text-accent"
-                  : "border-transparent text-muted hover:text-foreground"
-              }`}
-            >
-              <Icon size={16} aria-hidden="true" />
-              <span className="sm:hidden" aria-hidden="true">{tab.shortLabel}</span>
-              <span className="hidden sm:inline" aria-hidden="true">{tab.label}</span>
-            </button>
-          );
-        })}
+        <nav className="grid grid-cols-5 gap-1 px-2 pb-2 sm:flex sm:px-6" aria-label="Training rooms">
+          {tabs.map((tab, index) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => handleTabClick(tab.id)}
+                aria-label={tab.label}
+                aria-current={isActive ? "page" : undefined}
+                className={`group relative flex min-h-[52px] min-w-0 flex-col items-center justify-center gap-1 overflow-hidden border px-1 py-2 text-[10px] font-medium transition-all sm:min-h-[48px] sm:min-w-28 sm:flex-row sm:justify-start sm:gap-1.5 sm:px-3 sm:py-2.5 sm:text-xs ${
+                  isActive
+                    ? "border-accent/55 bg-gradient-to-br from-accent-surface/80 to-surface-2/90 text-foreground shadow-[0_0_28px_var(--glow-shadow)]"
+                    : "border-transparent text-muted hover:border-ink/10 hover:bg-ink/[.035] hover:text-foreground"
+                }`}
+              >
+                <span className={`hidden font-mono text-[9px] tracking-wider sm:inline ${isActive ? "text-ember" : "text-ink/25"}`}>0{index + 1}</span>
+                <Icon size={15} aria-hidden="true" className={isActive ? "text-ember" : ""} />
+                <span className="truncate sm:hidden" aria-hidden="true">{tab.shortLabel}</span>
+                <span className="hidden truncate sm:inline" aria-hidden="true">{tab.label}</span>
+                {isActive && <span className="absolute inset-x-2 bottom-0 h-px bg-ember shadow-[0_0_10px_var(--accent)]" />}
+              </button>
+            );
+          })}
         </nav>
       </header>
 
-      {/* Tab Content */}
-      <main className="flex-1 overflow-hidden">
+      <main className="relative z-10 flex-1 overflow-hidden">
         {activeTab === "technique" && (
-          <ErrorBoundary label="Technique chat">
-            <ChatTab
+          <div className="app-room h-full p-2 sm:p-3">
+            <div className="h-full overflow-hidden rounded-[24px] border border-ink/10 shadow-[0_32px_100px_var(--glow-shadow)]">
+              <ErrorBoundary label="Technique chat">
+                <ChatTab
               systemContext="technique"
               heroIcon={MessageSquare}
               heroTitle="What technique are you curious about?"
@@ -180,12 +207,21 @@ function AppContent() {
               ]}
               initialQuery={coachQuery}
               userId={userId}
-              extraContextProvider={getClipHistory}
-            />
-          </ErrorBoundary>
+                extraContextProvider={getClipHistory}
+              />
+              </ErrorBoundary>
+            </div>
+          </div>
         )}
         {activeTab === "drills" && (
-          <div className="flex flex-col h-full overflow-y-auto">
+          <div className="app-room flex h-full flex-col overflow-hidden">
+            <RoomMasthead
+              index="02"
+              kicker="Workrate lab"
+              title="Build the round."
+              description="Turn your style into deliberate rounds, precise constraints, and repeatable work."
+            />
+            <div className="min-h-0 flex-1 overflow-y-auto">
             <ErrorBoundary label="Drill program">
               <DrillProgramView
                 userId={userId}
@@ -194,7 +230,7 @@ function AppContent() {
             </ErrorBoundary>
             <div className="border-t border-border my-4" />
             <ErrorBoundary label="Drills chat">
-              <div className="min-h-[70vh] flex flex-col">
+              <div className="flex flex-col pb-6">
                 <ChatTab
                   systemContext="drills"
                   heroIcon={Dumbbell}
@@ -212,30 +248,120 @@ function AppContent() {
                 />
               </div>
             </ErrorBoundary>
+            </div>
           </div>
         )}
         {activeTab === "coach" && (
-          <ErrorBoundary label="My Coach">
-            <CoachTab userId={userId} />
-          </ErrorBoundary>
+          <div className="app-room flex h-full flex-col overflow-hidden">
+            <RoomMasthead
+              index="03"
+              kicker="Your corner"
+              title="Between rounds, we work."
+              description="Log the session, review the tape, and turn what happened into the next adjustment."
+            />
+            <div className="min-h-0 flex-1">
+              <ErrorBoundary label="My Coach">
+                <CoachTab userId={userId} />
+              </ErrorBoundary>
+            </div>
+          </div>
         )}
         {activeTab === "style" && (
-          <ErrorBoundary label="Find Your Style">
-            <StyleFinderTab
-              userId={userId}
-              onSwitchToChat={(query) => {
-                setCoachQuery(query);
-                setActiveTab("technique");
-              }}
+          <div className="app-room flex h-full flex-col overflow-hidden">
+            <RoomMasthead
+              index="04"
+              kicker="Fighter ID"
+              title="Know the fighter you're becoming."
+              description="Map your instincts, physical tools, and tactical preferences into a style you can train."
             />
-          </ErrorBoundary>
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <ErrorBoundary label="Find Your Style">
+                <StyleFinderTab
+                  userId={userId}
+                  onSwitchToChat={(query) => {
+                    setCoachQuery(query);
+                    setActiveTab("technique");
+                  }}
+                />
+              </ErrorBoundary>
+            </div>
+          </div>
         )}
         {activeTab === "games" && (
-          <ErrorBoundary label="Games">
-            <GamesHub userId={userId} />
-          </ErrorBoundary>
+          <div className="app-room flex h-full flex-col overflow-hidden">
+            <RoomMasthead
+              index="05"
+              kicker="Reaction arcade"
+              title="Train the eyes. Sharpen the trigger."
+              description="Fast, measurable cognition work built around the decisions fighters make under pressure."
+            />
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              <ErrorBoundary label="Games">
+                <GamesHub userId={userId} />
+              </ErrorBoundary>
+            </div>
+          </div>
         )}
       </main>
+    </div>
+  );
+}
+
+function GloveMark() {
+  // Brand mark: the glove artwork rendered as a CSS mask so it tints to the
+  // active corner (--accent: red or blue) and breathes a matching glow. See
+  // .glove-mark in globals.css.
+  return <span className="glove-mark" aria-hidden="true" />;
+}
+
+function ThemeControls() {
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
+  const [corner, setCorner] = useState<"red" | "blue">("red");
+
+  useEffect(() => {
+    // Read whatever the pre-paint boot script applied — external DOM state,
+    // only knowable post-mount (same pattern as the ?q= seed effect above).
+    const d = document.documentElement.dataset;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (d.theme === "light") setTheme("light");
+    if (d.corner === "blue") setCorner("blue");
+  }, []);
+
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    document.documentElement.dataset.theme = next;
+    localStorage.setItem("pd-theme", next);
+  };
+
+  const toggleCorner = () => {
+    const next = corner === "red" ? "blue" : "red";
+    setCorner(next);
+    document.documentElement.dataset.corner = next;
+    localStorage.setItem("pd-corner", next);
+  };
+
+  const btn =
+    "flex h-9 w-9 items-center justify-center border border-ink/15 text-muted hover:border-ember hover:text-foreground";
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <button
+        onClick={toggleTheme}
+        className={btn}
+        aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+        title={theme === "dark" ? "Light mode" : "Dark mode"}
+      >
+        {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+      </button>
+      <button
+        onClick={toggleCorner}
+        className={btn}
+        aria-label={corner === "red" ? "Switch to blue corner" : "Switch to red corner"}
+        title={corner === "red" ? "Blue corner" : "Red corner"}
+      >
+        <span className="block h-2.5 w-2.5 rotate-45 bg-accent" />
+      </button>
     </div>
   );
 }
@@ -254,7 +380,7 @@ function ProfileAvatarLink() {
     <Link
       href="/me"
       aria-label="Your profile"
-      className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 text-accent text-xs font-semibold hover:bg-accent/20"
+      className="relative flex h-9 w-9 items-center justify-center border border-accent/40 bg-accent-surface/70 font-mono text-[10px] font-semibold text-ember shadow-[0_0_24px_var(--glow-shadow)] hover:border-ember hover:bg-accent-surface"
     >
       {initials || <User size={14} aria-hidden />}
     </Link>

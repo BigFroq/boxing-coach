@@ -34,7 +34,7 @@ export default function MePage() {
           <span className="text-xl" role="img" aria-label="Boxing glove">
             🥊
           </span>
-          <p className="text-lg font-semibold leading-tight">Boxing Coach AI</p>
+          <p className="text-lg font-semibold leading-tight">Punch Doctor AI</p>
         </div>
       </header>
       <main>

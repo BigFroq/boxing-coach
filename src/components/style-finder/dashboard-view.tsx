@@ -198,7 +198,7 @@ export function DashboardView({
 
   return (
     <div className="flex h-full flex-col overflow-y-auto">
-      <div className="max-w-2xl mx-auto w-full px-6 py-8 space-y-6">
+      <div className="max-w-4xl mx-auto w-full px-6 py-6 space-y-6">
         {/* Refinement banner */}
         {missingQuestionCount > 0 && !narrativeStale && (
           <div className="mb-4 flex items-center justify-between rounded-lg border border-accent/40 bg-accent/5 px-3 py-2">
@@ -274,7 +274,7 @@ export function DashboardView({
           <h3 className="text-sm font-semibold text-accent mb-4 text-center">
             Dimensional Profile
           </h3>
-          <div className="max-w-sm mx-auto">
+          <div className="max-w-md mx-auto">
             <RadarChart
               scores={result.dimension_scores}
               onDimensionClick={(k) => setDrawerKey(k as DimensionKey)}
