@@ -40,6 +40,9 @@ interface ChatTabProps {
   storageKeyOverride?: string;
   /** Anonymous user id, used as the rate-limit key server-side. */
   userId?: string;
+  /** Bumped by the parent (logo click / re-tapped tab) to send the user back
+   *  to the hero: the open conversation is archived and the thread cleared. */
+  resetSignal?: number;
 }
 
 interface SavedConversation {
@@ -73,6 +76,7 @@ export function ChatTab({
   extraContextProvider,
   storageKeyOverride,
   userId,
+  resetSignal,
 }: ChatTabProps) {
   const storageKey = storageKeyOverride ?? `boxing-coach-chat-${systemContext}`;
   const isTechnique = systemContext === "technique";
@@ -225,6 +229,16 @@ export function ChatTab({
     setMessages([]);
     localStorage.removeItem(storageKey);
   }, [messages, storageKey]);
+
+  // Parent bumps resetSignal (logo click / re-tap of the active tab) to send
+  // the user home — archive the open conversation and clear it so the hero
+  // renders again. Guarded so it never fires on mount or on unrelated re-renders.
+  const prevResetRef = useRef(resetSignal);
+  useEffect(() => {
+    if (resetSignal === undefined || resetSignal === prevResetRef.current) return;
+    prevResetRef.current = resetSignal;
+    archiveAndNewChat();
+  }, [resetSignal, archiveAndNewChat]);
 
   const loadConversation = useCallback((conv: SavedConversation) => {
     if (messages.length > 0) {

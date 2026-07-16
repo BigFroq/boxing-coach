@@ -72,6 +72,8 @@ function getAnonymousUserId(): string {
 function AppContent() {
   const [activeTab, setActiveTab] = useState<TabId>("technique");
   const [coachQuery, setCoachQuery] = useState<string | undefined>();
+  // Bumped to send the Technique tab back to its hero (logo click / active-tab re-tap).
+  const [homeSignal, setHomeSignal] = useState(0);
   const userId = getAnonymousUserId();
 
   useEffect(() => {
@@ -135,15 +137,27 @@ function AppContent() {
   }, [activeTab, coachQuery]);
 
   const handleTabClick = (id: TabId) => {
-    if (id !== activeTab) track("tab_switch", { from: activeTab, to: id });
+    if (id === activeTab) {
+      // Re-tapping the active Technique tab returns it to the hero/home screen.
+      if (id === "technique") setHomeSignal((n) => n + 1);
+      return;
+    }
+    track("tab_switch", { from: activeTab, to: id });
     setActiveTab(id);
+  };
+
+  // Logo → home: jump to Technique and reset it to the hero.
+  const goHome = () => {
+    if (activeTab !== "technique") track("tab_switch", { from: activeTab, to: "technique" });
+    setActiveTab("technique");
+    setHomeSignal((n) => n + 1);
   };
 
   return (
     <div className="fight-shell flex h-full flex-col">
       <header className="relative z-20 border-b border-ink/10 bg-background/82 backdrop-blur-xl">
         <div className="flex items-center justify-between gap-3 px-4 pb-3 pt-4 sm:px-6">
-          <div className="flex items-center gap-3.5">
+          <button onClick={goHome} aria-label="Go to home" className="flex items-center gap-3.5 text-left">
             <span className="brand-mark" aria-hidden="true"><GloveMark /></span>
             <div>
               <p className="font-mono text-[9px] font-medium uppercase tracking-[0.22em] text-ember"><span className="corner-label-red">Red</span><span className="corner-label-blue">Blue</span> corner intelligence</p>
@@ -152,7 +166,7 @@ function AppContent() {
                 <span className="border border-accent/60 px-1.5 py-0.5 font-mono text-[9px] tracking-[0.12em] text-ember">AI</span>
               </h1>
             </div>
-          </div>
+          </button>
           <div className="flex items-center gap-3">
             <Link href="/about" className="hidden font-mono text-[10px] uppercase tracking-[0.12em] text-muted hover:text-foreground sm:block">
               Protocol / limits
@@ -207,6 +221,7 @@ function AppContent() {
               ]}
               initialQuery={coachQuery}
               userId={userId}
+              resetSignal={homeSignal}
                 extraContextProvider={getClipHistory}
               />
               </ErrorBoundary>
