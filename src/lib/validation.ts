@@ -88,6 +88,7 @@ export const chatRequestSchema = z.object({
 
 export const clipReviewRequestSchema = z.object({
   frames: z.array(z.string().max(200_000)).min(1).max(80),
+  fps: z.number().int().min(1).max(60).optional(),
   filename: z.string().max(200).optional(),
   userId: z.string().max(128).optional(),
 });

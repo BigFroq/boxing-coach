@@ -155,10 +155,14 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
     [handleFileSelect]
   );
 
-  const extractFrames = useCallback(async (): Promise<string[]> => {
+  const extractFrames = useCallback(async (): Promise<{
+    frames: string[];
+    fps: number;
+  }> => {
+    const empty = { frames: [], fps: 0 };
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    if (!video || !canvas) return [];
+    if (!video || !canvas) return empty;
 
     // Wait for metadata if not ready
     if (video.readyState < 1) {
@@ -174,12 +178,15 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
           Math.round(duration) +
           "s."
       );
-      return [];
+      return empty;
     }
 
-    const fps = 5;
-    const totalFrames = Math.min(Math.floor(duration * fps), 80);
+    // ponytail: fixed 80-frame budget spread across the clip — short clips get
+    // up to 20fps (3-5 frames per punch), long clips degrade gracefully.
+    // "All the frames" isn't possible: the API caps at 100 images per request.
+    const totalFrames = Math.max(1, Math.min(80, Math.ceil(duration * 20)));
     const interval = duration / totalFrames;
+    const effectiveFps = Math.round(totalFrames / duration);
 
     const maxW = 640,
       maxH = 480;
@@ -241,11 +248,16 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
           drawer.drawLandmarks(lm, { color: "#ff8c28", radius: 2 });
         }
       }
-      const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
-      frames.push(dataUrl.split(",")[1]);
+      // ponytail: keep 80 frames under Vercel's 4.5MB body cap — noisy frames
+      // drop to q0.5 (50KB × 80 ≈ 4MB worst case).
+      let b64 = canvas.toDataURL("image/jpeg", 0.7).split(",")[1];
+      if (b64.length > 50_000) {
+        b64 = canvas.toDataURL("image/jpeg", 0.5).split(",")[1];
+      }
+      frames.push(b64);
     }
     landmarker?.close();
-    return frames;
+    return { frames, fps: effectiveFps };
   }, []);
 
   const analyze = useCallback(async () => {
@@ -255,17 +267,17 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
 
     try {
       setStatus("Extracting frames...");
-      const frames = await extractFrames();
+      const { frames, fps } = await extractFrames();
       if (frames.length === 0) {
         setAnalyzing(false);
         return;
       }
 
-      setStatus(`Analyzing ${frames.length} frames...`);
+      setStatus(`Analyzing ${frames.length} frames (${fps}/sec)...`);
       const response = await fetch("/api/coach/clip-review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ frames, filename: videoFile.name, userId }),
+        body: JSON.stringify({ frames, fps, filename: videoFile.name, userId }),
       });
 
       if (!response.ok) {
