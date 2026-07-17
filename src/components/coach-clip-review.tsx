@@ -293,9 +293,10 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
     }
 
     // ponytail: fixed 80-frame budget spread across the clip — short clips get
-    // up to 20fps (3-5 frames per punch), long clips degrade gracefully.
-    // "All the frames" isn't possible: the API caps at 100 images per request.
-    const totalFrames = Math.max(1, Math.min(80, Math.ceil(duration * 20)));
+    // up to 30fps (native phone framerate), long clips degrade gracefully.
+    // "All the frames" isn't possible: the API caps at 100 images per request,
+    // and Vercel's 4.5MB body limit keeps the budget at 80.
+    const totalFrames = Math.max(1, Math.min(80, Math.ceil(duration * 30)));
     const interval = duration / totalFrames;
     const effectiveFps = Math.round(totalFrames / duration);
 
@@ -585,7 +586,7 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
           >
             <Upload className="mx-auto mb-3 h-8 w-8 text-muted" />
             <p className="text-sm font-medium mb-1">Upload a short clip</p>
-            <p className="text-xs text-muted">Up to 40 seconds — single punch, combination, or short flurry</p>
+            <p className="text-xs text-muted">Up to 40 seconds — trim to one punch per clip; shorter videos get sharper analysis</p>
             <p className="text-xs text-muted mt-1">MP4, MOV, or WebM • Max 50MB</p>
           </div>
           <Timeline clips={recentClips} />
