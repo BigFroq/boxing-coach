@@ -47,7 +47,10 @@ function buildConnectionsSection(
       ? edgePrefixes[edge.edge_type] ?? "Related"
       : `${edgePrefixes[edge.edge_type] ?? "Related"} (from)`;
 
-    lines.push(`- ${prefix}: [[${otherNode.title}]] — ${edge.evidence}`);
+    // Path-based link with title display: [[Title]] alone never resolves —
+    // files are written as <folder>/<slug>.md, so title-links are ghost nodes in Obsidian.
+    const otherPath = `${TYPE_FOLDERS[otherNode.node_type] ?? "concepts"}/${otherNode.slug}`;
+    lines.push(`- ${prefix}: [[${otherPath}|${otherNode.title}]] — ${edge.evidence}`);
   }
 
   return lines.join("\n");
@@ -92,6 +95,7 @@ export async function writeVaultFiles(
   }
 
   const nodesBySlug = new Map(nodes.map(n => [n.slug, n]));
+  const validPaths = new Set(nodes.map(n => `${TYPE_FOLDERS[n.node_type] ?? "concepts"}/${n.slug}`));
 
   // Write each node as a .md file
   let written = 0;
@@ -106,6 +110,11 @@ export async function writeVaultFiles(
     // Always clear the pass2 "[Leave empty]" placeholder, even if connections is empty
     // (a zero-edge node should render an empty Connections section, not a TODO).
     let content = node.content;
+    // Sources sections cite videos as [[src/...]] — a path that has never existed in the
+    // vault, so every such link is a ghost node in Obsidian. Render as plain text:
+    // "[[src/X]] — Title" keeps just the title; a bare [[src/X]] falls back to a cleaned X.
+    content = content.replace(/\[\[src\/([^\]|]+?)\]\]\s*—\s*(.+)/g, (_m, _slug, title) => `**${title.trim()}**`);
+    content = content.replace(/\[\[src\/([^\]|]+?)\]\]/g, (_m, slug) => `**${String(slug).replace(/_/g, " ").trim()}**`);
     const connectionsPattern = /## Connections\n[\s\S]*?(?=\n## |$)/;
     const newSection = connections ? `## Connections\n${connections}\n` : "## Connections\n";
     if (connectionsPattern.test(content)) {
@@ -120,7 +129,15 @@ export async function writeVaultFiles(
       }
     }
 
-    const fileContent = `${frontmatter}\n\n${content}\n`;
+    let fileContent = `${frontmatter}\n\n${content}\n`;
+    // Final guarantee: no dead links leave the renderer. Anything that isn't a
+    // [[folder/slug]] path backed by a real node renders as plain bold text
+    // (edge evidence and synthesized prose carry stray [[Video: ...]]/[[SOURCE n]] junk).
+    fileContent = fileContent.replace(/\[\[([^\]|]+?)(?:\|([^\]]*))?\]\]/g, (m, target, display) => {
+      if (validPaths.has(String(target).trim())) return m;
+      const text = (display ?? String(target).replace(/_/g, " ")).trim();
+      return text ? `**${text}**` : "";
+    });
     const filePath = path.join(VAULT_DIR, folder, `${node.slug}.md`);
     await fs.writeFile(filePath, fileContent, "utf-8");
     written++;
@@ -179,9 +196,9 @@ export async function writeVaultFiles(
     if (type === "phase") {
       // Special formatting for phases — show sequence
       const sorted = typeNodes.sort((a, b) => a.slug.localeCompare(b.slug));
-      mocSections.push(sorted.map(n => `[[${n.title}]]`).join(" → "));
+      mocSections.push(sorted.map(n => `[[${TYPE_FOLDERS[type] ?? "concepts"}/${n.slug}|${n.title}]]`).join(" → "));
     } else {
-      mocSections.push(typeNodes.map(n => `- [[${n.title}]]`).join("\n"));
+      mocSections.push(typeNodes.map(n => `- [[${TYPE_FOLDERS[type] ?? "concepts"}/${n.slug}|${n.title}]]`).join("\n"));
     }
     mocSections.push("");
   }
