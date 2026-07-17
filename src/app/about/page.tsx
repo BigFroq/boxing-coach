@@ -41,9 +41,9 @@ export default function AboutPage() {
             force, hand wrapping, bag work, and per-punch breakdowns.
           </li>
           <li>
-            <strong>Punch Doctor YouTube transcripts</strong> &mdash; 94 of
-            97 videos, roughly 1.2M characters of transcript ingested. Three
-            videos failed to fetch.
+            <strong>Punch Doctor YouTube transcripts</strong> &mdash; 98 of
+            99 videos, roughly 1.2M characters of transcript ingested. One
+            video failed to fetch (subtitles disabled on the source).
           </li>
         </ul>
         <p className="mb-4 text-sm">
