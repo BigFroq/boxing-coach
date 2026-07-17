@@ -93,7 +93,10 @@ async function callCLI(req: LLMRequest): Promise<string> {
 }
 
 export async function callLLM(req: LLMRequest): Promise<string> {
-  const provider = process.env.SYNTHESIS_PROVIDER ?? "sdk";
+  // Default to the claude CLI (Max subscription auth, no metered API credits).
+  // SYNTHESIS_PROVIDER=sdk opts back into the metered API — 2026-07-17 a default-sdk
+  // resynth burned $14 of credits that the CLI path would have covered for free.
+  const provider = process.env.SYNTHESIS_PROVIDER ?? "cli";
   const startTime = new Date();
   const base = { provider, model: req.model, system: req.system, user: req.user, startTime };
   try {

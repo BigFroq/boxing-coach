@@ -118,7 +118,7 @@ export async function synthesizeNodes(
 
   const synthesized = [...existing];
   const failedCandidates: NodeCandidate[] = [];
-  const provider = process.env.SYNTHESIS_PROVIDER ?? "sdk";
+  const provider = process.env.SYNTHESIS_PROVIDER ?? "cli";
   const model = process.env.SYNTHESIS_MODEL ?? "claude-opus-4-8";
   console.log(`  Provider: ${provider}, model: ${model}\n`);
 
