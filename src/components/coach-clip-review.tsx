@@ -8,6 +8,7 @@ import {
   DrawingUtils,
 } from "@mediapipe/tasks-vision";
 import { saveClipLog, fetchRecentClips } from "@/lib/clip-log-storage";
+import { saveClipCorrection } from "@/lib/clip-correction-storage";
 import type { ClipLog } from "@/lib/clip-log-types";
 import { DiffCard } from "@/components/clip-log/diff-card";
 import { Timeline } from "@/components/clip-log/timeline";
@@ -19,7 +20,7 @@ import {
 
 interface AnalysisResult {
   summary: string;
-  phases: { phase: string; feedback: string }[];
+  phases: { phase: string; feedback: string; score?: number }[];
   strengths: string[];
   improvements: string[];
 }
@@ -36,6 +37,114 @@ function getPhaseScore(
   return typeof p?.score === "number" ? p.score : null;
 }
 
+// Phase result card with an inline "Correct this" editor. Corrections feed the
+// coach-calibration loop: saved rows get injected into future analysis prompts.
+function PhaseCard({
+  phase,
+  feedback,
+  score,
+  userId,
+  clipLogId,
+}: {
+  phase: string;
+  feedback: string;
+  score: number | null;
+  userId: string;
+  clipLogId: string | null;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [correctedScore, setCorrectedScore] = useState(score ?? 5);
+  const [note, setNote] = useState("");
+  const [state, setState] = useState<"idle" | "saving" | "saved" | "error">(
+    "idle"
+  );
+
+  const submit = async () => {
+    setState("saving");
+    const r = await saveClipCorrection({
+      userId,
+      clipLogId,
+      phase,
+      aiScore: score,
+      aiFeedback: feedback,
+      correctedScore,
+      note: note.trim(),
+    });
+    setState(r.status === "saved" ? "saved" : "error");
+    if (r.status === "saved") setEditing(false);
+  };
+
+  return (
+    <div className="rounded-xl bg-surface-hover p-4">
+      <div className="mb-1 flex items-center justify-between">
+        <div className="text-xs font-medium text-accent">
+          {phase}
+          {score != null && <span className="ml-2 text-muted">{score}/10</span>}
+        </div>
+        {state === "saved" ? (
+          <span className="text-xs text-green-400">Correction saved</span>
+        ) : (
+          !editing && (
+            <button
+              onClick={() => setEditing(true)}
+              className="text-xs text-muted hover:text-foreground transition-colors"
+            >
+              Correct this
+            </button>
+          )
+        )}
+      </div>
+      <p className="text-sm text-muted leading-relaxed">{feedback}</p>
+      {editing && (
+        <div className="mt-3 space-y-2 border-t border-surface pt-3">
+          <div className="flex items-center gap-2 text-sm">
+            <label htmlFor={`correct-${phase}`} className="text-muted">
+              Right score:
+            </label>
+            <select
+              id={`correct-${phase}`}
+              value={correctedScore}
+              onChange={(e) => setCorrectedScore(Number(e.target.value))}
+              className="rounded-lg bg-surface px-2 py-1 text-sm"
+            >
+              {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </div>
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="What did it miss? (e.g. elbow flares on the hook — that caps this at 4)"
+            rows={2}
+            className="w-full rounded-lg bg-surface px-3 py-2 text-sm placeholder:text-muted/60"
+          />
+          <div className="flex items-center gap-2">
+            <button
+              onClick={submit}
+              disabled={state === "saving"}
+              className="rounded-lg bg-surface px-3 py-1.5 text-sm hover:text-foreground transition-colors disabled:opacity-60"
+            >
+              {state === "saving" ? "Saving…" : "Save correction"}
+            </button>
+            <button
+              onClick={() => setEditing(false)}
+              className="text-sm text-muted hover:text-foreground transition-colors"
+            >
+              Cancel
+            </button>
+            {state === "error" && (
+              <span className="text-xs text-red-400">Save failed — retry</span>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
@@ -45,6 +154,7 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
   const [error, setError] = useState<string | null>(null);
   const [recentClips, setRecentClips] = useState<ClipLog[]>([]);
   const [priorClipForDiff, setPriorClipForDiff] = useState<ClipLog | null>(null);
+  const [currentClipId, setCurrentClipId] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [exportPct, setExportPct] = useState(0);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -80,6 +190,7 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
     setStatus("");
     setAnalysis(null);
     setError(null);
+    setCurrentClipId(null);
     setExporting(false);
     setExportPct(0);
     setExportError(null);
@@ -303,6 +414,7 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
         }).then((res) => {
           if (res.status === "saved") {
             setRecentClips((prev) => [res.clip, ...prev]);
+            setCurrentClipId(res.clip.id);
           }
         });
       }
@@ -390,10 +502,14 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
         <div className="space-y-3">
           <h3 className="text-sm font-semibold">Phase Breakdown</h3>
           {analysis.phases.map((p, i) => (
-            <div key={i} className="rounded-xl bg-surface-hover p-4">
-              <div className="text-xs font-medium text-accent mb-1">{p.phase}</div>
-              <p className="text-sm text-muted leading-relaxed">{p.feedback}</p>
-            </div>
+            <PhaseCard
+              key={i}
+              phase={p.phase}
+              feedback={p.feedback}
+              score={typeof p.score === "number" ? p.score : null}
+              userId={userId ?? "anon"}
+              clipLogId={currentClipId}
+            />
           ))}
         </div>
 
