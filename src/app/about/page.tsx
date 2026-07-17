@@ -41,20 +41,20 @@ export default function AboutPage() {
             force, hand wrapping, bag work, and per-punch breakdowns.
           </li>
           <li>
-            <strong>Punch Doctor YouTube transcripts</strong> &mdash; 79 of
-            81 videos, roughly 877k characters of transcript ingested. Two
-            videos failed to fetch (one is worth retrying: Shoulder Stability
-            Part 4).
+            <strong>Punch Doctor YouTube transcripts</strong> &mdash; 94 of
+            97 videos, roughly 1.2M characters of transcript ingested. Three
+            videos failed to fetch.
           </li>
         </ul>
         <p className="mb-4 text-sm">
           The ingested sources are distilled into six synthesized note types:
-          <strong> 27 concepts</strong>, <strong>14 techniques</strong>,{" "}
-          <strong>8 phases</strong>, <strong>18 fighter profiles</strong>,{" "}
-          <strong>8 drills</strong>, and <strong>9 injury-prevention notes</strong>. Each note is cross-linked, so a question about the jab can
-          surface the Jab technique page, the Hip Rotation concept, the Four
-          Phases breakdown, <em>and</em> the Canelo fighter analysis in a
-          single retrieval.
+          <strong> 100 concepts</strong>, <strong>37 techniques</strong>,{" "}
+          <strong>12 phases</strong>, <strong>73 fighter profiles</strong>,{" "}
+          <strong>42 drills</strong>, and <strong>23 injury-prevention notes</strong>. The fighter roster spans boxing, muay thai, and MMA &mdash;
+          it feeds the Style Finder as well as the coach. Each note is
+          cross-linked, so a question about the jab can surface the Jab
+          technique page, the Hip Rotation concept, the Four Phases breakdown,{" "}
+          <em>and</em> the Canelo fighter analysis in a single retrieval.
         </p>
       </section>
 
@@ -107,9 +107,9 @@ export default function AboutPage() {
             aren&rsquo;t covered.
           </li>
           <li>
-            <strong>Only ~18 profiled fighters.</strong> Ask about Tszyu or
-            Benavidez and the coach falls back to general principles. It
-            won&rsquo;t fabricate a fight analysis.
+            <strong>~73 profiled fighters &mdash; but not every name.</strong>{" "}
+            Ask about Tszyu or Benavidez and the coach falls back to general
+            principles. It won&rsquo;t fabricate a fight analysis.
           </li>
           <li>
             <strong>Nutrition, weight cutting, cardio programming.</strong>{" "}
@@ -117,9 +117,15 @@ export default function AboutPage() {
             Blueprint-backed ones.
           </li>
           <li>
-            <strong>No form feedback from live video.</strong> The Clip Review
-            feature analyzes frames you upload, but it can&rsquo;t watch a
-            full sparring round or generate diagrams.
+            <strong>Clip Review works on short clips, not live video.</strong>{" "}
+            Upload a short clip &mdash; best filmed side-on, one punch at a
+            time &mdash; and it samples up to 80 frames (as dense as ~30fps on
+            a 3-second clip) to score the four phases and read
+            hip-vs-shoulder-vs-hand sequencing, with a pose skeleton drawn on
+            each frame. It can&rsquo;t watch a live feed or a full sparring
+            round, and accuracy drops on long multi-punch clips where each
+            punch gets fewer frames. When it misjudges a score, your correction
+            calibrates future analyses.
           </li>
           <li>
             <strong>Defense as a standalone topic.</strong> Defensive
