@@ -360,6 +360,137 @@ function buildCitations(candidates: RawCandidate[]): SourceCitation[] {
 }
 
 // ---------------------------------------------------------------------------
+// Step 4b: Fighter-name boost (additive, closed-list)
+// ---------------------------------------------------------------------------
+// Vector ranking alone leaves fighter-specific chunks flapping at the topN
+// cutoff (eval Layer 1 fighter queries fail nondeterministically). When the
+// query names a fighter from the knowledge graph, fetch up to BOOST_CAP chunks
+// about them and APPEND to the reranked set — nothing is displaced, and
+// queries that name no fighter are byte-for-byte unchanged.
+
+const BOOST_CAP = 3;
+
+interface FighterName {
+  name: string; // lowercase full name or unique alias/surname
+  canonical: string; // fighter node title, for chunk matching
+}
+
+let fighterNamesCache: FighterName[] | null = null;
+
+async function getFighterNames(): Promise<FighterName[]> {
+  if (fighterNamesCache) return fighterNamesCache;
+  const supabase = createServerClient();
+  const { data: rawData, error } = await supabase
+    .from("knowledge_nodes")
+    .select("title, aliases")
+    .eq("node_type", "fighter");
+  if (error || !rawData) {
+    console.warn("Fighter boost: could not load fighter list:", error?.message);
+    return [];
+  }
+  const data = rawData as unknown as Array<{ title: string; aliases: string[] | null }>;
+
+  const names: FighterName[] = [];
+  const surnameCount = new Map<string, number>();
+  for (const f of data) {
+    names.push({ name: f.title.toLowerCase(), canonical: f.title });
+    for (const a of (f.aliases as string[]) ?? []) {
+      if (a.trim().length > 3) names.push({ name: a.toLowerCase(), canonical: f.title });
+    }
+    const surname = f.title.trim().split(/\s+/).slice(-1)[0]?.toLowerCase();
+    if (surname && surname.length > 3) {
+      surnameCount.set(surname, (surnameCount.get(surname) ?? 0) + 1);
+    }
+  }
+  // Surname-only match allowed only when it maps to exactly one fighter
+  for (const f of data) {
+    const surname = f.title.trim().split(/\s+/).slice(-1)[0]?.toLowerCase();
+    if (surname && surname.length > 3 && surnameCount.get(surname) === 1) {
+      names.push({ name: surname, canonical: f.title });
+    }
+  }
+  fighterNamesCache = names;
+  return names;
+}
+
+async function fetchFighterBoosts(query: string): Promise<RawCandidate[]> {
+  try {
+    const names = await getFighterNames();
+    if (names.length === 0) return [];
+
+    const q = ` ${query.toLowerCase().replace(/[^a-z0-9'\s-]/g, " ")} `;
+    const matched = [...new Set(
+      names.filter((n) => q.includes(` ${n.name} `)).map((n) => n.canonical)
+    )].slice(0, 2);
+    if (matched.length === 0) return [];
+
+    const supabase = createServerClient();
+    const perFighter = await Promise.all(
+      matched.map(async (canonical) => {
+        // ilike-safe: fighter titles are plain words, but strip or()-breaking chars
+        const safe = canonical.replace(/[%_,()]/g, "");
+        const surname = safe.split(/\s+/).slice(-1)[0];
+        const { data } = await supabase
+          .from("content_chunks")
+          .select(
+            "content, source_type, video_id, video_title, video_url, pdf_file, techniques, fighters, category"
+          )
+          .or(`video_title.ilike.%${surname}%,content.ilike.%${surname}%`)
+          .limit(6);
+        const rows = (data ?? []) as unknown as Array<{
+          content: string;
+          source_type: "pdf" | "transcript";
+          video_id: string | null;
+          video_title: string | null;
+          video_url: string | null;
+          pdf_file: string | null;
+          techniques: string[] | null;
+          fighters: string[] | null;
+          category: string | null;
+        }>;
+        // Title matches are the fighter's own breakdowns — prefer them
+        rows.sort((a, b) => {
+          const at = a.video_title?.toLowerCase().includes(surname.toLowerCase()) ? 0 : 1;
+          const bt = b.video_title?.toLowerCase().includes(surname.toLowerCase()) ? 0 : 1;
+          return at - bt;
+        });
+        return rows;
+      })
+    );
+
+    // Round-robin across matched fighters up to BOOST_CAP total
+    const boosts: RawCandidate[] = [];
+    for (let i = 0; boosts.length < BOOST_CAP; i++) {
+      let added = false;
+      for (const rows of perFighter) {
+        if (boosts.length >= BOOST_CAP) break;
+        const row = rows[i];
+        if (!row) continue;
+        boosts.push({
+          content: row.content,
+          source: "vector",
+          similarity: 1, // exact name match
+          source_type: row.source_type,
+          video_id: row.video_id,
+          video_title: row.video_title,
+          video_url: row.video_url,
+          pdf_file: row.pdf_file,
+          techniques: row.techniques ?? [],
+          fighters: row.fighters ?? [],
+          category: row.category ?? "analysis",
+        });
+        added = true;
+      }
+      if (!added) break;
+    }
+    return boosts;
+  } catch (err) {
+    console.warn("Fighter boost failed (continuing without):", err);
+    return [];
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Main: retrieveContext()
 // ---------------------------------------------------------------------------
 
@@ -368,6 +499,10 @@ export async function retrieveContext(
   options?: { count?: number; categories?: string[] }
 ): Promise<{ chunks: RetrievedChunk[]; citations: SourceCitation[] }> {
   const topN = options?.count ?? 12;
+
+  // Fighter-name boost runs in parallel with the whole pipeline (independent
+  // of embeddings) and is appended after rerank — adds no latency.
+  const boostPromise = fetchFighterBoosts(query);
 
   // Step 1: Decompose query
   const { sub_queries, keywords } = await decomposeQuery(query);
@@ -383,9 +518,19 @@ export async function retrieveContext(
   // Step 4: Rerank
   const reranked = await rerankCandidates(query, allCandidates, topN);
 
+  // Step 4b: Append fighter-name boosts (deduped against reranked set)
+  const boosts = await boostPromise;
+  const rerankedKeys = new Set(
+    reranked.map((c) => `${c.video_id ?? c.pdf_file ?? ""}:${c.content.slice(0, 500)}`)
+  );
+  const newBoosts = boosts.filter(
+    (b) => !rerankedKeys.has(`${b.video_id ?? b.pdf_file ?? ""}:${b.content.slice(0, 500)}`)
+  );
+  const finalCandidates = [...reranked, ...newBoosts];
+
   // Step 5: Convert to output types
-  const chunks = candidatesToChunks(reranked);
-  const citations = buildCitations(reranked);
+  const chunks = candidatesToChunks(finalCandidates);
+  const citations = buildCitations(finalCandidates);
 
   return { chunks, citations };
 }
