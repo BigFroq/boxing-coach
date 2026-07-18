@@ -96,7 +96,7 @@ async function main() {
     throw new Error("--limit requires a number, e.g. `--limit 3`");
   }
   const model = process.env.SYNTHESIS_MODEL ?? "claude-opus-4-6";
-  const provider = process.env.SYNTHESIS_PROVIDER ?? "sdk";
+  const provider = process.env.SYNTHESIS_PROVIDER ?? "cli"; // display only; dispatch defaults to cli in llm-provider.ts
 
   // 1. Inputs
   const candidates = await loadJSON<NodeCandidate[]>(CANDIDATES_CACHE);
