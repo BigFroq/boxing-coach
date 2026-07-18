@@ -1,5 +1,5 @@
 // scripts/incremental-ingest.ts
-// Processes newly added transcripts, chunks them, embeds them,
+// Processes newly added transcripts AND pdf-chunk files, chunks/embeds them,
 // and connects them to existing knowledge graph nodes.
 import dotenv from "dotenv";
 dotenv.config({ path: ".env.local" });
@@ -12,9 +12,12 @@ import { withRetry } from "../src/lib/retry";
 
 const CONTENT_DIR = path.join(process.cwd(), "content");
 const TRANSCRIPTS_DIR = path.join(CONTENT_DIR, "transcripts");
+const PDF_CHUNKS_DIR = path.join(CONTENT_DIR, "pdf-chunks");
 const CHUNK_TARGET = 2000;
 const CHUNK_MAX = 3200;
 const VOYAGE_API_KEY = process.env.VOYAGE_API_KEY!;
+// Same override pass2/pass3 already support (e.g. claude-fable-5 via SYNTHESIS_PROVIDER=cli).
+const LLM_MODEL = process.env.SYNTHESIS_MODEL ?? "claude-opus-4-8";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -40,10 +43,11 @@ function shouldRetryLLM(err: unknown): boolean {
 
 interface RawChunk {
   content: string;
-  source_type: "transcript";
-  video_id: string;
-  video_title: string;
-  video_url: string;
+  source_type: "transcript" | "pdf";
+  video_id?: string;
+  video_title?: string;
+  video_url?: string;
+  pdf_file?: string;
   chunk_index: number;
 }
 
@@ -147,6 +151,37 @@ async function findNewTranscripts(): Promise<
   return newTranscripts;
 }
 
+// --- Find new pdf-chunk files ---
+// Each *.md in content/pdf-chunks is one curated chunk (same convention as ingest.ts);
+// "new" = its filename has no row in content_chunks.pdf_file yet.
+
+async function findNewPdfChunks(): Promise<RawChunk[]> {
+  let files: string[] = [];
+  try {
+    files = (await fs.readdir(PDF_CHUNKS_DIR)).filter((f) => f.endsWith(".md")).sort();
+  } catch {
+    return []; // no pdf-chunks dir
+  }
+
+  const { data: existingChunks, error } = await supabase
+    .from("content_chunks")
+    .select("pdf_file")
+    .eq("source_type", "pdf")
+    .not("pdf_file", "is", null);
+  if (error) throw new Error(`Failed to fetch existing pdf chunks: ${error.message}`);
+
+  const existingFiles = new Set((existingChunks ?? []).map((c: { pdf_file: string }) => c.pdf_file));
+
+  const chunks: RawChunk[] = [];
+  for (const file of files) {
+    if (existingFiles.has(file)) continue;
+    const content = await fs.readFile(path.join(PDF_CHUNKS_DIR, file), "utf-8");
+    if (content.trim().length < 50) continue;
+    chunks.push({ content, source_type: "pdf", pdf_file: file, chunk_index: 0 });
+  }
+  return chunks;
+}
+
 // --- Metadata extraction via Claude ---
 
 async function extractMetadataBatch(chunks: RawChunk[]): Promise<ChunkMetadata[]> {
@@ -162,7 +197,7 @@ async function extractMetadataBatch(chunks: RawChunk[]): Promise<ChunkMetadata[]
     const text = await withRetry(
       () =>
         callLLM({
-          model: "claude-opus-4-8",
+          model: LLM_MODEL,
           maxTokens: 4096,
           system: `Extract metadata from boxing content chunks. For each chunk, identify:
 - techniques: specific boxing techniques mentioned (e.g., "jab", "hook", "uppercut", "kinetic chain", "phase 1", "phase 2", "hip rotation", "follow through", "stance")
@@ -248,10 +283,10 @@ async function insertChunks(
         content: chunk.content,
         embedding: JSON.stringify(embeddings[globalIdx]),
         source_type: chunk.source_type,
-        video_id: chunk.video_id,
-        video_title: chunk.video_title,
-        video_url: chunk.video_url,
-        pdf_file: null,
+        video_id: chunk.video_id ?? null,
+        video_title: chunk.video_title ?? null,
+        video_url: chunk.video_url ?? null,
+        pdf_file: chunk.pdf_file ?? null,
         chunk_index: chunk.chunk_index,
         techniques: metadata[globalIdx]?.techniques ?? [],
         fighters: metadata[globalIdx]?.fighters ?? [],
@@ -299,7 +334,7 @@ async function matchChunkToNodes(
   const text = await withRetry(
     () =>
       callLLM({
-        model: "claude-opus-4-8",
+        model: LLM_MODEL,
         maxTokens: 2048,
         system: `Given a boxing content chunk and a list of existing knowledge graph nodes, identify which nodes this chunk is related to. Return a JSON array of { slug: string, relevance: "high" | "medium" | "low" }. Only include nodes that are genuinely mentioned or directly relevant. Return ONLY the JSON array, no markdown.`,
         user: `Chunk content: ${chunkContent.slice(0, 2000)}\n\nExisting nodes:\n${nodeList}`,
@@ -398,20 +433,25 @@ async function createSourcedFromEdges(
 
 async function main() {
   console.log("=== Punch Doctor AI — Incremental Ingest ===\n");
-  console.log(`Provider: ${process.env.SYNTHESIS_PROVIDER ?? "sdk"} | Model: claude-opus-4-8\n`);
+  console.log(`Provider: ${process.env.SYNTHESIS_PROVIDER ?? "sdk"} | Model: ${LLM_MODEL}\n`);
 
-  // 1. Find new transcripts
-  console.log("1. Scanning for new transcripts...");
+  // 1. Find new transcripts + new pdf-chunk files
+  console.log("1. Scanning for new transcripts and pdf chunks...");
   const newTranscripts = await findNewTranscripts();
+  const newPdfChunks = await findNewPdfChunks();
 
-  if (newTranscripts.length === 0) {
-    console.log("   No new transcripts found. Everything is up to date.");
+  if (newTranscripts.length === 0 && newPdfChunks.length === 0) {
+    console.log("   No new content found. Everything is up to date.");
     return;
   }
 
   console.log(`   Found ${newTranscripts.length} new transcript(s):`);
   for (const t of newTranscripts) {
     console.log(`   - ${t.videoTitle} (${t.videoId})`);
+  }
+  console.log(`   Found ${newPdfChunks.length} new pdf chunk(s):`);
+  for (const p of newPdfChunks) {
+    console.log(`   - ${p.pdf_file}`);
   }
   console.log();
 
@@ -432,6 +472,7 @@ async function main() {
       });
     }
   }
+  allChunks.push(...newPdfChunks);
   console.log(`   Created ${allChunks.length} chunks\n`);
 
   // 3. Extract metadata via Claude
@@ -509,6 +550,7 @@ async function main() {
   // 8. Summary
   console.log("=== Incremental ingest complete! ===");
   console.log(`New transcripts processed: ${newTranscripts.length}`);
+  console.log(`New pdf chunks processed: ${newPdfChunks.length}`);
   console.log(`Chunks created: ${chunkIds.length}`);
   console.log(`Knowledge nodes in graph: ${existingNodes.length}`);
 }
