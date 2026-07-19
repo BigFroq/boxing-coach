@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PUNCH_SLUGS } from "./punch-types";
 
 export const styleProfileSchema = z
   .object({
@@ -83,6 +84,9 @@ export const chatRequestSchema = z.object({
   styleProfile: styleProfileSchema.optional(),
   clipHistory: clipHistorySchema.optional(),
   thinkLonger: z.boolean().optional(),
+  // Scopes the conversation to one analysed clip — the route loads that row
+  // and injects its scores plus the punch instruction set.
+  clipLogId: z.string().max(64).optional(),
   userId: z.string().max(128).optional(),
 });
 
@@ -90,6 +94,9 @@ export const clipReviewRequestSchema = z.object({
   frames: z.array(z.string().max(200_000)).min(1).max(80),
   fps: z.number().int().min(1).max(60).optional(),
   filename: z.string().max(200).optional(),
+  // Which punch the fighter wants assessed. Optional so older clients keep
+  // working; absent behaves the same as "general".
+  punchType: z.enum(PUNCH_SLUGS).optional(),
   userId: z.string().max(128).optional(),
 });
 

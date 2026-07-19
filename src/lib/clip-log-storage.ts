@@ -39,6 +39,7 @@ export function rowToClipLog(row: AnyRow): ClipLog {
     thumbnailB64: row.thumbnail_b64 ?? null,
     modelVersion: row.model_version,
     promptVersion: row.prompt_version,
+    punchType: row.punch_type ?? null,
   };
 }
 
@@ -48,6 +49,9 @@ export interface SaveClipLogInput {
   durationSeconds: number | null;
   analysis: ClipAnalysis;
   thumbnailB64: string | null;
+  punchType?: string | null;
+  /** Returned by the analysis route; omitted falls back to the column default. */
+  promptVersion?: string;
 }
 
 export type SaveResult =
@@ -114,6 +118,8 @@ export async function saveClipLog(input: SaveClipLogInput): Promise<SaveResult> 
         score_follow_through: scores.followThrough,
         score_overall: scores.overall,
         thumbnail_b64: input.thumbnailB64,
+        punch_type: input.punchType ?? null,
+        ...(input.promptVersion ? { prompt_version: input.promptVersion } : {}),
       })
       .select("*")
       .single();

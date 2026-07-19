@@ -27,6 +27,7 @@ function makeClip(daysAgo: number, scores: Partial<ClipScores>, summary = "test"
     thumbnailB64: null,
     modelVersion: "sonnet-4-6",
     promptVersion: "v1",
+    punchType: null,
   };
 }
 

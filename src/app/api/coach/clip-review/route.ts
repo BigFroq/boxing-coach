@@ -4,73 +4,13 @@ import { enforceRateLimit } from "@/lib/rate-limit";
 import { clipReviewRequestSchema } from "@/lib/validation";
 import { withRetry } from "@/lib/retry";
 import { createServerClient } from "@/lib/supabase";
+import { buildAnalysisPrompt, PROMPT_VERSION } from "@/lib/clip-review-prompt";
+import { readClipReviewInstructions } from "@/lib/clip-review-instructions";
+import { punchLabel } from "@/lib/punch-types";
 
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
 });
-
-const ANALYSIS_PROMPT = `You are a boxing technique analyst trained on Dr. Alex Wiant's Power Punching Blueprint methodology.
-
-You are analyzing a DENSE sequence of frames sampled evenly across a short boxing clip (the exact rate is given in the user message — up to 30 frames per second). Because these frames are closely spaced, you CAN see the progression of movement — use this to analyze timing and sequence.
-
-Frames may carry a machine-drawn pose skeleton: cyan lines connecting orange joint dots (shoulders, elbows, wrists, hips, knees, ankles). Use these markers to track body segments across frames — especially hip position vs shoulder position vs fist position — when judging rotation and sequencing. The skeleton is an estimate: on some frames it may be missing or misplaced; trust the actual body in the image over a glitchy skeleton, and never cite the skeleton itself as a flaw in the boxer's technique.
-
-## What to Analyze
-
-### Phase 1: Loading
-- Is elastic potential energy being stored via weight shift?
-- Is the weight transferring to the appropriate leg?
-- Are cross-body kinetic chains being pre-stretched?
-
-### Phase 2: Hip Explosion
-- Does the hip rotate BEFORE the arm? (Look at frame sequence — hip should lead)
-- Is the hip opening (jab/hook/lead uppercut) or closing (cross/rear uppercut)?
-- Is there visible separation between hip and arm timing?
-
-### Phase 3: Energy Transfer
-- Is the core rotating after the hips?
-- Does the punch follow a slight arc (throw) or go straight (push)?
-- Does the arm appear loose until near impact?
-
-### Phase 4: Follow Through
-Note: on a heavy bag the fist stops at contact — that is normal, NOT a lack of follow-through. Judge follow-through by the BODY, not fist travel:
-- Do the hips and torso keep rotating through the contact frame? (Rotation dying at contact = push, not throw)
-- If a bag is visible: does it visibly jump/fold/swing after contact (mass driven through), or barely move (arm-only tap)?
-- Is the arm near full extension at contact, with weight committed forward?
-- Is there a quick reset to neutral stance?
-
-### Common Errors to Check
-- Push punching (linear movement instead of rotational)
-- Arm in lockstep with hips (no acceleration — hip should fire first)
-- Guard dropping during the punch
-- Stance too narrow or too wide
-- No weight shift in loading phase
-
-## Scoring rubric (per phase)
-
-For each phase, return an integer score 1–10 calibrated against textbook technique:
-- 1–3 — needs significant work (basic alignment off, sequence broken)
-- 4–6 — developing (form recognizable, key flaws present)
-- 7–8 — competent (textbook execution, minor refinements possible)
-- 9–10 — elite (fight-ready precision)
-
-Score against the platonic ideal, NOT against the user's previous attempts. Be honest, not generous.
-
-## Response Format
-Return a JSON object:
-{
-  "summary": "2-3 sentence overall assessment",
-  "phases": [
-    { "phase": "Loading", "feedback": "what you observe", "score": 7 },
-    { "phase": "Hip Explosion", "feedback": "what you observe", "score": 6 },
-    { "phase": "Energy Transfer", "feedback": "what you observe", "score": 7 },
-    { "phase": "Follow Through", "feedback": "what you observe", "score": 5 }
-  ],
-  "strengths": ["specific strength observed"],
-  "improvements": ["specific improvement needed"]
-}
-
-Be specific about what you SEE in the frames. Reference the frame sequence when relevant (e.g., "In the early frames... by mid-sequence..."). Be encouraging but honest. Score honestly — inflated scores rob the user of useful feedback.`;
 
 // Recent coach corrections become calibration examples appended to the system
 // prompt. Best-effort: any failure returns "" and the analysis runs uncalibrated.
@@ -116,17 +56,22 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const { frames, fps, filename } = parsed.data;
+    const { frames, fps, filename, punchType } = parsed.data;
 
     const limited = await enforceRateLimit(request);
     if (limited) return limited;
 
     const safeName = (filename ?? "").replace(/[^\w\s\-.]/g, "").slice(0, 100) || "clip";
+    const declaredPunch = punchLabel(punchType);
 
     const content: Anthropic.Messages.ContentBlockParam[] = [
       {
         type: "text",
-        text: `Analyze these ${frames.length} sequential frames from a short boxing clip (${safeName}). The frames are at ${fps ?? 5}fps — closely spaced so you can see movement progression. Analyze the technique using the 4-phase framework.`,
+        text: `Analyze these ${frames.length} sequential frames from a short boxing clip (${safeName}). The frames are at ${fps ?? 5}fps — closely spaced so you can see movement progression.${
+          punchType && punchType !== "general"
+            ? ` The fighter says this clip is a ${declaredPunch}.`
+            : " The fighter did not specify which punch this is — identify it yourself, name it in the summary, and assess accordingly."
+        } Analyze the technique using the 4-phase framework.`,
       },
       ...frames.map(
         (frame: string) =>
@@ -141,14 +86,26 @@ export async function POST(request: NextRequest) {
       },
     ];
 
-    const calibration = await fetchCalibrationBlock();
+    // A punch with no instruction file yet falls back to the generic prompt
+    // rather than failing the request.
+    const [instructions, calibration] = await Promise.all([
+      punchType && punchType !== "general"
+        ? readClipReviewInstructions(punchType)
+        : Promise.resolve(null),
+      fetchCalibrationBlock(),
+    ]);
+    if (punchType && punchType !== "general" && !instructions) {
+      console.warn(
+        `[clip-review] no instruction file for punch "${punchType}" — using generic prompt`
+      );
+    }
 
     const response = await withRetry(
       () =>
         anthropic.messages.create({
           model: "claude-sonnet-4-6",
           max_tokens: 2048,
-          system: ANALYSIS_PROMPT + calibration,
+          system: buildAnalysisPrompt({ punchType, instructions, calibration }),
           messages: [{ role: "user", content }],
         }),
       { label: "clip-review", maxAttempts: 3 }
@@ -170,7 +127,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(analysis);
+    // promptVersion travels back so the client can store which prompt shape
+    // produced these scores — punch-specific scoring is not comparable to v1.
+    return NextResponse.json({ ...analysis, promptVersion: PROMPT_VERSION });
   } catch (error) {
     console.error("Clip review error:", error);
     const msg = error instanceof Error ? error.message.toLowerCase() : "";

@@ -4,6 +4,9 @@ import { retrieveContext, formatChunksForPrompt } from "@/lib/graph-rag";
 import { createServerClient } from "@/lib/supabase";
 import { enforceRateLimit } from "@/lib/rate-limit";
 import { chatRequestSchema } from "@/lib/validation";
+import { readClipReviewInstructions } from "@/lib/clip-review-instructions";
+import { punchLabel } from "@/lib/punch-types";
+import { truncateInstructions } from "@/lib/clip-review-prompt";
 
 type AnthropicMsg = { role: "user" | "assistant"; content: string };
 
@@ -147,6 +150,60 @@ function formatClipHistory(c: ClipHistoryPayload): string {
   return lines.join("\n");
 }
 
+// Scopes the conversation to one analysed clip: the row's own scores plus the
+// coach instruction set that produced them, so follow-up questions land on the
+// specific feedback the fighter is looking at. Best-effort — an unknown id, a
+// row belonging to someone else, or any failure returns "" and chat proceeds
+// as a normal conversation.
+async function fetchClipContext(clipLogId: string, userId?: string): Promise<string> {
+  try {
+    const supabase = createServerClient();
+    let query = supabase
+      .from("clip_logs")
+      .select("punch_type, summary, phases, strengths, improvements, created_at")
+      .eq("id", clipLogId);
+    if (userId && userId !== "anon") query = query.eq("user_id", userId);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = (await query.maybeSingle()) as { data: any | null; error: unknown };
+    if (error || !data) return "";
+
+    const label = punchLabel(data.punch_type);
+    const lines: string[] = ["\n\n## The clip under discussion\n<clip_analysis>"];
+    if (label) lines.push(`Punch the fighter asked about: ${label}`);
+    if (data.summary) lines.push(`Overall assessment given: "${data.summary}"`);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const phases: any[] = Array.isArray(data.phases) ? data.phases : [];
+    for (const p of phases) {
+      if (!p?.phase) continue;
+      lines.push(
+        `- ${p.phase}${typeof p.score === "number" ? ` — scored ${p.score}/10` : ""}: ${p.feedback ?? ""}`
+      );
+    }
+    if (data.strengths?.length) lines.push(`Strengths called out: ${data.strengths.join("; ")}`);
+    if (data.improvements?.length) {
+      lines.push(`Improvements called out: ${data.improvements.join("; ")}`);
+    }
+    lines.push("</clip_analysis>");
+
+    if (data.punch_type && data.punch_type !== "general") {
+      const instructions = await readClipReviewInstructions(data.punch_type);
+      if (instructions) {
+        lines.push(
+          `\n<coach_instructions punch="${data.punch_type}">\n${truncateInstructions(instructions)}\n</coach_instructions>`
+        );
+      }
+    }
+
+    lines.push(
+      "\nThe fighter is asking about THIS clip. Reference these exact scores and this exact feedback — they are looking at them on screen. If they ask why a phase scored what it did, explain it from the feedback above and the coach instructions, not in general terms. Never ask them to describe the clip; you already have the analysis."
+    );
+    return lines.join("\n");
+  } catch (err) {
+    console.error("[chat] clip context fetch failed:", err);
+    return "";
+  }
+}
+
 function formatStyleProfile(p: StyleProfilePayload): string {
   const lines: string[] = ["\n\n## This fighter's profile (reference it freely — you already know this about them)\n<fighter_profile>"];
   if (p.style_name) lines.push(`Style name: ${p.style_name}`);
@@ -190,7 +247,8 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const { messages, context, thinkLonger, styleProfile, clipHistory } = parsed.data;
+    const { messages, context, thinkLonger, styleProfile, clipHistory, clipLogId, userId } =
+      parsed.data;
 
     const limited = await enforceRateLimit(request);
     if (limited) return limited;
@@ -227,6 +285,7 @@ export async function POST(request: NextRequest) {
 
     const styleNote = context === "style" && styleProfile ? formatStyleProfile(styleProfile) : "";
     const clipHistoryNote = clipHistory ? formatClipHistory(clipHistory) : "";
+    const clipNote = clipLogId ? await fetchClipContext(clipLogId, userId) : "";
 
     const thinkLongerNote = thinkLonger
       ? "\n\nThe user has asked you to think longer. Give a more detailed, thorough answer — work through the mechanics step by step, name specific phases and chains, and include the 'one thing to do' at the end. Still no markdown headings."
@@ -240,7 +299,14 @@ export async function POST(request: NextRequest) {
     const stream = anthropic.messages.stream({
       model: "claude-sonnet-4-6",
       max_tokens: maxTokens,
-      system: SYSTEM_PROMPT + contextText + contextNote + styleNote + clipHistoryNote + thinkLongerNote,
+      system:
+        SYSTEM_PROMPT +
+        contextText +
+        contextNote +
+        styleNote +
+        clipHistoryNote +
+        clipNote +
+        thinkLongerNote,
       messages: clampHistoryForAnthropic(
         messages.map((m: { role: string; content: string }) => ({
           role: m.role as "user" | "assistant",

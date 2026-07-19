@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { Upload, Loader2, AlertCircle, RotateCcw, Download, Share2 } from "lucide-react";
+import { Upload, Loader2, AlertCircle, RotateCcw, Download, Share2, MessageSquare, Dumbbell } from "lucide-react";
 import {
   PoseLandmarker,
   FilesetResolver,
@@ -10,6 +10,8 @@ import {
 import { saveClipLog, fetchRecentClips } from "@/lib/clip-log-storage";
 import { saveClipCorrection } from "@/lib/clip-correction-storage";
 import type { ClipLog } from "@/lib/clip-log-types";
+import { PUNCH_TYPES, punchLabel, type PunchSlug } from "@/lib/punch-types";
+import { ChatTab } from "@/components/chat-tab";
 import { DiffCard } from "@/components/clip-log/diff-card";
 import { Timeline } from "@/components/clip-log/timeline";
 import { PoseOverlay } from "@/components/clip-log/pose-overlay";
@@ -23,6 +25,8 @@ interface AnalysisResult {
   phases: { phase: string; feedback: string; score?: number }[];
   strengths: string[];
   improvements: string[];
+  /** Which prompt shape produced these scores — stored alongside the log. */
+  promptVersion?: string;
 }
 
 interface CoachClipReviewProps {
@@ -155,6 +159,8 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
   const [recentClips, setRecentClips] = useState<ClipLog[]>([]);
   const [priorClipForDiff, setPriorClipForDiff] = useState<ClipLog | null>(null);
   const [currentClipId, setCurrentClipId] = useState<string | null>(null);
+  const [punchType, setPunchType] = useState<PunchSlug | null>(null);
+  const [discussing, setDiscussing] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportPct, setExportPct] = useState(0);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -191,6 +197,8 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
     setAnalysis(null);
     setError(null);
     setCurrentClipId(null);
+    setPunchType(null);
+    setDiscussing(false);
     setExporting(false);
     setExportPct(0);
     setExportError(null);
@@ -389,7 +397,7 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
       const response = await fetch("/api/coach/clip-review", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ frames, fps, filename: videoFile.name, userId }),
+        body: JSON.stringify({ frames, fps, filename: videoFile.name, punchType, userId }),
       });
 
       if (!response.ok) {
@@ -412,6 +420,8 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
           durationSeconds,
           analysis: result,
           thumbnailB64: middleFrame,
+          punchType,
+          promptVersion: result.promptVersion,
         }).then((res) => {
           if (res.status === "saved") {
             setRecentClips((prev) => [res.clip, ...prev]);
@@ -426,7 +436,7 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
       setAnalyzing(false);
       setStatus("");
     }
-  }, [videoFile, extractFrames, userId, recentClips]);
+  }, [videoFile, extractFrames, userId, recentClips, punchType]);
 
   // Results view
   if (analysis) {
@@ -485,7 +495,15 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
           </div>
         )}
         <div className="rounded-xl bg-surface-hover p-5">
-          <h3 className="text-sm font-semibold mb-2">Summary</h3>
+          <div className="mb-2 flex items-center justify-between gap-3">
+            <h3 className="text-sm font-semibold">Summary</h3>
+            {punchLabel(punchType) && (
+              <span className="flex items-center gap-1.5 rounded-full bg-accent/10 px-2.5 py-1 text-xs text-accent">
+                <Dumbbell size={12} />
+                {punchLabel(punchType)}
+              </span>
+            )}
+          </div>
           <p className="text-sm text-muted leading-relaxed">{analysis.summary}</p>
         </div>
 
@@ -541,6 +559,47 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
             </div>
           </div>
         )}
+
+        {/* Follow-up dialog about THIS clip. The embedded chat gets clipLogId,
+            so the route loads these scores and the punch's instruction set into
+            its context. Only offered once the clip has actually persisted —
+            without a row id there is nothing for the coach to look up. */}
+        {currentClipId &&
+          (discussing ? (
+            <div className="overflow-hidden rounded-xl border border-border bg-surface">
+              <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+                <span className="text-sm font-semibold">Talk it through</span>
+                <button
+                  onClick={() => setDiscussing(false)}
+                  className="text-xs text-muted hover:text-foreground transition-colors"
+                >
+                  Hide
+                </button>
+              </div>
+              <div className="h-[32rem]">
+                <ChatTab
+                  systemContext="technique"
+                  placeholder="Ask about this clip…"
+                  suggestions={[]}
+                  heroIcon={MessageSquare}
+                  heroTitle="Talk it through"
+                  heroSubtitle="Ask anything about this clip."
+                  initialQuery="Walk me through this analysis — what should I fix first?"
+                  extraContext={{ clipLogId: currentClipId }}
+                  storageKeyOverride={`boxing-coach-clip-${currentClipId}`}
+                  userId={userId}
+                />
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setDiscussing(true)}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-accent/10 py-2.5 text-sm font-medium text-accent hover:bg-accent/15 transition-colors"
+            >
+              <MessageSquare size={14} />
+              Talk it through with the coach
+            </button>
+          ))}
 
         <button
           onClick={reset}
@@ -612,6 +671,36 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
             </div>
           )}
 
+          {!analyzing && (
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-medium">Which punch should I assess?</legend>
+              <p className="text-xs text-muted">
+                Each punch is scored against its own protocol — picking the right one is
+                what makes the feedback specific.
+              </p>
+              <div className="grid grid-cols-2 gap-2 pt-1">
+                {PUNCH_TYPES.map((p) => {
+                  const selected = punchType === p.slug;
+                  return (
+                    <button
+                      key={p.slug}
+                      type="button"
+                      onClick={() => setPunchType(p.slug)}
+                      aria-pressed={selected}
+                      className={`rounded-lg px-3 py-2 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+                        selected
+                          ? "bg-accent text-white"
+                          : "bg-surface-hover text-muted hover:text-foreground"
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
+          )}
+
           {analyzing ? (
             <div className="flex items-center justify-center gap-2 py-3">
               <Loader2 className="h-4 w-4 animate-spin text-accent" />
@@ -621,10 +710,11 @@ export function CoachClipReview({ userId }: CoachClipReviewProps = {}) {
             <div className="flex gap-2">
               <button
                 onClick={analyze}
-                disabled={!!error}
+                disabled={!!error || !punchType}
+                title={!punchType ? "Pick a punch first" : undefined}
                 className="flex-1 rounded-lg bg-accent py-2.5 text-sm font-medium text-white hover:bg-accent/90 disabled:opacity-50"
               >
-                Analyze technique
+                {punchType ? `Analyze ${punchLabel(punchType)?.toLowerCase()}` : "Pick a punch first"}
               </button>
               <button
                 onClick={reset}

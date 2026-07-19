@@ -37,6 +37,9 @@ export interface ClipLog {
   thumbnailB64: string | null;
   modelVersion: string;
   promptVersion: string;
+  /** Punch the fighter asked to have assessed. Null on rows written before
+   *  punch selection existed — render defensively. */
+  punchType: string | null;
 }
 
 export interface ClipHistoryContext {

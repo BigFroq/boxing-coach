@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { ClipLog } from "@/lib/clip-log-types";
+import { punchLabel } from "@/lib/punch-types";
 
 interface TimelineProps {
   clips: ClipLog[];
@@ -85,7 +86,14 @@ export function Timeline({ clips }: TimelineProps) {
                 <div className="w-20 h-15 rounded bg-surface flex-shrink-0" />
               )}
               <div className="flex-1 min-w-0">
-                <div className="text-xs text-muted">{shortDate(c.createdAt)}</div>
+                <div className="flex items-center gap-2 text-xs text-muted">
+                  <span>{shortDate(c.createdAt)}</span>
+                  {punchLabel(c.punchType) && (
+                    <span className="rounded-full bg-accent/10 px-2 py-0.5 text-accent">
+                      {punchLabel(c.punchType)}
+                    </span>
+                  )}
+                </div>
                 <div className="text-sm mt-0.5 line-clamp-2">{summaryFirstLine}</div>
                 <div className="flex flex-wrap gap-1 mt-2">
                   <ScoreChip label="Load" score={c.scores.loading} />
