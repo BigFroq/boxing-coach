@@ -11,6 +11,7 @@ import { synthesizeNodes, type SynthesizedNode } from "./vault-generation/pass2-
 import { discoverEdges, type DiscoveredEdge } from "./vault-generation/pass3-edges";
 import { validateAndInsert } from "./vault-generation/pass4-validate";
 import { writeVaultFiles } from "./vault-generation/write-vault";
+import { acquirePipelineLock } from "./vault-generation/pipeline-lock";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -37,6 +38,7 @@ async function saveCache<T>(filename: string, data: T): Promise<void> {
 }
 
 async function main() {
+  await acquirePipelineLock("generate-vault");
   console.log("=== Punch Doctor AI — Vault Generation Pipeline ===\n");
   await ensureCacheDir();
 

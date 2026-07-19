@@ -33,6 +33,7 @@ import { synthesizeNodes, type SynthesizedNode } from "./vault-generation/pass2-
 import type { DiscoveredEdge } from "./vault-generation/pass3-edges";
 import { writeVaultFiles } from "./vault-generation/write-vault";
 import { withRetry } from "../src/lib/retry";
+import { acquirePipelineLock } from "./vault-generation/pipeline-lock";
 
 const CACHE_DIR = path.join(process.cwd(), "scripts", "vault-generation", ".cache");
 const CANDIDATES_CACHE = path.join(CACHE_DIR, "pass1-candidates.json");
@@ -89,6 +90,7 @@ function parseLimit(argv: string[]): number | null {
 }
 
 async function main() {
+  await acquirePipelineLock("resynth-dirty");
   console.log("=== Punch Doctor AI — Targeted Dirty-Node Re-Synthesis ===\n");
 
   const limit = parseLimit(process.argv.slice(2));

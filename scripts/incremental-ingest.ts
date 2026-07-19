@@ -9,6 +9,7 @@ import path from "path";
 import { createClient } from "@supabase/supabase-js";
 import { callLLM } from "./vault-generation/llm-provider";
 import { withRetry } from "../src/lib/retry";
+import { acquirePipelineLock } from "./vault-generation/pipeline-lock";
 
 const CONTENT_DIR = path.join(process.cwd(), "content");
 const TRANSCRIPTS_DIR = path.join(CONTENT_DIR, "transcripts");
@@ -432,6 +433,7 @@ async function createSourcedFromEdges(
 // --- Main ---
 
 async function main() {
+  await acquirePipelineLock("incremental-ingest");
   console.log("=== Punch Doctor AI — Incremental Ingest ===\n");
   console.log(`Provider: ${process.env.SYNTHESIS_PROVIDER ?? "sdk"} | Model: ${LLM_MODEL}\n`);
 
