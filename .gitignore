@@ -48,8 +48,12 @@ content/transcripts/manifest.json
 # vault generation cache
 scripts/vault-generation/.cache/
 
-# generated vault (regenerated from DB)
-vault/
+# generated vault (regenerated from DB) — but fighters/ and drills/ are read
+# from disk at request time by /api/style-finder and /api/drill-program, so
+# they must be committed or those reads silently return null in production
+vault/*
+!vault/fighters
+!vault/drills
 
 # git worktrees
 .worktrees/
