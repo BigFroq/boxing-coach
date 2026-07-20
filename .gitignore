@@ -73,3 +73,7 @@ vault/*
 # loose screenshots at repo root (scratch — keep curated ones under docs/)
 /*.png
 content/transcripts-external/
+
+# scratch/debug scripts and cache backups (session cruft)
+scripts/.tmp-*.ts
+scripts/vault-generation/.cache-backup/
