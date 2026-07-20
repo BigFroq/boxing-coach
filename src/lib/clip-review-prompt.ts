@@ -30,6 +30,7 @@ Frames may carry a machine-drawn pose skeleton: cyan lines connecting orange joi
 const FRAMEWORK = `## What to Analyze
 
 ### Phase 1: Loading
+- Does the body LOWER — a visible increase in hip bend, weight sinking — just before the drive off the leg? In this method that dip IS the load; look for it early in the frame sequence. Its absence means the fighter is punching without loading.
 - Is elastic potential energy being stored via weight shift?
 - Is the weight transferring to the appropriate leg?
 - Are cross-body kinetic chains being pre-stretched?

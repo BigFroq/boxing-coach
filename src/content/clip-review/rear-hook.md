@@ -1,10 +1,9 @@
 # Clip review protocol: Rear hook
 
-> **DRAFT — Alex, this one needs you most.** The vault's `hook.md` is written almost
-> entirely around the **lead** hook. What follows is the part of that material that
-> transfers, plus the hip action implied by your opening/closing framework. Two
-> things below are inference rather than something you said on tape — they are
-> marked **[CONFIRM]**. Please correct or delete them.
+> **DRAFT — Alex, rewrite this freely.** The vault's `hook.md` covers the **lead**
+> hook almost entirely; this adapts it to the rear hook. The hip action and the
+> pivot rule below are confirmed by Alex (2026-07-19); the rest still wants his
+> pass.
 
 ## What a good rep looks like
 
@@ -12,20 +11,21 @@ A horizontal arc thrown with the rear hand, whose radius tightens through impact
 with the fist landing mid-arc to shear rather than perpendicular. Everything the
 lead hook teaches about sequencing, the tightening arc, and impact timing applies.
 
-**[CONFIRM]** Because the rear side rotates forward, the rear hook should be driven
-by the hips **closing** — the same action as the cross and rear uppercut — rather
-than the opening that powers the lead hook. The load therefore sits on the rear
-leg rather than laterally on the lead leg.
+The rear hook is driven by the hips **closing** — the rear side rotates forward,
+the same action as the rear straight and rear uppercut — NOT the opening that
+powers the lead hook. The load therefore sits on the rear leg, not laterally on
+the lead leg.
 
 ## Assess in this order
 
 1. **Load.** Weight settles onto the rear leg with knee and hip bend to explode
    from, cross-body chains pre-stretched, arm and shoulder briefly relaxed so the
    pec loads. The body should look alive, never stiff.
-2. **Drive off a flat foot.** As with the lead hook, the glute should deliver hip
-   extension and rotation together. **[CONFIRM]** whether you want the same
-   absolute "never pivot" rule here as on the lead hook, or whether the rear foot
-   turning is acceptable on this punch.
+2. **Close the hips — pivoting is correct here.** The glute drives the rear hip
+   forward and closed. Unlike the lead hook (opening, off a flat foot), this is a
+   closing punch, so the rear foot **pivots** — and it usually must, to keep the
+   leg neutral with the pelvis as the hip closes. The fault is not the pivot; it is
+   a passive spin with no push behind it, which generates no torque.
 3. **Hips – torso – arm.** The arm lags, the shoulder girdle retracts, the arm line
    stretches from pec to fist, then rebounds and snaps across the body with full
    shoulder-blade protraction. The hip must finish rotating while the arm is still
@@ -50,12 +50,12 @@ leg rather than laterally on the lead leg.
 
 ## Do not flag
 
+- **The rear foot pivoting / turning.** On a closing punch this is correct, and
+  usually necessary to keep the leg neutral with the pelvis. Only the passive
+  spin-without-push version is a fault (see step 2).
 - **The fist not turning over**, and **landing with the palm facing the fighter.**
   Both correct on hooks.
 - **Continuing to rotate through impact** instead of leaning forward.
 - **Loading out of a slip, roll, or the end of a previous punch.** Legitimate
   entry into the load phase.
 - **The fist stopping dead at contact on a heavy bag.**
-- Until the **[CONFIRM]** items above are settled, do not score Hip Explosion
-  harshly purely on the basis of which way the hips turned — describe what you see
-  and leave the verdict soft.
