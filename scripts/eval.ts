@@ -29,7 +29,9 @@ import { withRetry } from "../src/lib/retry";
 import Anthropic from "@anthropic-ai/sdk";
 
 const CHAT_API_URL = process.env.CHAT_API_URL ?? "http://localhost:3001/api/chat";
-const RESULTS_DIR = path.resolve(process.cwd(), "docs/outreach");
+const RESULTS_DIR = process.env.EVAL_RESULTS_DIR
+  ? path.resolve(process.env.EVAL_RESULTS_DIR)
+  : path.resolve(process.cwd(), "docs/outreach");
 const RESULTS_JSON = path.join(RESULTS_DIR, "eval-results.json");
 const RESULTS_MD = path.join(RESULTS_DIR, "blueprint-fidelity.md");
 
@@ -507,6 +509,18 @@ function parseSourceArg(): string | null {
   return arg.split("=")[1] ?? null;
 }
 
+// --only-queries=<path> restricts Layer 3 to the query strings in a JSON array.
+// Used for scoped re-judging (e.g. re-checking only the low scorers after a
+// prompt change) without a full metered run.
+function parseOnlyQueries(): Set<string> | null {
+  const arg = process.argv.find((a) => a.startsWith("--only-queries="));
+  if (!arg) return null;
+  const p = arg.split("=")[1];
+  if (!p) return null;
+  const list = JSON.parse(fs.readFileSync(path.resolve(p), "utf8")) as string[];
+  return new Set(list.map((q) => q.trim()));
+}
+
 async function chatAPI(query: string): Promise<string> {
   return withRetry(
     async () => {
@@ -892,11 +906,16 @@ async function runLayer3(): Promise<{
   const anthropic = new Anthropic();
 
   const sourceFilter = parseSourceArg();
-  const cases = sourceFilter
+  const onlyQueries = parseOnlyQueries();
+  let cases = sourceFilter
     ? LAYER_3_CASES.filter((c) => c.source === sourceFilter)
     : LAYER_3_CASES;
   if (sourceFilter) {
     console.log(`  Filtered to source="${sourceFilter}": ${cases.length} of ${LAYER_3_CASES.length}`);
+  }
+  if (onlyQueries) {
+    cases = cases.filter((c) => onlyQueries.has(c.query.trim()));
+    console.log(`  Filtered to ${cases.length} query(ies) from --only-queries`);
   }
 
   const allScores: JudgeScores[] = [];
