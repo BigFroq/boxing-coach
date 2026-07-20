@@ -3,6 +3,7 @@ import { CohereClient } from "cohere-ai";
 
 import { createServerClient } from "./supabase";
 import { embedText } from "./voyage";
+import { withRetry } from "./retry";
 import {
   type RetrievedChunk,
   type SourceCitation,
@@ -430,13 +431,20 @@ async function fetchFighterBoosts(query: string): Promise<RawCandidate[]> {
         // ilike-safe: fighter titles are plain words, but strip or()-breaking chars
         const safe = canonical.replace(/[%_,()]/g, "");
         const surname = safe.split(/\s+/).slice(-1)[0];
-        const { data } = await supabase
-          .from("content_chunks")
-          .select(
-            "content, source_type, video_id, video_title, video_url, pdf_file, techniques, fighters, category"
-          )
-          .or(`video_title.ilike.%${surname}%,content.ilike.%${surname}%`)
-          .limit(6);
+        const { data } = await withRetry(
+          async () => {
+            const res = await supabase
+              .from("content_chunks")
+              .select(
+                "content, source_type, video_id, video_title, video_url, pdf_file, techniques, fighters, category"
+              )
+              .or(`video_title.ilike.%${surname}%,content.ilike.%${surname}%`)
+              .limit(6);
+            if (res.error) throw new Error(`boost query failed: ${res.error.message}`);
+            return res;
+          },
+          { label: "fighter-boost", maxAttempts: 3 }
+        );
         const rows = (data ?? []) as unknown as Array<{
           content: string;
           source_type: "pdf" | "transcript";

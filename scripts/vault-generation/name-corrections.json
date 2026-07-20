@@ -1,0 +1,632 @@
+[
+ {
+  "file": "content/transcripts/1ilb9U6efYs_Crawford_vs_Spence_Difference_in_Jab_Technique_and_Speed_boxing_terencecrawford.md",
+  "from": "arrol",
+  "to": "Errol",
+  "evidence": "Wikipedia/ESPN: Errol Spence Jr. vs Terence \"Bud\" Crawford, July 29 2023 welterweight (Crawford TKO9) \u2014 matches the video's subject, and \"Errol Spence\" is spelled correctly at line 9 of the same transcript."
+ },
+ {
+  "file": "content/transcripts/1ilb9U6efYs_Crawford_vs_Spence_Difference_in_Jab_Technique_and_Speed_boxing_terencecrawford.md",
+  "from": "terrence's",
+  "to": "Terence's",
+  "evidence": "BoxRec (box-pro/447121) and Wikipedia both spell it \"Terence Crawford\" (one r); fight context matches Spence vs Crawford, July 29 2023, welterweight, Crawford TKO9, and transcript's \"Bud\" nickname confirms it's Crawford."
+ },
+ {
+  "file": "content/transcripts/21LUs2MXlSg_How_Tim_Bradley_Could_Have_Fixed_His_Punch_Mechanics.md",
+  "from": "winky right",
+  "to": "Winky Wright",
+  "evidence": "BoxRec 003600 / Wikipedia: Ronald \"Winky\" Wright, 51-6-1 (25 KOs), HOF southpaw renowned for his jab \u2014 matches \"how winky right Jacks right\" = \"how Winky Wright jabs, right\" in a jab-mechanics passage"
+ },
+ {
+  "file": "content/transcripts/21LUs2MXlSg_How_Tim_Bradley_Could_Have_Fixed_His_Punch_Mechanics.md",
+  "from": "Paco",
+  "to": "Pacquiao",
+  "evidence": "Bradley's only opponent matching context is Manny Pacquiao (trilogy 2012/2014/2016, WBO welterweight, per Wikipedia/ESPN); 'Pacquiao' spelled correctly elsewhere in file, 'Manny' appears in same sentence as 'Paco', and no boxer named Paco ever fought Bradley."
+ },
+ {
+  "file": "content/transcripts/21LUs2MXlSg_How_Tim_Bradley_Could_Have_Fixed_His_Punch_Mechanics.md",
+  "from": "tyon",
+  "to": "Mike Tyson",
+  "evidence": "No boxer named \"tyon\" exists; Mike Tyson's lead/right uppercut from a loaded stance is his signature punch (Cus D'Amato peekaboo style, e.g. Ribalta KO footage per givemesport.com and bloodyelbow.com breakdowns), matching the transcript's \"old footage of tyon\" during a lead-uppercut mechanics demo."
+ },
+ {
+  "file": "content/transcripts/21LUs2MXlSg_How_Tim_Bradley_Could_Have_Fixed_His_Punch_Mechanics.md",
+  "from": "hipley",
+  "to": "Tim Bradley",
+  "evidence": "No boxer \"Hipley\" exists on BoxRec; the video is a breakdown of the Pacquiao\u2013Bradley trilogy (2012/2014/2016, Wikipedia-confirmed), and the surrounding transcript already names Bradley clamping Pacquiao's arm \u2014 \"hipley\" is \"hip\" + sentence boundary + \"Bradley\" (\"connected to his hip. Bradley left, Pacquiao...\") smashed into one token."
+ },
+ {
+  "file": "content/transcripts/21LUs2MXlSg_How_Tim_Bradley_Could_Have_Fixed_His_Punch_Mechanics.md",
+  "from": "Devon Haney",
+  "to": "Devin Haney",
+  "evidence": "Devin Haney (Wikipedia/ESPN/BoxingScene) is a real champion boxer whose best-known criticism is lack of punching power \u2014 exactly the trait cited in the transcript; no boxer \"Devon Haney\" exists in records."
+ },
+ {
+  "file": "content/transcripts/3x9DQgypEBA_How_Earnie_Shavers_Used_His_Kinetic_Chains_to_Generate_Devastating_Power_It_Wasn.md",
+  "from": "Ken Nordon",
+  "to": "Ken Norton",
+  "evidence": "BoxRec/Boxing News: Shavers KO1 (1:58) Ken Norton, Mar 23 1979, Las Vegas Hilton \u2014 ended by uppercut, matching transcript's fight description; \"Norton\" spelled correctly later in same file"
+ },
+ {
+  "file": "content/transcripts/3x9DQgypEBA_How_Earnie_Shavers_Used_His_Kinetic_Chains_to_Generate_Devastating_Power_It_Wasn.md",
+  "from": "Shannon Brig",
+  "to": "Shannon Briggs",
+  "evidence": "Shannon Briggs (BoxRec/Wikipedia: 60-7-1, 53 KOs, lineal HW champ 1997-98, WBO champ 2006-07) matches the \"knockout power, contender skill\" comparison; spelled correctly earlier in the same transcript and grouped with Hasim Rahman and David Tua."
+ },
+ {
+  "file": "content/transcripts/3x9DQgypEBA_How_Earnie_Shavers_Used_His_Kinetic_Chains_to_Generate_Devastating_Power_It_Wasn.md",
+  "from": "Hassim Rockman",
+  "to": "Hasim Rahman",
+  "evidence": "No \"Hassim Rockman\" exists in boxing records; Hasim Rahman \"The Rock\" (BoxRec 006070, 50-9-2, two-time heavyweight champ, 2001 upset KO of Lennox Lewis) matches the Briggs/Tua power-puncher context and his nickname explains the \"Rockman\" garble"
+ },
+ {
+  "file": "content/transcripts/3x9DQgypEBA_How_Earnie_Shavers_Used_His_Kinetic_Chains_to_Generate_Devastating_Power_It_Wasn.md",
+  "from": "Ernie Shavers",
+  "to": "Earnie Shavers",
+  "evidence": "Wikipedia and BoxRec (proboxer/320) both spell it \"Earnie Shavers\" \u2014 heavyweight 1969-1995, 74-14-1 with 68 KOs, widely called the hardest puncher Ali and Holmes ever faced, matching the \"huge power puncher\" context and the video title's own spelling."
+ },
+ {
+  "file": "content/transcripts/8apQ3QI7nTg_James_Toney_Straight_Punch_Mechanics.md",
+  "from": "James Tony",
+  "to": "James Toney",
+  "evidence": "Wikipedia/BoxRec: James Toney beat Iran Barkley Feb 13, 1993 (IBF super middleweight, corner retirement); heights 5'9\" vs 6'1\" match transcript's claim."
+ },
+ {
+  "file": "content/transcripts/8apQ3QI7nTg_James_Toney_Straight_Punch_Mechanics.md",
+  "from": "Tony does not throw",
+  "to": "Toney does not throw",
+  "evidence": "Video is about James Toney vs Iran Barkley (Feb 13 1993, IBF super middleweight, Toney RTD9 win per BoxRec/Wikipedia); \"Tony\" is the auto-caption misspelling of \"Toney\"."
+ },
+ {
+  "file": "content/transcripts/9BU_i_EVrBc_Why_Ciryl_Ganes_Punches_Are_Weak_And_How_to_Fix_Them.md",
+  "from": "Sirill",
+  "to": "Ciryl",
+  "evidence": "Wikipedia/UFC.com/Sherdog confirm UFC heavyweight Ciryl Gane (no fighter \"Sirill\" exists); his widely-discussed lack of punching power matches the video's topic, and the video title itself uses \"Ciryl Ganes\""
+ },
+ {
+  "file": "content/transcripts/9BU_i_EVrBc_Why_Ciryl_Ganes_Punches_Are_Weak_And_How_to_Fix_Them.md",
+  "from": "Gan",
+  "to": "Gane",
+  "evidence": "Ciryl Gane (Wikipedia/ESPN, UFC heavyweight 14-2, technical striker not known for one-punch power) matches the video title and its power-critique premise plus Pereira/Aspinall references; no fighter \"Gan\" fits."
+ },
+ {
+  "file": "content/transcripts/9BU_i_EVrBc_Why_Ciryl_Ganes_Punches_Are_Weak_And_How_to_Fix_Them.md",
+  "from": "Sirill Gone",
+  "to": "Ciryl Gane",
+  "evidence": "Wikipedia/UFC.com: Ciryl Gane, French UFC heavyweight (14-2, two-time interim HW champion); transcript title itself spells \"Ciryl Gane\" and context (heavyweight, weak KO ratio, Aspinall/Pereira comparisons) matches his record"
+ },
+ {
+  "file": "content/transcripts/9BU_i_EVrBc_Why_Ciryl_Ganes_Punches_Are_Weak_And_How_to_Fix_Them.md",
+  "from": "Gon",
+  "to": "Gane",
+  "evidence": "Video title and transcript are about UFC heavyweight Ciryl Gane (14-2, interim champ per Wikipedia/UFC.com), whose volume-over-power striking style matches the video's critique; \"Gon\" matches no real fighter in this context."
+ },
+ {
+  "file": "content/transcripts/9BU_i_EVrBc_Why_Ciryl_Ganes_Punches_Are_Weak_And_How_to_Fix_Them.md",
+  "from": "serial",
+  "to": "Ciryl",
+  "evidence": "Wikipedia/UFC.com: Ciryl Gane, French UFC heavyweight (14-2, interim champ) \u2014 matches video title \"Why Ciryl Gane's Punches Are Weak\" and in-transcript Aspinall/Pereira UFC context; \"serial\" appears only where his first name belongs"
+ },
+ {
+  "file": "content/transcripts/9BU_i_EVrBc_Why_Ciryl_Ganes_Punches_Are_Weak_And_How_to_Fix_Them.md",
+  "from": "Tom Aspenol",
+  "to": "Tom Aspinall",
+  "evidence": "No fighter \"Aspenol\" exists; Tom Aspinall (UFC heavyweight champ) scored ~50k on the PowerKube punch machine in March 2024 vs Ngannou's 129k record \u2014 matches the transcript's \"power cube... scored so low\" context (Lowkick MMA / Bloody Elbow, 2024-03-08)."
+ },
+ {
+  "file": "content/transcripts/9BU_i_EVrBc_Why_Ciryl_Ganes_Punches_Are_Weak_And_How_to_Fix_Them.md",
+  "from": "Maggomed on",
+  "to": "Magomed Ankalaev",
+  "evidence": "UFC 320 (2025-10-04): Pereira dropped Ankalaev with a looping right hook and won by R1 TKO in 80s (ESPN/Wikipedia), matching \"put him down and ultimately out\" in the Pereira context of the transcript."
+ },
+ {
+  "file": "content/transcripts/9BU_i_EVrBc_Why_Ciryl_Ganes_Punches_Are_Weak_And_How_to_Fix_Them.md",
+  "from": "Maggamemed Anollay",
+  "to": "Magomed Ankalaev",
+  "evidence": "UFC 320 (2025-10-04): Alex Pereira dropped and TKO'd Magomed Ankalaev at 1:20 of R1 (ESPN/Wikipedia), matching the transcript's \"Pereira knocked out or knocked down\" context"
+ },
+ {
+  "file": "content/transcripts/9BU_i_EVrBc_Why_Ciryl_Ganes_Punches_Are_Weak_And_How_to_Fix_Them.md",
+  "from": "Maize",
+  "to": "Don'Tale Mayes",
+  "evidence": "Ciryl Gane def. Don'Tale Mayes (heel hook, R3) at UFC Fight Night 162, Singapore, Oct 26 2019 (Tapology/Cageside Press); \"Mayes\" is a homophone of \"Maize\" and the no-KO outcome matches the transcript's claim that Gane's overhands landed without putting him away."
+ },
+ {
+  "file": "content/transcripts/ANNvbkVlpds_Terence_Crawfords_Elite_Biomechanics_Power_Speed_Balance_and_Counterpunching.md",
+  "from": "Terren",
+  "to": "Terence",
+  "evidence": "Transcript details (jab duel and knockdowns vs Errol Spence, uppercut and right-hook knockdowns, TKO finish) match Errol Spence Jr. vs. Terence Crawford, July 29, 2023, T-Mobile Arena \u2014 Crawford KD2 R2/R7x2, TKO9 (Wikipedia/CBS Sports/ESPN); \"Terren\" alternates with \"Terrence\"/\"Bud\" for the same fighter and no boxer named \"Terren\" fits."
+ },
+ {
+  "file": "content/transcripts/ANNvbkVlpds_Terence_Crawfords_Elite_Biomechanics_Power_Speed_Balance_and_Counterpunching.md",
+  "from": "Terrence",
+  "to": "Terence Crawford",
+  "evidence": "BoxRec (box-pro/447121) and Wikipedia spell it \"Terence Allan 'Bud' Crawford\"; transcript context (vs Errol Spence Jr., knockdowns, TKO) matches his July 2023 win, and the file title itself uses \"Terence\"."
+ },
+ {
+  "file": "content/transcripts/ANNvbkVlpds_Terence_Crawfords_Elite_Biomechanics_Power_Speed_Balance_and_Counterpunching.md",
+  "from": "arrol",
+  "to": "Errol Spence Jr.",
+  "evidence": "Crawford TKO9 Errol Spence Jr., 2023-07-29 (SI/CBS) matches transcript's knockdowns and jab comparison; transcript spells \"Errol Spence\" correctly elsewhere in the same sentence flow."
+ },
+ {
+  "file": "content/transcripts/ANNvbkVlpds_Terence_Crawfords_Elite_Biomechanics_Power_Speed_Balance_and_Counterpunching.md",
+  "from": "butd",
+  "to": "Bud",
+  "evidence": "Crawford's nickname \"Bud\" confirmed via CBS/Wikipedia coverage of Spence vs Crawford (Jul 29, 2023, TKO9) \u2014 the exact fight analyzed; \"Bud\" appears correctly ~20x elsewhere in the same transcript."
+ },
+ {
+  "file": "content/transcripts/ANNvbkVlpds_Terence_Crawfords_Elite_Biomechanics_Power_Speed_Balance_and_Counterpunching.md",
+  "from": "butt",
+  "to": "Bud",
+  "evidence": "Terence \"Bud\" Crawford beat Errol Spence Jr. by TKO9 on 2023-07-29 (undisputed welterweight, per Wikipedia/PBC) \u2014 matches the transcript's Crawford-vs-Spence jab comparison, where \"Bud\" appears correctly ~20 times elsewhere in the same file."
+ },
+ {
+  "file": "content/transcripts/ANNvbkVlpds_Terence_Crawfords_Elite_Biomechanics_Power_Speed_Balance_and_Counterpunching.md",
+  "from": "Buzz",
+  "to": "Bud's",
+  "evidence": "Terence Crawford's nickname is \"Bud\" (Wikipedia: Spence vs. Crawford, TKO9 on 2023-07-29 \u2014 the fight this video analyzes); transcript repeats the same phrase correctly (\"Bud's weight is already on his right foot\") two sentences before the garble."
+ },
+ {
+  "file": "content/transcripts/AquYbQzqG58_Exactly_How_Alex_Poatan_Pereira_Creates_SCARY_KO_Power_Using_His_Kinetic_Chains.md",
+  "from": "pera's",
+  "to": "Pereira's",
+  "evidence": "Video is about Alex \"Poatan\" Pereira; transcript's opponents (Strickland UFC 276 KO, Adesanya, Jamahal Hill UFC 300, Jiri Prochazka UFC 303) match Pereira's record per UFC.com/Wikipedia; title itself names Pereira"
+ },
+ {
+  "file": "content/transcripts/AquYbQzqG58_Exactly_How_Alex_Poatan_Pereira_Creates_SCARY_KO_Power_Using_His_Kinetic_Chains.md",
+  "from": "Perera",
+  "to": "Alex Pereira",
+  "evidence": "Wikipedia/UFC: Alex \"Poatan\" Pereira, Glory two-division kickboxing champ and UFC LHW champ known for KO power \u2014 matches video title \"Alex_Poatan_Pereira\" and kinetic-chain/KO context"
+ },
+ {
+  "file": "content/transcripts/AquYbQzqG58_Exactly_How_Alex_Poatan_Pereira_Creates_SCARY_KO_Power_Using_His_Kinetic_Chains.md",
+  "from": "donagi abina",
+  "to": "Donegi Abena",
+  "evidence": "Glory 68 (Oct 2019): Pereira KO'd Donegi Abena with a counter left hook (R3, 2:08) for the interim LHW title \u2014 matches Tapology bout 457217 and Glory's own recap; \"left hook\" context in transcript fits exactly."
+ },
+ {
+  "file": "content/transcripts/AquYbQzqG58_Exactly_How_Alex_Poatan_Pereira_Creates_SCARY_KO_Power_Using_His_Kinetic_Chains.md",
+  "from": "pro HOSA",
+  "to": "Jiri Prochazka",
+  "evidence": "Transcript calls the opponent \"Jerry\" (Jiri) in the same passage; ESPN/UFC confirm Pereira TKO'd Jiri Prochazka via left hook at UFC 295 (Nov 2023), their first of two fights, matching the slip-counter left hook described."
+ },
+ {
+  "file": "content/transcripts/AquYbQzqG58_Exactly_How_Alex_Poatan_Pereira_Creates_SCARY_KO_Power_Using_His_Kinetic_Chains.md",
+  "from": "Jerry",
+  "to": "Jiri Prochazka",
+  "evidence": "Transcript section opens with \"the first pro HOSA fight\" (Prochazka garbled); ESPN/UFC confirm Pereira TKO'd Jiri Prochazka at UFC 295 (Nov 2023) in their first fight, matching the described knockdown sequence"
+ },
+ {
+  "file": "content/transcripts/AquYbQzqG58_Exactly_How_Alex_Poatan_Pereira_Creates_SCARY_KO_Power_Using_His_Kinetic_Chains.md",
+  "from": "jer's",
+  "to": "Jiri's",
+  "evidence": "Transcript section is \"the first pro HOSA [Prochazka] fight\" with \"Jerry's\"/\"jer's\" variants; ESPN/UFC confirm Alex Pereira TKO'd Jiri Prochazka at UFC 295 (Nov 2023) via left hook, matching the clip context."
+ },
+ {
+  "file": "content/transcripts/AquYbQzqG58_Exactly_How_Alex_Poatan_Pereira_Creates_SCARY_KO_Power_Using_His_Kinetic_Chains.md",
+  "from": "ERD gr bayak",
+  "to": "Ertu\u011frul Bayrak",
+  "evidence": "Glory 74 / Collision 2 (2019-12-21): Pereira KO'd Ertu\u011frul Bayrak with a left hook after a right hand to the body \u2014 exactly the sequence described in the transcript (Glory recap + Tapology bout record)."
+ },
+ {
+  "file": "content/transcripts/AquYbQzqG58_Exactly_How_Alex_Poatan_Pereira_Creates_SCARY_KO_Power_Using_His_Kinetic_Chains.md",
+  "from": "bayra",
+  "to": "Ertu\u011frul Bayrak",
+  "evidence": "Tapology/Glory: Alex Pereira KO1 Ertu\u011frul Bayrak at Glory 74 (21 Dec 2019, middleweight title) \u2014 right to body + left hook, matching the transcript's \"ERD gr bayak\" left-hook breakdown and this \"bayra\" right-hand clip of the same fight."
+ },
+ {
+  "file": "content/transcripts/AquYbQzqG58_Exactly_How_Alex_Poatan_Pereira_Creates_SCARY_KO_Power_Using_His_Kinetic_Chains.md",
+  "from": "ad asagna",
+  "to": "Israel Adesanya",
+  "evidence": "Pereira KO'd Israel Adesanya with a left hook at Glory of Heroes 7 (March 2017, kickboxing) \u2014 Adesanya's only KO loss; matches transcript's left-hook context (Tapology/Combat Press records)."
+ },
+ {
+  "file": "content/transcripts/AquYbQzqG58_Exactly_How_Alex_Poatan_Pereira_Creates_SCARY_KO_Power_Using_His_Kinetic_Chains.md",
+  "from": "yri bgui",
+  "to": "Yousri Belgaroui",
+  "evidence": "Tapology/Glory records confirm Pereira vs Yousri Belgaroui trilogy (Glory 40, 49, 55); \"yri bgui\" is a phonetic fragment of the name and the transcript re-garbles it as \"user\" in the same passage"
+ },
+ {
+  "file": "content/transcripts/AquYbQzqG58_Exactly_How_Alex_Poatan_Pereira_Creates_SCARY_KO_Power_Using_His_Kinetic_Chains.md",
+  "from": "user",
+  "to": "Yousri",
+  "evidence": "Transcript names the clip \"Alex versus yri bgui\" (= Yousri Belgaroui); Tapology/Glory records confirm Pereira fought Yousri Belgaroui three times (Glory 40, 49, 55), Pereira winning the Glory 49 and 55 title fights \u2014 \"user\" in \"Landing into user\" is the opponent, Yousri."
+ },
+ {
+  "file": "content/transcripts/AquYbQzqG58_Exactly_How_Alex_Poatan_Pereira_Creates_SCARY_KO_Power_Using_His_Kinetic_Chains.md",
+  "from": "Jamal Hill",
+  "to": "Jamahal Hill",
+  "evidence": "ESPN/Tapology: Pereira KO'd Jamahal Hill with a left hook at UFC 300 (Apr 2024, R1 TKO, LHW title) \u2014 matches transcript's \"punch against Jamal Hill which puts him down\" in the left-hook analysis section"
+ },
+ {
+  "file": "content/transcripts/AquYbQzqG58_Exactly_How_Alex_Poatan_Pereira_Creates_SCARY_KO_Power_Using_His_Kinetic_Chains.md",
+  "from": "Jamal's",
+  "to": "Jamahal's",
+  "evidence": "Pereira KO'd Jamahal Hill (left hook, R1 TKO) at UFC 300 to retain the LHW title \u2014 ESPN/Tapology confirm; transcript's \"punch against Jamal Hill which puts him down\" matches this fight exactly"
+ },
+ {
+  "file": "content/transcripts/Au5vsk6Q-5k_Charles_vs_Ilia_The_Frame_Battle_Before_the_Fight.md",
+  "from": "Olivivera",
+  "to": "Oliveira",
+  "evidence": "UFC 317 (June 2025) was Ilia Topuria vs Charles Oliveira for the vacant lightweight title (ufc.com/event/ufc-317, Tapology); transcript context (Ilia moving up in weight, walking Charles down) matches, and \"Olivivera\" is Oliveira with a duplicated syllable."
+ },
+ {
+  "file": "content/transcripts/Au5vsk6Q-5k_Charles_vs_Ilia_The_Frame_Battle_Before_the_Fight.md",
+  "from": "Pantoia",
+  "to": "Alexandre Pantoja",
+  "evidence": "UFC 317 (2025-06-28) co-main: Alexandre Pantoja def. Kai Kara-France (R3 RNC), same card as Topuria vs Oliveira \u2014 matches \"Pantoia and Kai\" weigh-in context (Wikipedia/Yahoo Sports)"
+ },
+ {
+  "file": "content/transcripts/Au5vsk6Q-5k_Charles_vs_Ilia_The_Frame_Battle_Before_the_Fight.md",
+  "from": "Pentoia",
+  "to": "Pantoja",
+  "evidence": "UFC 317 (June 28, 2025, Topuria vs Oliveira card): co-main was Alexandre Pantoja vs Kai Kara-France, Pantoja won by R3 rear-naked choke \u2014 matches transcript's \"Pantoia and Kai\" staredown and \"Pentoia is gonna win\" prediction (Yahoo Sports/Tapology/UFC.com)"
+ },
+ {
+  "file": "content/transcripts/B8AOX1L1OTc_How_Ramon_Dekkers_Used_His_Kinetic_Chains_to_Land_Devastating_Kicks_and_Punches.md",
+  "from": "Raone Deckers",
+  "to": "Ramon Dekkers",
+  "evidence": "Wikipedia confirms Ramon Dekkers (1969-2013), Dutch Muay Thai 8x world champion, matching the file title and later 'Ramon' mentions; no fighter named \"Raone Deckers\" exists."
+ },
+ {
+  "file": "content/transcripts/CW4wTxzCeWo_Beterbiev_vs_Bivol_Punch_Mechanics_Differences.md",
+  "from": "better beev",
+  "to": "Artur Beterbiev",
+  "evidence": "Beterbiev beat Bivol by majority decision (116-112, 115-113, 114-114) on 2024-10-12 in Riyadh for the undisputed light heavyweight title \u2014 matches transcript's majority-decision winner over \"beevil\" (Bivol), also called \"Artur\" in the same file."
+ },
+ {
+  "file": "content/transcripts/CW4wTxzCeWo_Beterbiev_vs_Bivol_Punch_Mechanics_Differences.md",
+  "from": "artour",
+  "to": "Artur Beterbiev",
+  "evidence": "Wikipedia/ESPN: Artur Beterbiev beat Dmitry Bivol by majority decision (Oct 2024, light heavyweight) \u2014 matches transcript's \"beterbiev getting a majority decision\"; \"artour\" is a phonetic caption of his first name Artur, alongside sibling garbles \"Ur\", \"our tour\", \"Art tour\" in the same file."
+ },
+ {
+  "file": "content/transcripts/CW4wTxzCeWo_Beterbiev_vs_Bivol_Punch_Mechanics_Differences.md",
+  "from": "ur's",
+  "to": "Artur's",
+  "evidence": "Beterbiev (first name Artur) beat Bivol by majority decision on 2024-10-12 in Riyadh (Wikipedia/BoxRec), matching the transcript's \"majority decision\" winner whose \"harder more effective blows\" won the fight; transcript spells the same fighter \"Artur\"/\"artour\"/\"Art tour's\" elsewhere."
+ },
+ {
+  "file": "content/transcripts/CW4wTxzCeWo_Beterbiev_vs_Bivol_Punch_Mechanics_Differences.md",
+  "from": "Ur",
+  "to": "Artur",
+  "evidence": "Wikipedia/ESPN confirm Artur Beterbiev vs Dmitry Bivol (undisputed LHW, 2024/2025); transcript itself alternates \"Ur\" with \"artour\" against \"bevil/bivol\", and no boxer named \"Ur\" exists."
+ },
+ {
+  "file": "content/transcripts/CW4wTxzCeWo_Beterbiev_vs_Bivol_Punch_Mechanics_Differences.md",
+  "from": "UR",
+  "to": "Artur",
+  "evidence": "Wikipedia: Artur Beterbiev beat Dmitry Bivol by majority decision (Oct 2024, undisputed light heavyweight) \u2014 matches transcript's \"better beev getting a majority decision\"; same transcript spells the name \"Artur\"/\"artour\" elsewhere."
+ },
+ {
+  "file": "content/transcripts/CW4wTxzCeWo_Beterbiev_vs_Bivol_Punch_Mechanics_Differences.md",
+  "from": "Art tour's",
+  "to": "Artur Beterbiev",
+  "evidence": "Wikipedia/ESPN: Artur Beterbiev def. Dmitry Bivol by majority decision (12 Oct 2024, undisputed light heavyweight) \u2014 matches transcript's \"better beev getting a majority decision\"; \"Art tour's\" = \"Artur's\"."
+ },
+ {
+  "file": "content/transcripts/CW4wTxzCeWo_Beterbiev_vs_Bivol_Punch_Mechanics_Differences.md",
+  "from": "our tour",
+  "to": "Artur Beterbiev",
+  "evidence": "Wikipedia: Artur Beterbiev def. Dmitry Bivol by majority decision (114-114, 115-113, 116-112), 12 Oct 2024, undisputed light heavyweight \u2014 matches transcript's \"majority decision\" and Bivol-outlanded-on-punch-count details; \"Artur\" is spelled correctly elsewhere in the same transcript."
+ },
+ {
+  "file": "content/transcripts/CW4wTxzCeWo_Beterbiev_vs_Bivol_Punch_Mechanics_Differences.md",
+  "from": "better bv's",
+  "to": "Beterbiev's",
+  "evidence": "Wikipedia/ESPN: Artur Beterbiev beat Dmitry Bivol by majority decision (Oct 2024), matching the transcript's \"better beev getting a majority decision\" and the video title Beterbiev_vs_Bivol."
+ },
+ {
+  "file": "content/transcripts/CW4wTxzCeWo_Beterbiev_vs_Bivol_Punch_Mechanics_Differences.md",
+  "from": "better BV",
+  "to": "Artur Beterbiev",
+  "evidence": "Beterbiev beat Bivol by majority decision (116-112, 115-113, 114-114) on 2024-10-12 in Riyadh for undisputed light heavyweight title \u2014 matches transcript's \"better beev getting a majority decision\" (ESPN/Bad Left Hook)."
+ },
+ {
+  "file": "content/transcripts/CW4wTxzCeWo_Beterbiev_vs_Bivol_Punch_Mechanics_Differences.md",
+  "from": "Better B have",
+  "to": "Artur Beterbiev",
+  "evidence": "Beterbiev beat Bivol by majority decision (114-114, 115-113, 116-112) Oct 2024 for undisputed LHW title per Wikipedia/CBS \u2014 matches transcript's \"majority decision\" and torque-creating fighter described; \"Better B have\" phonetically matches Beterbiev and no such person exists."
+ },
+ {
+  "file": "content/transcripts/CW4wTxzCeWo_Beterbiev_vs_Bivol_Punch_Mechanics_Differences.md",
+  "from": "better BF",
+  "to": "Artur Beterbiev",
+  "evidence": "Beterbiev beat Bivol by majority decision at light heavyweight (Oct 2024, per Wikipedia/ESPN), matching transcript's \"majority decision\" and torque examples attributed to the same fighter via sibling garbles \"better beev\"/\"better BV\""
+ },
+ {
+  "file": "content/transcripts/CW4wTxzCeWo_Beterbiev_vs_Bivol_Punch_Mechanics_Differences.md",
+  "from": "better be",
+  "to": "Artur Beterbiev",
+  "evidence": "Beterbiev beat Bivol by majority decision on 2024-10-12 (Wikipedia/Bad Left Hook), matching the transcript's \"majority decision\" claim; \"better be\" appears alongside other Beterbiev mangles (\"better beev\", \"better BV\") in the same file"
+ },
+ {
+  "file": "content/transcripts/CW4wTxzCeWo_Beterbiev_vs_Bivol_Punch_Mechanics_Differences.md",
+  "from": "beevil",
+  "to": "Dmitry Bivol",
+  "evidence": "Beterbiev def. Bivol by majority decision (Oct 2024 light heavyweight unification, per Wikipedia/ESPN) matches transcript's \"better beev getting a majority decision\"; transcript also says \"Dimitri beevil\" and spells \"bivol\" correctly twice."
+ },
+ {
+  "file": "content/transcripts/CW4wTxzCeWo_Beterbiev_vs_Bivol_Punch_Mechanics_Differences.md",
+  "from": "bevil",
+  "to": "Dmitry Bivol",
+  "evidence": "Beterbiev def. Bivol by majority decision (Oct 12, 2024, undisputed light heavyweight) per ESPN/Forbes \u2014 matches transcript's \"majority decision\" outcome, \"Dimitri\" first name, and one correctly-spelled \"bivol\" occurrence"
+ },
+ {
+  "file": "content/transcripts/CW4wTxzCeWo_Beterbiev_vs_Bivol_Punch_Mechanics_Differences.md",
+  "from": "biville",
+  "to": "Dmitry Bivol",
+  "evidence": "Beterbiev beat Bivol by majority decision (114-114, 115-113, 116-112) on 2024-10-12 in Riyadh for undisputed light heavyweight title \u2014 matches transcript's \"better beev getting a majority decision\"; transcript also spells the same fighter \"bivol\" correctly elsewhere."
+ },
+ {
+  "file": "content/transcripts/CW4wTxzCeWo_Beterbiev_vs_Bivol_Punch_Mechanics_Differences.md",
+  "from": "Beil",
+  "to": "Dmitry Bivol",
+  "evidence": "Transcript describes Beterbiev beating Bivol by majority decision at light heavyweight \u2014 matches Beterbiev vs Bivol I, Oct 12 2024 (114-114, 115-113, 116-112); \"Beil\" sits in a passage analyzing Bivol's leaping hook heel-lift, same subject the file elsewhere garbles as beevil/bevil/biville."
+ },
+ {
+  "file": "content/transcripts/CW4wTxzCeWo_Beterbiev_vs_Bivol_Punch_Mechanics_Differences.md",
+  "from": "bble",
+  "to": "Dmitry Bivol",
+  "evidence": "\"bble\" is not a person; transcript's fight (Beterbiev majority decision 114-114/115-113/116-112, Oct 12 2024, Riyadh \u2014 per Wikipedia/CBS Sports) matches Beterbiev vs Bivol, and the surrounding sentence (\"poor mechanics from bble ... bevil could commit to this punch\") continues the video's critique of Bivol's mechanics, whose name is garbled throughout as beevil/bevil/biville."
+ },
+ {
+  "file": "content/transcripts/CW4wTxzCeWo_Beterbiev_vs_Bivol_Punch_Mechanics_Differences.md",
+  "from": "bol's",
+  "to": "Bivol's",
+  "evidence": "Wikipedia/ESPN confirm Beterbiev beat Dmitry Bivol by majority decision (Oct 2024, light heavyweight), matching the transcript's fight description; \"bol's\" appears in a passage critiquing the same fighter elsewhere garbled as \"beevil/bevil/bivol\"."
+ },
+ {
+  "file": "content/transcripts/CW4wTxzCeWo_Beterbiev_vs_Bivol_Punch_Mechanics_Differences.md",
+  "from": "Bol",
+  "to": "Bivol",
+  "evidence": "Beterbiev def. Dmitry Bivol by majority decision, 12 Oct 2024, undisputed light heavyweight (Wikipedia/Bad Left Hook) \u2014 matches transcript's fight details; \"Bol\" appears amid other Bivol garbles (beevil/bevil/biville) describing Bivol's left hook"
+ },
+ {
+  "file": "content/transcripts/CW4wTxzCeWo_Beterbiev_vs_Bivol_Punch_Mechanics_Differences.md",
+  "from": "Dimitri",
+  "to": "Dmitry Bivol",
+  "evidence": "Wikipedia/ESPN spell it \"Dmitry Bivol\" (BoxRec: \"Dmitrii\"); transcript's majority-decision loss to Artur Beterbiev matches the Oct 2024 light-heavyweight undisputed fight \u2014 no fighter spelled \"Dimitri Bivol\" exists."
+ },
+ {
+  "file": "content/transcripts/DE0NCQhajFQ_Mike_Tyson_and_Jake_Paul_Punch_Mechanics_Comparison.md",
+  "from": "Artur better beev",
+  "to": "Artur Beterbiev",
+  "evidence": "Wikipedia/BoxRec: Artur Beterbiev, undisputed light heavyweight champion 2024-2025, first 20 pro wins all by KO \u2014 matches the \"worldclass torque\" power-puncher reference next to Alex Pereira in a Nov 2024 video; no fighter named \"better beev\" exists"
+ },
+ {
+  "file": "content/transcripts/DE0NCQhajFQ_Mike_Tyson_and_Jake_Paul_Punch_Mechanics_Comparison.md",
+  "from": "bevil",
+  "to": "Dmitry Bivol",
+  "evidence": "No boxer named \"Bevil\" exists; the channel's own thepunchdoctor.com article on Beterbiev vs Bivol punch mechanics describes Bivol's Soviet leaping/lockstep-arm mechanics matching this exact context, and the same transcript garbles \"Artur better beev\" (Beterbiev)"
+ },
+ {
+  "file": "content/transcripts/EpYUn_gXCp4_How_to_Land_Your_Straight_Punches_for_the_Most_Stable_Impact_and_Follow_Through.md",
+  "from": "naoya inway",
+  "to": "Naoya Inoue",
+  "evidence": "BoxRec 628407: Naoya Inoue, Japanese multi-division undisputed champion, 27 KOs/32 wins, renowned puncher \u2014 matches transcript context citing him among top punchers (Toney, Beterbiev); no boxer \"Inway\" exists"
+ },
+ {
+  "file": "content/transcripts/EpYUn_gXCp4_How_to_Land_Your_Straight_Punches_for_the_Most_Stable_Impact_and_Follow_Through.md",
+  "from": "James Tony",
+  "to": "James Toney",
+  "evidence": "Wikipedia/BoxRec: Iran Barkley vs. James Toney, Feb 13 1993, IBF super middleweight title \u2014 Toney won by RTD after round 9, matching the \"lands against Iran Barkley\" context"
+ },
+ {
+  "file": "content/transcripts/EpYUn_gXCp4_How_to_Land_Your_Straight_Punches_for_the_Most_Stable_Impact_and_Follow_Through.md",
+  "from": "Artur better be of",
+  "to": "Artur Beterbiev",
+  "evidence": "BoxRec/Wikipedia: Artur Beterbiev, 21-1 (20 KOs), former undisputed light-heavyweight champion with 100% KO ratio through 20 bouts \u2014 matches \"a massive puncher\" context; \"better be of\" is a phonetic caption split of \"Beterbiev\""
+ },
+ {
+  "file": "content/transcripts/G4Ie04RZkGE_How_Gervonta_Davis_Generates_Explosive_KO_Power_Using_His_Kinetic_Chains.md",
+  "from": "javante",
+  "to": "Gervonta",
+  "evidence": "BoxRec/ESPN: Gervonta \"Tank\" Davis's record matches all four transcript fights \u2014 TKO8 Hector Luis Garcia 2023, TKO11 Mario Barrios 2021, TKO7 Jose Pedraza 2017, KO7 (liver shot) Ryan Garcia 2023; video title also says Gervonta Davis"
+ },
+ {
+  "file": "content/transcripts/G4Ie04RZkGE_How_Gervonta_Davis_Generates_Explosive_KO_Power_Using_His_Kinetic_Chains.md",
+  "from": "Dante",
+  "to": "Gervonta Davis",
+  "evidence": "All four opponents in the transcript (Hector Luis Garcia TKO9 2023, Mario Barrios TKO11 2021, Jose Pedraza TKO7 2017, Ryan Garcia KO7 body shot 2023) match Gervonta \"Tank\" Davis's record per ESPN/Wikipedia/PBC; no fighter named Dante fits, and the same sentence garbles his name as \"javante tank Davis\"."
+ },
+ {
+  "file": "content/transcripts/G4Ie04RZkGE_How_Gervonta_Davis_Generates_Explosive_KO_Power_Using_His_Kinetic_Chains.md",
+  "from": "baros",
+  "to": "Mario Barrios",
+  "evidence": "Gervonta Davis TKO'd Mario Barrios June 26, 2021 (PBC/CBS Sports), with body-shot knockdowns including a left uppercut to the body \u2014 matching the transcript's \"left hand ... knocked baros down already with a liver shot\"; \"baros\" is not a known boxer."
+ },
+ {
+  "file": "content/transcripts/G4Ie04RZkGE_How_Gervonta_Davis_Generates_Explosive_KO_Power_Using_His_Kinetic_Chains.md",
+  "from": "Thomas Meyers",
+  "to": "Thomas Myers",
+  "evidence": "Anatomy Trains (Elsevier/Amazon/Goodreads) is authored by Thomas W. Myers; \"Meyers\" is a misspelling of the surname."
+ },
+ {
+  "file": "content/transcripts/H6i5jcID-38_Learn_WHY_Nakatani_is_the_BEST_Boxer_at_Long_Range.md",
+  "from": "Nani's",
+  "to": "Nakatani's",
+  "evidence": "BoxRec 718508 / Wikipedia: Junto Nakatani, southpaw ex-WBO flyweight champ with long reach, matches the video's sole subject; \"Nani's\" is a caption truncation mid-sentence about his lead-hand skills and combinations."
+ },
+ {
+  "file": "content/transcripts/H6i5jcID-38_Learn_WHY_Nakatani_is_the_BEST_Boxer_at_Long_Range.md",
+  "from": "Alexander usk",
+  "to": "Oleksandr Usyk",
+  "evidence": "Wikipedia/BoxRec: Oleksandr Usyk, Ukrainian southpaw known for active lead-hand/pawing jab; \"Alexander\" is a common anglicization (Wikidata lists Facebook handle \"Alexanderusyk\"), matching the southpaw lead-hand-trap context in the transcript."
+ },
+ {
+  "file": "content/transcripts/H6i5jcID-38_Learn_WHY_Nakatani_is_the_BEST_Boxer_at_Long_Range.md",
+  "from": "Maloney",
+  "to": "Moloney",
+  "evidence": "Nakatani KO12 Andrew Moloney, May 20 2023, vacant WBO junior bantamweight (115 lb) title, Las Vegas \u2014 Nakatani landed heavy uppercuts throughout and Moloney kept trying to get inside, matching the caption context (\"looking for that Upp[ercut]... that Moloney to get inside\"); per CBS Sports (https://www.cbssports.com/boxing/news/best-of-boxing-in-2023-junto-nakatani-earns-knockout-of-the-year-for-vicious-stoppage-of-andrew-moloney/) and Bad Left Hook (https://www.badlefthook.com/2023/5/20/23731215/highlights-results-junto-nakatani-wins-wbo-title-andrew-moloney-nico-ali-walsh-draw-boxing-news-2023)"
+ },
+ {
+  "file": "content/transcripts/H6i5jcID-38_Learn_WHY_Nakatani_is_the_BEST_Boxer_at_Long_Range.md",
+  "from": "naoya in way",
+  "to": "Naoya Inoue",
+  "evidence": "Nov 2023 viral clip \"Manny Pacquiao Teaches Hook - Student: Naoya Inoue\" (youtube.com/watch?v=lokh736CmMw) matches the context of Pacquiao explaining his lead hook; \"in way\" is a phonetic mishearing of \"Inoue\""
+ },
+ {
+  "file": "content/transcripts/H6i5jcID-38_Learn_WHY_Nakatani_is_the_BEST_Boxer_at_Long_Range.md",
+  "from": "Nagatani",
+  "to": "Nakatani",
+  "evidence": "No boxer \"Nagatani\" exists on BoxRec/Wikipedia; transcript names Junto Nakatani (~25 correct spellings), and context \u2014 Japanese southpaw, WBO flyweight champ, long-range tall frame \u2014 matches Junto Nakatani's record exactly."
+ },
+ {
+  "file": "content/transcripts/Ij3V4ls-QOI_The_1_Boxing_Footwork_Mistake_Killing_Your_Speed_and_Power_Do_THIS_Instead.md",
+  "from": "Terren Crawford",
+  "to": "Terence Crawford",
+  "evidence": "No boxer named \"Terren Crawford\" exists on BoxRec/Wikipedia; exact-phrase search resolves only to Terence \"Bud\" Crawford (BoxRec 447121, 42-0, five-division champ), whose jab is a standard subject of technique-breakdown videos, matching the \"my Terence Crawford video\" context."
+ },
+ {
+  "file": "content/transcripts/Ij3V4ls-QOI_The_1_Boxing_Footwork_Mistake_Killing_Your_Speed_and_Power_Do_THIS_Instead.md",
+  "from": "Philillip",
+  "to": "Phillip Ndou",
+  "evidence": "Mayweather TKO7 Phillip N'dou, Nov 1 2003, WBC lightweight (Wikipedia/BoxRec); only Mayweather opponent named Phillip, and transcript context is Floyd jab footage separate from the Angel Manfredy clips"
+ },
+ {
+  "file": "content/transcripts/Ij3V4ls-QOI_The_1_Boxing_Footwork_Mistake_Killing_Your_Speed_and_Power_Do_THIS_Instead.md",
+  "from": "Angel Man Freddy",
+  "to": "Angel Manfredy",
+  "evidence": "Wikipedia/BoxRec: Floyd Mayweather Jr. vs. Angel Manfredy, Dec 19, 1998, TKO2 WBC super featherweight title defense \u2014 matches the transcript's Floyd-vs-\"Angel\" clip analysis; no fighter \"Angel Man Freddy\" exists."
+ },
+ {
+  "file": "content/transcripts/J7ahAClLSbo_Master_Mind_Games_of_Floyd_Mayweather_Jr_-_Oscar_De_La_Hoya.md",
+  "from": "charmbay mitchell",
+  "to": "Sharmba Mitchell",
+  "evidence": "Wikipedia/BoxRec: Mayweather TKO6 Sharmba Mitchell on 2005-11-19, matching the pre-De La Hoya win streak with Gatti, Judah, Baldomir cited in context"
+ },
+ {
+  "file": "content/transcripts/J7ahAClLSbo_Master_Mind_Games_of_Floyd_Mayweather_Jr_-_Oscar_De_La_Hoya.md",
+  "from": "arturo gaddy",
+  "to": "Arturo Gatti",
+  "evidence": "Mayweather TKO6 Arturo Gatti, June 25 2005, WBC super lightweight title, Boardwalk Hall Atlantic City (Wikipedia/BoxRec) \u2014 fits alongside adjacent wins over Sharmba Mitchell, Zab Judah, Carlos Baldomir; no boxer named \"Arturo Gaddy\" exists."
+ },
+ {
+  "file": "content/transcripts/J7ahAClLSbo_Master_Mind_Games_of_Floyd_Mayweather_Jr_-_Oscar_De_La_Hoya.md",
+  "from": "rookie hatton",
+  "to": "Ricky Hatton",
+  "evidence": "Wikipedia/BoxRec: Floyd Mayweather Jr. vs. Ricky Hatton, Dec 8 2007, MGM Grand, Mayweather TKO10 \u2014 fits a Mayweather mind-games video referencing \"the [Ricky] Hatton fight\"; no boxer named \"Rookie Hatton\" exists, and the corpus has a companion video titled with Ricky Hatton."
+ },
+ {
+  "file": "content/transcripts/J7ahAClLSbo_Master_Mind_Games_of_Floyd_Mayweather_Jr_-_Oscar_De_La_Hoya.md",
+  "from": "sugar ray robertson",
+  "to": "Sugar Ray Robinson",
+  "evidence": "Sugar Ray Robinson is BoxRec's #1 pound-for-pound all-time boxer (Wikipedia), the standard name paired with Muhammad Ali in all-time-great comparisons like Mayweather's quote; no boxer \"Sugar Ray Robertson\" exists."
+ },
+ {
+  "file": "content/transcripts/J7ahAClLSbo_Master_Mind_Games_of_Floyd_Mayweather_Jr_-_Oscar_De_La_Hoya.md",
+  "from": "48 mayweather",
+  "to": "Floyd Mayweather",
+  "evidence": "Parallel clause in same sentence resolves to \"floyd mayweather\"; Sky Sports/SI document Mayweather's recurring Robinson+Ali self-comparison; no fighter \"48 Mayweather\" exists."
+ },
+ {
+  "file": "content/transcripts/LZ3R1Qg85j8_A_More_Powerful_Athletic_Stance__boxing.md",
+  "from": "Philip Endo",
+  "to": "Phillip Ndou",
+  "evidence": "No boxer \"Philip Endo\" exists; Phillip Ndou (BoxRec #14997) fought Floyd Mayweather Jr. 2003-11-01 for the WBC lightweight title (Mayweather TKO7), matching the transcript's Floyd-vs-opponent stance comparison."
+ },
+ {
+  "file": "content/transcripts/LZ3R1Qg85j8_A_More_Powerful_Athletic_Stance__boxing.md",
+  "from": "Endo",
+  "to": "Ndou",
+  "evidence": "Mayweather vs Phillip Ndou, 2003-11-01, WBC lightweight, Mayweather TKO7 (Wikipedia/Tapology) \u2014 matches transcript's \"Floyd and Philip Endo\" stance comparison; no boxer \"Endo\" fits alongside Floyd"
+ },
+ {
+  "file": "content/transcripts/LU7zgoNDQng_The_Real_Reason_Ilia_Lost_to_Justin.md",
+  "from": "Ilya",
+  "to": "Ilia",
+  "evidence": "Justin Gaethje TKO'd Ilia Topuria at UFC Freedom 250 (June 14, 2026); reports confirm Topuria's double orbital fractures matching the transcript \u2014 the fighter is universally spelled \"Ilia\", so mid-file \"Ilya\"/\"Ilias\" is caption transliteration drift."
+ },
+ {
+  "file": "content/transcripts/M3RlgdPF65E_This_Mistake_Is_Making_Your_Uppercut_Weak_and_Slow_How_to_Fix_it_for_More_Speed.md",
+  "from": "Jervante Davis",
+  "to": "Gervonta Davis",
+  "evidence": "Exact-string search for \"Jervante Davis\" returns no such boxer, only Gervonta Davis (BoxRec 643387); his signature left-uppercut KO of Leo Santa Cruz (2020) matches the \"excellent uppercut\" context."
+ },
+ {
+  "file": "content/transcripts/MbBZTuwyhu8_How_Devin_Haney_Can_Improve_His_Punch_Mechanics.md",
+  "from": "Devon Haney",
+  "to": "Devin Haney",
+  "evidence": "BoxRec #741718 / Wikipedia confirm Devin Haney, undefeated US boxer noted for his overhand right; file title and other mentions in same transcript spell it Devin, no boxer \"Devon Haney\" exists."
+ },
+ {
+  "file": "content/transcripts/MbBZTuwyhu8_How_Devin_Haney_Can_Improve_His_Punch_Mechanics.md",
+  "from": "Devon",
+  "to": "Devin",
+  "evidence": "BoxRec #741718 lists Devin Haney (33-0, 1 NC, former undisputed lightweight champ); no \"Devon Haney\" exists on BoxRec, and the video title itself spells it \"Devin Haney\" while the transcript alternates spellings for the same person."
+ },
+ {
+  "file": "content/transcripts/NFmaBAuQRVE_Canelo_vs_Crawford_Breakdown_-_How_Bud_Made_Canelo_Look_Average_Punch_Doctor_Ana.md",
+  "from": "Canel",
+  "to": "Canelo",
+  "evidence": "Canelo \u00c1lvarez vs. Terence Crawford, Sept 13, 2025 (Wikipedia/BoxRec) matches all fight details; \"Canel\" appears twice mid-transcript where every surrounding sentence uses \"Canelo\" for the same fighter \u2014 truncated caption, not a real boxer."
+ },
+ {
+  "file": "content/transcripts/NrGEgbZhkM4_The_Proper_Knuckles_to_Punch_With.md",
+  "from": "Emmanuel Stewart",
+  "to": "Emanuel Steward",
+  "evidence": "Wikipedia (en.wikipedia.org/wiki/Emanuel_Steward): Emanuel Steward (1944-2012), Kronk Gym founder, trained 41 world champions (Hearns, Lewis, Klitschko), IBHOF 1996 \u2014 fits the \"greatest trainers\" list alongside Eddie Futch and Angelo Dundee; \"Emmanuel Stewart\" is a caption misspelling of both names."
+ },
+ {
+  "file": "content/transcripts/NrGEgbZhkM4_The_Proper_Knuckles_to_Punch_With.md",
+  "from": "Gennaro Hernandez",
+  "to": "Genaro Hernandez",
+  "evidence": "Wikipedia/BoxRec: Genaro Hern\u00e1ndez (single n) lost WBC super featherweight title to Mayweather by TKO8 on 1998-10-03 \u2014 matches \"Floyd versus [him]\" context"
+ },
+ {
+  "file": "content/transcripts/NrGEgbZhkM4_The_Proper_Knuckles_to_Punch_With.md",
+  "from": "Jack definitely",
+  "to": "Jack Dempsey",
+  "evidence": "Dempsey's 1950 book Championship Fighting (archive.org full text) teaches the power line and three-knuckle landing led by the ring knuckle \u2014 exactly the quoted claim \u2014 and the same transcript says \"Jack Dempsey's book called championship fighting\" verbatim elsewhere."
+ },
+ {
+  "file": "content/transcripts/T2KM_iYiJ3c_Ready_to_Strike__How_Top_Pros_Seamlessly_Link_Defense_and_Offense.md",
+  "from": "James Tony",
+  "to": "James Toney",
+  "evidence": "Wikipedia: \"Michael Nunn vs. James Toney\" (Rumble on the Riverbank), May 10, 1991, IBF middleweight title \u2014 Toney TKO 11, matching the transcript's \"James Tony versus Michael Nun\" clip."
+ },
+ {
+  "file": "content/transcripts/T2KM_iYiJ3c_Ready_to_Strike__How_Top_Pros_Seamlessly_Link_Defense_and_Offense.md",
+  "from": "Tony",
+  "to": "James Toney",
+  "evidence": "Nunn vs. Toney, May 10 1991 (IBF middleweight): Nunn led 99-91/98-92/97-93 after 10 rounds, Toney won by 11th-round KO via right hand + left hook \u2014 matches transcript exactly (Wikipedia/BoxRec)."
+ },
+ {
+  "file": "content/transcripts/T2KM_iYiJ3c_Ready_to_Strike__How_Top_Pros_Seamlessly_Link_Defense_and_Offense.md",
+  "from": "Michael Nun",
+  "to": "Michael Nunn",
+  "evidence": "Wikipedia: Michael Nunn vs. James Toney, May 10, 1991, IBF middleweight title \u2014 Nunn led on all three scorecards before Toney's 11th-round TKO, matching the \"was outboxing Toney\" context."
+ },
+ {
+  "file": "content/transcripts/T2KM_iYiJ3c_Ready_to_Strike__How_Top_Pros_Seamlessly_Link_Defense_and_Offense.md",
+  "from": "Nun's",
+  "to": "Nunn's",
+  "evidence": "Michael Nunn (southpaw IBF middleweight champ) was KO'd by James Toney in Rd 11, May 10 1991 \u2014 matches transcript's \"James Tony versus Michael Nun\" clip and the southpaw left hand Toney slips (Wikipedia: Michael Nunn vs. James Toney)."
+ },
+ {
+  "file": "content/transcripts/T2KM_iYiJ3c_Ready_to_Strike__How_Top_Pros_Seamlessly_Link_Defense_and_Offense.md",
+  "from": "none",
+  "to": "Nunn",
+  "evidence": "Toney vs Nunn, May 10 1991 IBF middleweight title ([Wikipedia](https://en.wikipedia.org/wiki/Michael_Nunn_vs._James_Toney)): Nunn outboxed Toney for most of the fight, then Toney's right hand + left hook dropped Nunn in round 11 for the TKO \u2014 exactly matching the transcript (\"puts none down\", \"Rocks none and Tony is able to follow up\"); the transcript itself even names \"James Tony versus Michael Nun\" earlier."
+ },
+ {
+  "file": "content/transcripts/Uhfn3CN7cjQ_Shoulder_Stability_for_Boxers_MMA_Fighters_Martial_Artists_Part_4_Kinetic_Chain_Activation.md",
+  "from": "scott slonin",
+  "to": "Scott Sonnon",
+  "evidence": "Scott Sonnon is the RMAX International founder and patented Clubbell creator (Big Book of Clubbell Training, tacfit.com, RMAX product pages), matching the transcript's rmax.tv/alternative-fitness context; \"Scott Slonin\" has no web presence in fitness records."
+ },
+ {
+  "file": "content/transcripts/VnRdVNTNihE_Learn_the_Biomechanics_Behind_Deontay_Wilders_Inhuman_KO_Power.md",
+  "from": "Sergey Lovich",
+  "to": "Sergei Liakhovich",
+  "evidence": "Wilder KO1 (1:43) Sergei/Siarhei Liakhovich, Aug 9 2013, ShoBox (Bad Left Hook, Sky Sports) \u2014 matches the video's Wilder-KO-power context; no boxer \"Sergey Lovich\" exists"
+ },
+ {
+  "file": "content/transcripts/VnRdVNTNihE_Learn_the_Biomechanics_Behind_Deontay_Wilders_Inhuman_KO_Power.md",
+  "from": "Nick ftha",
+  "to": "Nicolai Firtha",
+  "evidence": "Wilder KO'd Nicolai Firtha in round 4 (Oct 2013, Atlantic City) per BoxRec/BoxingScene \u2014 \"Nick ftha\" is a caption garble of Firtha; extractor's 2011 date was off but the matchup is real."
+ }
+]
