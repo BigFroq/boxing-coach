@@ -26,6 +26,7 @@ import * as fs from "fs";
 import * as path from "path";
 import { retrieveContext } from "../src/lib/graph-rag";
 import { withRetry } from "../src/lib/retry";
+import { acquirePipelineLock } from "./vault-generation/pipeline-lock";
 import Anthropic from "@anthropic-ai/sdk";
 
 const CHAT_API_URL = process.env.CHAT_API_URL ?? "http://localhost:3001/api/chat";
@@ -1019,6 +1020,12 @@ async function main() {
       process.exit(1);
     }
   }
+
+  // Serialize against the vault pipeline AND other eval runs — a concurrent
+  // eval clobbered docs/outreach/eval-results.json mid-write (2026-07-20), and
+  // evaluating during a resynth reads a half-mutated graph. Shares the pipeline
+  // lockfile. --report-only above stays lock-free (fast, no graph/DB access).
+  await acquirePipelineLock("eval");
 
   const layerFilter = parseLayerArg();
   let anyFailed = false;
