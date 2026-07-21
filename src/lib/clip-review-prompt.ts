@@ -36,6 +36,8 @@ const FRAMEWORK = `## What to Analyze
 - Are cross-body kinetic chains being pre-stretched?
 
 ### Phase 2: Hip Explosion
+- Does the explode start with a PUSH off the ground — a flat-foot drive, or a bounce/small step off the ball of the foot — that extends the hip and knee to begin hip and body rotation? That push is what powers the punch.
+- A foot PIVOT is fine AFTER that push, as the body rotates. But a pivot on its own does NOT generate power: pivoting in place to make torque (the "squish the bug" cue) is the fault. Look for the push first; a pivot second is fine, a pivot instead of a push is not.
 - Does the hip rotate BEFORE the arm? (Look at frame sequence — hip should lead)
 - Is the hip opening (jab/hook/lead uppercut) or closing (cross/rear uppercut)?
 - Is there visible separation between hip and arm timing?

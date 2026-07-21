@@ -18,10 +18,11 @@ contract on.
    loaded, rear hip pulled back. Like a sprinter on the blocks. The power comes
    from shifting weight back then exploding the hips forward — the posterior chain
    runs through the calf, around the heel, into the foot, into the ground.
-2. **Push, not pivot.** Phase 2 is a push: the rear hip drives forward to close.
-   Like pushing a skateboard, except the foot stays planted and you push the ground
-   back to turn the hip into rotation. A back foot that merely spins in place is
-   the fault — it creates no torque.
+2. **Hip drive initiates; a pivot can follow.** Phase 2 starts with a push off the
+   ground — a flat-foot drive, or a small step/bounce off the ball of the foot —
+   that drives the rear hip forward to close. The push is what powers it; the back
+   foot can then pivot or rotate as the body turns. A back foot that merely spins in
+   place — a pivot with no push behind it — is the fault: it creates no torque.
 3. **Hip–torso separation.** The hips rotate, the torso lags a beat behind. That
    lag is the torque. Then the torso rebounds and the arm lags, stretching the pec
    into a slingshot. Check across frames that the hip finishes its rotation while

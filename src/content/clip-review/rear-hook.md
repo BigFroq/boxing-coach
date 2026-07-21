@@ -21,11 +21,12 @@ the lead leg.
 1. **Load.** Weight settles onto the rear leg with knee and hip bend to explode
    from, cross-body chains pre-stretched, arm and shoulder briefly relaxed so the
    pec loads. The body should look alive, never stiff.
-2. **Close the hips — pivoting is correct here.** The glute drives the rear hip
-   forward and closed. Unlike the lead hook (opening, off a flat foot), this is a
-   closing punch, so the rear foot **pivots** — and it usually must, to keep the
-   leg neutral with the pelvis as the hip closes. The fault is not the pivot; it is
-   a passive spin with no push behind it, which generates no torque.
+2. **Hip drive initiates; pivot follows.** The glute drives the rear hip forward
+   and closed, starting with a push off the ground (flat foot, or a bounce off the
+   ball of the foot) that extends the hip and knee to begin the rotation. As the
+   body rotates the rear foot can then pivot — that pivot is fine, and helps keep
+   the leg neutral with the pelvis. What it must NOT be is a pivot in place with no
+   push behind it: that generates no torque.
 3. **Hips – torso – arm.** The arm lags, the shoulder girdle retracts, the arm line
    stretches from pec to fist, then rebounds and snaps across the body with full
    shoulder-blade protraction. The hip must finish rotating while the arm is still
@@ -50,9 +51,9 @@ the lead leg.
 
 ## Do not flag
 
-- **The rear foot pivoting / turning.** On a closing punch this is correct, and
-  usually necessary to keep the leg neutral with the pelvis. Only the passive
-  spin-without-push version is a fault (see step 2).
+- **The rear foot pivoting / turning after the hip-drive push.** On a closing
+  punch that's correct, and helps keep the leg neutral with the pelvis. Only a
+  pivot in place with no push behind it is a fault (see step 2).
 - **The fist not turning over**, and **landing with the palm facing the fighter.**
   Both correct on hooks.
 - **Continuing to rotate through impact** instead of leaning forward.
