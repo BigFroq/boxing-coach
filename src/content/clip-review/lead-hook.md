@@ -8,8 +8,9 @@
 The hook is powered by a **lateral** weight load onto the lead leg and a dramatic
 **opening** of the hips, driving a horizontal arc whose radius tightens through
 impact. Weight transfers laterally past the centre line — and that crossing is the
-moment of impact. It is thrown off a **flat foot** using glute-driven hip
-extension, never off a pivot.
+moment of impact. The drive is a **flat-foot** push — glute-driven hip extension
+off the ground — not a pivot. A pivot as the body rotates afterwards is fine; it
+is just never the thing that powers the punch.
 
 ## Assess in this order
 
@@ -17,11 +18,12 @@ extension, never off a pivot.
    and the lead-side cross-body chains, with some knee and hip bend to explode
    from. The arm and shoulder relax briefly, the arm hanging so the upper pec
    pre-stretches. The body should look *alive* — a ready athlete, never stiff.
-2. **Flat foot, glute drive.** The single most important check. The glute does two
-   jobs at once: hip extension and hip rotation. Look for the ready position —
-   angle in hip, angle in knee — straightening out and driving the hip forward,
-   with the lead foot planted flat. A lead foot that pivots is the fault: the thigh
-   just turns in place, no hip extension happens, and ground reaction force is lost.
+2. **Flat-foot drive.** The single most important check. The glute does two jobs at
+   once: hip extension and hip rotation. Look for the ready position — angle in hip,
+   angle in knee — straightening out and driving the hip forward off a flat foot.
+   The lead foot can pivot as the body rotates afterwards; what powers the punch is
+   the push. The fault is a pivot INSTEAD of that push — the thigh just turning in
+   place, no hip extension, so ground reaction force is lost.
 3. **Hips – torso – arm.** As the body rotates the arm lags back, the shoulder
    girdle retracts, the elbow extends slightly, stretching the whole arm line from
    pec to fist. Then the pec rebounds and the arm snaps across the body with full
@@ -40,9 +42,10 @@ extension, never off a pivot.
 
 ## If / then
 
-- **If the lead foot pivots to generate torque** → say so directly and score Hip
-  Explosion accordingly. Weight goes laterally with no foot supporting it, so the
-  fighter finishes off balance and has to disengage before following up.
+- **If the lead foot pivots INSTEAD of driving off the push** (pivoting to generate
+  torque, rather than a pivot that simply follows the push) → say so directly and
+  score Hip Explosion accordingly. Weight goes laterally with no foot supporting it,
+  so the fighter finishes off balance and has to disengage before following up.
 - **If the pelvis keeps rotating after impact with no counter-rotation** → the
   lead leg will pivot to make room and balance goes. Recommend the spaghetti-arms
   or broomstick turning drill.
@@ -58,6 +61,9 @@ extension, never off a pivot.
 
 ## Do not flag
 
+- **The lead foot pivoting after the push.** Once the flat-foot drive has started
+  the hip rotation, the foot turning as the body rotates is fine. Only a pivot in
+  place with no push behind it — pivoting to make the torque — is the fault.
 - **Loading off a slip, a roll, or the end of a rear hand.** These are legitimate
   entries into the hook's load phase — the fighter is primed to launch a lead hook
   virtually any time weight shifts to the lead leg. Read defensive movement as
